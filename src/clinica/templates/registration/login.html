@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Área do Paciente{% endblock %}
+{% block title %}Login{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -16,17 +16,23 @@
 <body class="text-center">
     
 <main class="form-signin">
-  <form style="padding-top: 15%; width: 50%; margin: auto;">
+  <form method="post" style="padding-top: 15%; width: 50%; margin: auto;">
+    {% csrf_token %}
     {% load static %}
+    {% if error %}
+      <div class="alert alert-danger" role="alert">
+        {{ error }}
+      </div>
+    {% endif %}
     <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57">
     <h1 class="h3 mb-3 fw-normal">Faça seu login</h1>
 
     <div class="form-floating">
-      <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+      <input type="text" class="form-control" id="floatingInput" name="username" placeholder="Usuário" required>
       <label for="floatingInput">Usuário</label>
     </div>
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+      <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="Senha" required>
       <label for="floatingPassword">Senha</label>
     </div>
 

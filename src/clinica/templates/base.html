@@ -51,13 +51,13 @@
     <hr>
     <ul class="nav nav-pills flex-column mb-auto">
       <li class="nav-item">
-        <a href="#" class="nav-link active" aria-current="page">
+        <a href="{% url 'area_paciente:index' %}" class="nav-link active" aria-current="page">
           <svg class="bi me-2" width="16" height="16"><use xlink:href="#home"></use></svg>
           Home
         </a>
       </li>
       <li>
-        <a href="#" class="nav-link link-dark">
+        <a href="{% url 'area_paciente:dashboard' %}" class="nav-link link-dark">
           <svg class="bi me-2" width="16" height="16"><use xlink:href="#speedometer2"></use></svg>
           Dashboard
         </a>
@@ -92,7 +92,7 @@
         <li><a class="dropdown-item" href="#">Settings</a></li>
         <li><a class="dropdown-item" href="#">Profile</a></li>
         <li><hr class="dropdown-divider"></li>
-        <li><a class="dropdown-item" href="#">Sign out</a></li>
+        <li><a class="dropdown-item" href="{% url 'area_paciente:logout' %}">Sair</a></li>
       </ul>
     </div>
   </div>
@@ -120,12 +120,12 @@
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <li><a class="dropdown-item" href="#">Perfil</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Sair</a></li>
+                <li><a class="dropdown-item" href="{% url 'area_paciente:logout' %}">Sair</a></li>
               </ul>
             </li>
             {% else %}
             <li class="nav-item">
-              <a class="nav-link" href="/area-paciente/">Area do Paciente</a>
+              <a class="nav-link" href="accounts/login/">Login</a>
             </li>
             {% endif %}
           </ul>

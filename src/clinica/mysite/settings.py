@@ -81,6 +81,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Redirect to home URL after login (Default redirects to /accounts/profile/)
+LOGIN_REDIRECT_URL = '/area-paciente/dashboard/'
+
 
 # Internationalization
 

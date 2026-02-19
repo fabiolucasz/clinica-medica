@@ -1,6 +1,26 @@
 from django.shortcuts import render
+from django.contrib.auth import authenticate, login, logout
 
 # Create your views here.
 
 def index(request):
+
     return render(request, 'index.html')
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return render(request, 'area_paciente/index.html')
+        else:
+            return render(request, 'registration/login.html', {'error': 'Usuário ou senha inválidos'})
+    
+    return render(request, 'registration/login.html')
+
+def logout_view(request):
+    logout(request)
+    return render(request, 'registration/login.html')
+
