@@ -15,5 +15,4 @@ def dashboard(request):
 
 def logout_view(request):
     logout(request)
-    return render(request, 'registration/login.html')
-
+    return redirect('login')
