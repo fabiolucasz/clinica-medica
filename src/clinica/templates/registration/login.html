@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block title %}Login{% endblock %}
-
 {% block extra_css %}
 <style>
   /* Estilos customizados podem ser adicionados aqui */
@@ -16,7 +15,7 @@
 <body class="text-center">
     
 <main class="form-signin">
-  <form method="post" style="padding-top: 15%; width: 50%; margin: auto;">
+  <form method="post" style="padding-top: 5rem; width: 50%; margin: auto;">
     {% csrf_token %}
     {% load static %}
     {% if error %}

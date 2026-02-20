@@ -6,10 +6,10 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def index(request):
-    return render(request, 'area_paciente/dashboard.html')
+    return render(request, 'painel/painel.html')
 
 
-
+@login_required
 def logout_view(request):
     logout(request)
     return redirect('login')
