@@ -1,13 +1,30 @@
 {% extends 'painel/base.html' %}
 
 {% block content %}
+<style>
+    .d-flex {
+        margin: auto;
+        width: 80%;
+    }
+</style>
 
-<div class="d-flex justify-content-between align-items-center mb-4" style="margin: auto; width: 80%;">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Lista de Pacientes</h2>
     <a href="{% url 'painel:cadastrar_paciente' %}" class="btn btn-primary">Novo Paciente</a>
+
+
 </div>
 
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <form class="d-flex" onsubmit="return false;">
+        <input class="form-control me-2" type="search" placeholder="Buscar por nome ou CPF" id="buscar" aria-label="Search">
+        <button class="btn btn-primary" type="button" onclick="limparBusca()">Limpar</button>
+    </form>
+</div>
+
+
 <table class="table table-striped" style="margin: auto; width: 80%;">
+
     <thead>
         <tr>
             <th>Nome</th>
@@ -88,6 +105,7 @@
 <script>
     let pacienteAtualId = null;
 
+
     function abrirModalPaciente(element) {
         const id = element.dataset.pacienteId;
         const nome = element.dataset.pacienteNome;
@@ -139,6 +157,40 @@
         if (!dateString) return '';
         const date = new Date(dateString);
         return date.toLocaleDateString('pt-BR');
+    }
+
+    // Funcionalidade de busca em tempo real
+    document.addEventListener('DOMContentLoaded', function() {
+        const buscaInput = document.getElementById('buscar');
+        const tabela = document.querySelector('tbody');
+        const linhas = Array.from(tabela.querySelectorAll('tr'));
+
+        buscaInput.addEventListener('input', function() {
+            const termoBusca = this.value.toLowerCase().trim();
+            
+            linhas.forEach(linha => {
+                if (linha.querySelector('.text-center')) {
+                    // Linha de "Nenhum paciente cadastrado"
+                    linha.style.display = termoBusca === '' ? '' : 'none';
+                    return;
+                }
+                
+                const nome = linha.cells[0].textContent.toLowerCase();
+                const cpf = linha.cells[1].textContent.toLowerCase();
+                
+                if (nome.includes(termoBusca) || cpf.includes(termoBusca)) {
+                    linha.style.display = '';
+                } else {
+                    linha.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function limparBusca() {
+        const buscaInput = document.getElementById('buscar');
+        buscaInput.value = '';
+        buscaInput.dispatchEvent(new Event('input'));
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
