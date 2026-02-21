@@ -18,7 +18,14 @@
     </thead>
     <tbody>
         {% for paciente in pacientes %}
-        <tr style="cursor: pointer;" onclick="return confirm('Tem certeza que deseja editar este paciente? {{ paciente.id }}');">
+        <tr style="cursor: pointer;" data-paciente-id="{{ paciente.id }}" data-paciente-nome="{{ paciente.nome }}"
+            data-paciente-email="{{ paciente.email }}" data-paciente-celular="{{ paciente.celular }}"
+            data-paciente-cpf="{{ paciente.cpf }}"
+            data-paciente-data-nascimento="{{ paciente.data_nascimento|date:'Y-m-d' }}"
+            data-paciente-sexo="{{ paciente.sexo }}" data-paciente-cep="{{ paciente.cep }}"
+            data-paciente-rua="{{ paciente.rua }}" data-paciente-numero="{{ paciente.numero }}"
+            data-paciente-bairro="{{ paciente.bairro }}" data-paciente-cidade="{{ paciente.cidade }}"
+            data-paciente-estado="{{ paciente.estado }}" onclick="abrirModalPaciente(this)">
             <td>{{ paciente.nome }}</td>
             <td>{{ paciente.cpf }}</td>
             <td>{{ paciente.celular }}</td>
@@ -32,4 +39,109 @@
     </tbody>
 </table>
 
+<!-- Modal Detalhes do Paciente -->
+<div class="modal fade" id="modalPaciente" tabindex="-1" aria-labelledby="modalPacienteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPacienteLabel">Detalhes do Paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Dados Pessoais</h6>
+                        <p><strong>Nome:</strong> <input type="text" class="form-control" id="modal-nome"></p>
+                        <p><strong>Email:</strong> <input type="email" class="form-control" id="modal-email"></p>
+                        <p><strong>Celular:</strong> <input type="text" class="form-control" id="modal-celular"></p>
+                        <p><strong>CPF:</strong> <input type="text" class="form-control" id="modal-cpf"></p>
+                        <p><strong>Data Nascimento:</strong> <input type="text" class="form-control"
+                                id="modal-data-nascimento"></p>
+                        <p><strong>Sexo:</strong> <input type="text" class="form-control" id="modal-sexo"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Endereço</h6>
+                        <p><strong>CEP:</strong> <input type="text" class="form-control" id="modal-cep"></p>
+                        <p><strong>Rua:</strong> <input type="text" class="form-control" id="modal-rua"></p>
+                        <p><strong>Número:</strong> <input type="text" class="form-control" id="modal-numero"></p>
+                        <p><strong>Bairro:</strong> <input type="text" class="form-control" id="modal-bairro"></p>
+                        <p><strong>Cidade:</strong> <input type="text" class="form-control" id="modal-cidade"></p>
+                        <p><strong>Estado:</strong> <input type="text" class="form-control" id="modal-estado"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Agendar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Prontuário</button>
+                <button type="button" class="btn btn-warning" id="btn-editar">Editar</button>
+                <button type="button" class="btn btn-danger" id="btn-excluir">Excluir</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let pacienteAtualId = null;
+
+    function abrirModalPaciente(element) {
+        const id = element.dataset.pacienteId;
+        const nome = element.dataset.pacienteNome;
+        const email = element.dataset.pacienteEmail;
+        const celular = element.dataset.pacienteCelular;
+        const cpf = element.dataset.pacienteCpf;
+        const dataNascimento = element.dataset.pacienteDataNascimento;
+        const sexo = element.dataset.pacienteSexo;
+        const cep = element.dataset.pacienteCep;
+        const rua = element.dataset.pacienteRua;
+        const numero = element.dataset.pacienteNumero;
+        const bairro = element.dataset.pacienteBairro;
+        const cidade = element.dataset.pacienteCidade;
+        const estado = element.dataset.pacienteEstado;
+
+        pacienteAtualId = id;
+
+        // Preencher os dados do modal
+        document.getElementById('modal-nome').value = nome;
+        document.getElementById('modal-email').value = email;
+        document.getElementById('modal-celular').value = celular;
+        document.getElementById('modal-cpf').value = cpf;
+        document.getElementById('modal-data-nascimento').value = formatDate(dataNascimento);
+        document.getElementById('modal-sexo').value = sexo;
+        document.getElementById('modal-cep').value = cep;
+        document.getElementById('modal-rua').value = rua;
+        document.getElementById('modal-numero').value = numero;
+        document.getElementById('modal-bairro').value = bairro;
+        document.getElementById('modal-cidade').value = cidade;
+        document.getElementById('modal-estado').value = estado;
+
+        // Configurar URLs dos botões
+        document.getElementById('btn-editar').onclick = function () {
+            window.location.href = '/editar-paciente/' + id + '/';
+        };
+
+        document.getElementById('btn-excluir').onclick = function () {
+            if (confirm('Tem certeza que deseja excluir este paciente?')) {
+                window.location.href = '/excluir-paciente/' + id + '/';
+            }
+        };
+
+        // Abrir o modal
+        const modal = new bootstrap.Modal(document.getElementById('modalPaciente'));
+        modal.show();
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR');
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+    crossorigin="anonymous"></script>
 {% endblock %}
