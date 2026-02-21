@@ -1,14 +1,6 @@
 {% extends 'base.html' %}
 
 {% block title %}Login{% endblock %}
-{% block extra_css %}
-<style>
-  /* Estilos customizados podem ser adicionados aqui */
-  .form-floating {
-    margin-bottom: 1rem;
-  }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -26,11 +18,11 @@
     <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57">
     <h1 class="h3 mb-3 fw-normal">Faça seu login</h1>
 
-    <div class="form-floating">
+    <div class="form-floating" style="margin-bottom: 1rem;">
       <input type="text" class="form-control" id="floatingInput" name="username" placeholder="Usuário" required>
       <label for="floatingInput">Usuário</label>
     </div>
-    <div class="form-floating">
+    <div class="form-floating" style="margin-bottom: 1rem;">
       <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="Senha" required>
       <label for="floatingPassword">Senha</label>
     </div>
