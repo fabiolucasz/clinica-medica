@@ -1,4 +1,5 @@
-from django.shortcuts import render, redirect
+from datetime import datetime
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from .models import Paciente
@@ -58,12 +59,33 @@ def listar_pacientes(request):
 
 @login_required
 def editar_paciente(request, id):
-    paciente = Paciente.objects.get(id=id)
-    return render(request, 'painel/editar_paciente.html', {'paciente': paciente})
+    paciente = get_object_or_404(Paciente, pk=id)
+    
+    if request.method == 'POST':
+        # Processar o formulário
+        paciente.nome = request.POST.get('nome')
+        paciente.celular = request.POST.get('celular')
+        paciente.cpf = request.POST.get('cpf')
+        data_nascimento_obj = request.POST.get('data_nascimento')
+        nascimento_iso = data_nascimento_obj.split('/')[2] + '-' + data_nascimento_obj.split('/')[1] + '-' + data_nascimento_obj.split('/')[0]
+        paciente.data_nascimento = nascimento_iso
+        paciente.sexo = request.POST.get('sexo')
+        paciente.cep = request.POST.get('cep')
+        paciente.rua = request.POST.get('rua')
+        paciente.numero = request.POST.get('numero')
+        paciente.bairro = request.POST.get('bairro')
+        paciente.cidade = request.POST.get('cidade')
+        paciente.estado = request.POST.get('estado')
+        
+        paciente.save()
+        
+        return redirect('painel:listar_pacientes')
+    
+    return redirect('painel:listar_pacientes')
 
 @login_required
 def excluir_paciente(request, id):
-    paciente = Paciente.objects.get(id=id)
+    paciente = get_object_or_404(Paciente, pk=id)
     paciente.delete()
     return redirect('painel:listar_pacientes')
 

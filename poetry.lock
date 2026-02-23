@@ -294,6 +294,24 @@ files = [
 django = ">=4.2"
 
 [[package]]
+name = "faker"
+version = "40.4.0"
+description = "Faker is a Python package that generates fake data for you."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "faker-40.4.0-py3-none-any.whl", hash = "sha256:486d43c67ebbb136bc932406418744f9a0bdf2c07f77703ea78b58b77e9aa443"},
+    {file = "faker-40.4.0.tar.gz", hash = "sha256:76f8e74a3df28c3e2ec2caafa956e19e37a132fdc7ea067bc41783affcfee364"},
+]
+
+[package.dependencies]
+tzdata = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+tzdata = ["tzdata"]
+
+[[package]]
 name = "gitdb"
 version = "4.0.12"
 description = "Git Object Database"
@@ -1349,4 +1367,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "4f14b9c13171f525db8bacbeff5d04d2c686126871b994df9b9f5f7d2f4fcc85"
+content-hash = "eef3b25c65401d46175bbfc7673ce6e1be39b69cf8e54208f6f63b893613b9ca"
