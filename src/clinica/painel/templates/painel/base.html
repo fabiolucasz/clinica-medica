@@ -57,8 +57,6 @@
 
         
     </style>
-    {% block extra_css %}
-        {% endblock %}
 
 </head>
 
@@ -177,7 +175,7 @@
             </a>
             <ul class="nav nav-pills nav-flush flex-column mb-auto text-center">
                 <li class="nav-item">
-                    <a href="{% url 'painel:cadastrar_paciente' %}" class="nav-link active py-3 border-bottom" aria-current="page" title=""
+                    <a href="#" class="nav-link active py-3 border-bottom" aria-current="page" title=""
                         data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Home">
                         <svg class="bi" width="24" height="24" role="img" aria-label="Home">
                             <use xlink:href="#home"></use>
@@ -186,6 +184,14 @@
                 </li>
                 <li>
                     <a href="{% url 'painel:listar_pacientes' %}" class="nav-link py-3 border-bottom" title="" data-bs-toggle="tooltip"
+                        data-bs-placement="right" data-bs-original-title="Customers">
+                        <svg class="bi" width="24" height="24" role="img" aria-label="Customers">
+                            <use xlink:href="#people-circle"></use>
+                        </svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link py-3 border-bottom" title="" data-bs-toggle="tooltip"
                         data-bs-placement="right" data-bs-original-title="Dashboard">
                         <svg class="bi" width="24" height="24" role="img" aria-label="Dashboard">
                             <use xlink:href="#speedometer2"></use>
@@ -205,14 +211,6 @@
                         data-bs-placement="right" data-bs-original-title="Products">
                         <svg class="bi" width="24" height="24" role="img" aria-label="Products">
                             <use xlink:href="#grid"></use>
-                        </svg>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link py-3 border-bottom" title="" data-bs-toggle="tooltip"
-                        data-bs-placement="right" data-bs-original-title="Customers">
-                        <svg class="bi" width="24" height="24" role="img" aria-label="Customers">
-                            <use xlink:href="#people-circle"></use>
                         </svg>
                     </a>
                 </li>
@@ -246,13 +244,12 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                {% block navbar-left %}
+                {% endblock %}
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link">Seja bem vindo, {{ user.username }}</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/painel/">Painel</a>
-                    </li>
+                    {% block navbar-right %}
+                    {% endblock %}
+                </ul>
             </div>
         </div>
     </nav>

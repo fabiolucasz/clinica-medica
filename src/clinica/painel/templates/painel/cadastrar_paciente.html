@@ -1,9 +1,20 @@
 {% extends 'painel/base.html' %}
 
-{% block extra_css %}
+{% block navbar-left %}
+<h1 class="m-auto h3 mb-3 fw-normal">Novo Paciente</h1>
+{% endblock %}
+
+{% block navbar-right %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'painel:listar_pacientes' %}">Pacientes</a>
+</li>
+
+{% endblock %}
+
+{% block content %}
 <style>
     .form {
-        padding-top: 5rem;
+        padding-top: 1rem;
         margin: auto;
     }
 
@@ -16,13 +27,10 @@
     }
 
     button.btn {
-        margin-top: 3rem;
+        margin-top: 1rem;
         width: 10rem !important;
     }
 </style>
-{% endblock %}
-
-{% block content %}
 
 
 <body class="text-center">
@@ -36,8 +44,7 @@
                 {{ error }}
             </div>
             {% endif %}
-            <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57">
-            <h1 class="h3 mb-3 fw-normal">Novo Paciente</h1>
+            <!-- <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57"> -->
 
             <div class="flex" style="display: flex; gap: 1rem; justify-content: space-around;">
                 <div class="column">
@@ -149,13 +156,9 @@
                 </div>
             </div>
 
-
             <button class="w-100 btn btn-lg btn-primary" type="submit">Cadastrar</button>
-            <p class="mt-5 mb-3 text-muted">© 2026</p>
         </form>
     </main>
-
-
 
     {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"

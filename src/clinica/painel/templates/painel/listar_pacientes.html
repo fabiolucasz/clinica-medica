@@ -1,5 +1,19 @@
 {% extends 'painel/base.html' %}
 
+{% block navbar-left %}
+
+<form class="d-flex m-auto w-50" onsubmit="return false;">
+    <input class="form-control me-2" type="search" placeholder="Buscar por nome ou CPF" id="buscar" aria-label="Search">
+</form>
+
+{% endblock %}
+
+{% block navbar-right %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'painel:cadastrar_paciente' %}">Novo Paciente</a>
+</li>
+{% endblock %}
+
 {% block content %}
 <style>
     .d-flex {
@@ -8,7 +22,7 @@
     }
 
     .table-container {
-        height: 60vh;
+        max-height: 80vh;
         overflow-y: auto;
         margin: auto;
         width: 80%;
@@ -30,19 +44,9 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Lista de Pacientes</h2>
-    <a href="{% url 'painel:cadastrar_paciente' %}" class="btn btn-primary">Novo Paciente</a>
-
-
-</div>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <form class="d-flex" onsubmit="return false;">
-        <input class="form-control me-2" type="search" placeholder="Buscar por nome ou CPF" id="buscar"
-            aria-label="Search">
-        <button class="btn btn-primary" type="button" onclick="limparBusca()">Limpar</button>
-    </form>
+
 </div>
 
 <div class="table-container">
@@ -94,22 +98,33 @@
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Dados Pessoais</h6>
-                            <p><strong>Nome:</strong> <input type="text" class="form-control" id="modal-nome" name="nome"></p>
-                            <p><strong>Email:</strong> <input type="email" class="form-control" id="modal-email" name="email"></p>
-                            <p><strong>Celular:</strong> <input type="text" class="form-control" id="modal-celular" name="celular"></p>
-                            <p><strong>CPF:</strong> <input type="text" class="form-control" id="modal-cpf" name="cpf"></p>
+                            <p><strong>Nome:</strong> <input type="text" class="form-control" id="modal-nome"
+                                    name="nome"></p>
+                            <p><strong>Email:</strong> <input type="email" class="form-control" id="modal-email"
+                                    name="email"></p>
+                            <p><strong>Celular:</strong> <input type="text" class="form-control" id="modal-celular"
+                                    name="celular"></p>
+                            <p><strong>CPF:</strong> <input type="text" class="form-control" id="modal-cpf" name="cpf">
+                            </p>
                             <p><strong>Data Nascimento:</strong> <input type="text" class="form-control"
                                     id="modal-data-nascimento" name="data_nascimento"></p>
-                            <p><strong>Sexo:</strong> <input type="text" class="form-control" id="modal-sexo" name="sexo"></p>
+                            <p><strong>Sexo:</strong> <input type="text" class="form-control" id="modal-sexo"
+                                    name="sexo"></p>
                         </div>
                         <div class="col-md-6">
                             <h6>Endereço</h6>
-                            <p><strong>CEP:</strong> <input type="text" class="form-control" id="modal-cep" name="cep"></p>
-                            <p><strong>Rua:</strong> <input type="text" class="form-control" id="modal-rua" name="rua"></p>
-                            <p><strong>Número:</strong> <input type="text" class="form-control" id="modal-numero" name="numero"></p>
-                            <p><strong>Bairro:</strong> <input type="text" class="form-control" id="modal-bairro" name="bairro"></p>
-                            <p><strong>Cidade:</strong> <input type="text" class="form-control" id="modal-cidade" name="cidade"></p>
-                            <p><strong>Estado:</strong> <input type="text" class="form-control" id="modal-estado" name="estado"></p>
+                            <p><strong>CEP:</strong> <input type="text" class="form-control" id="modal-cep" name="cep">
+                            </p>
+                            <p><strong>Rua:</strong> <input type="text" class="form-control" id="modal-rua" name="rua">
+                            </p>
+                            <p><strong>Número:</strong> <input type="text" class="form-control" id="modal-numero"
+                                    name="numero"></p>
+                            <p><strong>Bairro:</strong> <input type="text" class="form-control" id="modal-bairro"
+                                    name="bairro"></p>
+                            <p><strong>Cidade:</strong> <input type="text" class="form-control" id="modal-cidade"
+                                    name="cidade"></p>
+                            <p><strong>Estado:</strong> <input type="text" class="form-control" id="modal-estado"
+                                    name="estado"></p>
                         </div>
                     </div>
                 </form>
@@ -124,6 +139,10 @@
             </div>
         </div>
     </div>
+    <!-- Fim Modal -->
+
+
+
 
 
     {% endblock %}
@@ -218,11 +237,6 @@
             });
         });
 
-        function limparBusca() {
-            const buscaInput = document.getElementById('buscar');
-            buscaInput.value = '';
-            buscaInput.dispatchEvent(new Event('input'));
-        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
