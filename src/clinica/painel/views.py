@@ -10,6 +10,7 @@ from .models import Paciente, Medico
 def index(request):
     return render(request, 'painel/painel.html')
 
+# Views dos Pacientes
 @login_required
 def cadastrar_paciente(request):
     """
@@ -89,10 +90,17 @@ def excluir_paciente(request, id):
     paciente.delete()
     return redirect('painel:listar_pacientes')
 
+
+#Views dos Médicos
 @login_required
 def listar_medicos(request):
     medicos = Medico.objects.all()
     return render(request, 'painel/medicos.html', {'medicos': medicos})
+
+@login_required
+def medico_detalhes(request, id):
+    medico = get_object_or_404(Medico, pk=id)
+    return render(request, 'painel/medico_detalhes.html', {'medico': medico})
 
 @login_required
 def agendar_consulta(request):
@@ -109,6 +117,9 @@ def editar_consulta(request, id):
 @login_required
 def excluir_consulta(request, id):
     return render(request, 'painel/excluir_consulta.html')
+
+
+
 
 @login_required
 def logout_view(request):

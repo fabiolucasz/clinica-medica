@@ -24,6 +24,7 @@
         margin: auto;
         width: 18rem;
         margin-bottom: 2rem;
+        cursor: pointer;
     }
 
     .moldura {
@@ -55,7 +56,7 @@
 
 <div class="container">
     {% for medico in medicos %}
-    <div class="card">
+    <div class="card" data-medico-id="{{ medico.id }}" onclick="verDetalhesMedico(this)">
         <div class="moldura">
             <img src="{{ medico.foto_perfil }}" class="card-img-top" alt="Foto de perfil do médico">
 
@@ -68,7 +69,7 @@
                     <p class="card-text">Especialidade: {{ medico.especialidade }}</p>
                 </li>
                 <li class="nav-item">
-                    <p class="card-text">{{ medico.tipo_conselho}}-{{ medico.uf_conselho }}-{{ medico.numero_conselho }}</p>
+                    <p class="card-text">{{ medico.tipo_conselho}}-{{ medico.uf_conselho }} {{ medico.numero_conselho }}</p>
                 </li>
                 <li class="nav-item">
                     <p class="card-text">Telefone: {{ medico.celular }}</p>
@@ -78,9 +79,16 @@
                 </li>
             </ul>
 
-            <a href="#" class="btn btn-primary">Agendar</a>
+            
         </div>
     </div>
     {% endfor %}
 </div>
+
+<script>
+    function verDetalhesMedico(element) {
+        let medicoId = element.getAttribute('data-medico-id');
+        window.location.href = '/painel/medico/detalhes/' + medicoId + '/';
+    }
+</script>
 {% endblock %}

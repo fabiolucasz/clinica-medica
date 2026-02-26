@@ -1,0 +1,173 @@
+{% extends 'painel/base.html' %}
+
+{% block navbar-right %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'painel:listar_medicos' %}">Médicos</a>
+</li>
+{% endblock %}
+
+{% block title %}Detalhes do Médico{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        display: flex;
+        justify-content: space-around;
+        flex-direction: row;
+        max-width: 80vw;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 2rem;
+    }
+
+    .profile-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 2rem;
+        border: 4px solid #007bff;
+    }
+
+    .profile-info h2 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+    }
+
+    .profile-info .especialidade {
+        color: #007bff;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .section {
+        margin-bottom: 2rem;
+    }
+
+    .section h3 {
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .info-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .info-item strong {
+        color: #555;
+        display: inline-block;
+        width: 120px;
+    }
+
+    .agendamento{
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .calendario {
+        border: 1px solid #555;
+        border-radius: 10px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .local-atendimento{
+        border: 1px solid #555;
+        border-radius: 10px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+
+</style>
+
+<div class="container">
+    <div class="detalhes">
+        <div class="profile-header">
+            <img src="{{ medico.foto_perfil }}" alt="Foto de {{ medico.nome }}" class="profile-image">
+            <div class="profile-info">
+                <h2>{{ medico.nome }}</h2>
+                <div class="especialidade">{{ medico.especialidade }}</div>
+                <div>{{ medico.tipo_conselho }}-{{ medico.uf_conselho }} {{ medico.numero_conselho }}</div>
+                <div>RQE: 123456789</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div>
+                <h3>Apresentação</h3>
+                <p>Seja bem-vindo(a) ao perfil do(a) médico(a) {{ medico.nome }}.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Formação</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>Medicina</h4>
+                    <p>Universidade Esquina - 2015</p>
+
+                    <h4>Residência</h4>
+                    <p>Hospital Esquina - 2020</p>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Convênios Atendidos</h3>
+            <div class="info-grid">
+                <p class="convenio">Convenio 1</p>
+                <p class="convenio">Convenio 2</p>
+                <p class="convenio">Convenio 3</p>
+                <p class="convenio">Particular</p>
+            </div>
+
+
+        </div>
+    </div>
+    <div class="agendamento">
+        <div class="calendario">
+            <h3>Agendar consultas</h3>
+            <div>
+                
+            </div>
+        </div>
+
+        <div class="local-atendimento">
+            <h3>Locais de atendimento</h3>
+            <div>
+                <h4>1. Hospital Esquina</h4>
+                <p>Endereço: Rua Esquina, 123</p>
+                <p>Telefone: (11) 1234-5678</p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
