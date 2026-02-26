@@ -15,20 +15,28 @@
         margin: auto;
         padding-top: 2rem;
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
         align-items: center;
     }
 
     .card {
         margin: auto;
-        width: 14rem;
+        width: 18rem;
+        margin-bottom: 2rem;
+    }
+
+    .moldura {
+        width: 200px;
+        height: 200px;
+        border-radius: 100%;
+        overflow: hidden;
+        margin: auto;
+        background-color: #464b52;
     }
 
     img {
-        padding-top: 2rem;
         margin: auto;
-        max-width: 200px;
-        border-radius: 50%;
     }
 
     .card-body::before {
@@ -47,9 +55,12 @@
 
 <div class="container">
     {% for medico in medicos %}
-    <div class="card mb-3" style="width: 14rem;">
-        <img src="{{ medico.foto_perfil }}"
-            class="card-img-top" alt="Foto de perfil do médico">
+    <div class="card">
+        <div class="moldura">
+            <img src="{{ medico.foto_perfil }}" class="card-img-top" alt="Foto de perfil do médico">
+
+        </div>
+
         <div class="card-body">
             <h5 class="card-title text-center">{{ medico.nome }}</h5>
             <ul class="navbar-nav ms-auto">
@@ -57,13 +68,13 @@
                     <p class="card-text">Especialidade: {{ medico.especialidade }}</p>
                 </li>
                 <li class="nav-item">
-                    <p class="card-text">CRM: {{ medico.crm }}</p>
+                    <p class="card-text">{{ medico.tipo_conselho}}-{{ medico.uf_conselho }}-{{ medico.numero_conselho }}</p>
                 </li>
                 <li class="nav-item">
-                    <p class="card-text">Telefone: {{ medico.telefone }}</p>
+                    <p class="card-text">Telefone: {{ medico.celular }}</p>
                 </li>
                 <li class="nav-item">
-                    <p class="card-text">Valor: R$ {{ medico.valor }}</p>
+                    <p class="card-text">Valor: R$ {{ medico.valor_consulta }}</p>
                 </li>
             </ul>
 
