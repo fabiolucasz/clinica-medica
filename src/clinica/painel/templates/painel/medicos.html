@@ -1,0 +1,75 @@
+{% extends 'painel/base.html' %}
+
+{% block navbar-right %}
+<li class="nav-item">
+    <a class="nav-link" href="#">Novo Medico</a>
+</li>
+{% endblock %}
+
+{% block title %}Medicos{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        width: 90%;
+        margin: auto;
+        padding-top: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .card {
+        margin: auto;
+        width: 14rem;
+    }
+
+    img {
+        padding-top: 2rem;
+        margin: auto;
+        max-width: 200px;
+        border-radius: 50%;
+    }
+
+    .card-body::before {
+        content: " ";
+        display: block;
+        width: 100%;
+        height: 1px;
+        background-color: #464b52;
+        margin-top: 1rem;
+    }
+
+    .card-title {
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="container">
+    {% for medico in medicos %}
+    <div class="card mb-3" style="width: 14rem;">
+        <img src="{{ medico.foto_perfil }}"
+            class="card-img-top" alt="Foto de perfil do médico">
+        <div class="card-body">
+            <h5 class="card-title text-center">{{ medico.nome }}</h5>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <p class="card-text">Especialidade: {{ medico.especialidade }}</p>
+                </li>
+                <li class="nav-item">
+                    <p class="card-text">CRM: {{ medico.crm }}</p>
+                </li>
+                <li class="nav-item">
+                    <p class="card-text">Telefone: {{ medico.telefone }}</p>
+                </li>
+                <li class="nav-item">
+                    <p class="card-text">Valor: R$ {{ medico.valor }}</p>
+                </li>
+            </ul>
+
+            <a href="#" class="btn btn-primary">Agendar</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

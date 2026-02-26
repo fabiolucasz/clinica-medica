@@ -2,7 +2,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from .models import Paciente
+from .models import Paciente, Medico
 
 # Create your views here.
 
@@ -88,6 +88,11 @@ def excluir_paciente(request, id):
     paciente = get_object_or_404(Paciente, pk=id)
     paciente.delete()
     return redirect('painel:listar_pacientes')
+
+@login_required
+def listar_medicos(request):
+    medicos = Medico.objects.all()
+    return render(request, 'painel/medicos.html', {'medicos': medicos})
 
 @login_required
 def agendar_consulta(request):
