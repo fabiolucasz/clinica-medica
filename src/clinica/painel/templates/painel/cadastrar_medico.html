@@ -123,13 +123,122 @@
                         <select class="form-select" aria-label="Default select example" name="estado" id="floatingInput"
                             required>
                             <option value="">Selecione</option>
-                            {% for estado in estados %}
-                                <option value="{{ estado.uf }}">{{ estado.nome }}</option>
-                            {% endfor %}
+                            <option value="AC">Acre</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="AP">Amapá</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="ES">Espirito Santo</option>
+                            <option value="GO">Goiás</option>
+                            <option value="MA">Maranhão</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PA">Pará</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="PR">Paraná</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="RR">Roraima</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="TO">Tocantins</option>
                         </select>
                         <label for="floatingInput">Estado</label>
                     </div>
                 </div>
+
+
+
+            </div>
+
+            <!--Contrato-->
+            <div class="contrato">
+                <h2>Contrato</h2>
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="floatingInput" name="foto_perfil"
+                        placeholder="foto_perfil" required>
+                    <label for="floatingInput">Foto de perfil</label>
+                </div>
+
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="floatingInput" name="especialidade"
+                        placeholder="especialidade" required>
+                    <label for="floatingInput">Especialidade</label>
+                </div>
+
+                <div class="form-floating">
+                    <select type="text" class="form-control" aria-label="Default select example"
+                        placeholder="tipo_conselho" name="tipo_conselho" id="floatingInput" required>
+                        {% if tipo_conselho %}
+                        <option value="">Selecione</option>
+                        {% for tipo in tipo_conselho %}
+                        <option value="{{ tipo.nome }}">{{ tipo.nome }}</option>
+                        {% endfor %}
+                        {% else %}
+                        <p>Nenhum tipo de conselho encontrado</p>
+                        {% endif %}
+                    </select>
+                    <label for="floatingInput">Conselho Regional</label>
+                </div>
+
+                <div class="form-floating">
+                    <select type="text" class="form-control" aria-label="Default select example"
+                        placeholder="uf_conselho" name="uf_conselho" id="floatingInput" required>
+                        {% if tipo_conselho %}
+                        <option value="">Selecione</option>
+                        {% for estado in estados %}
+                        <option value="{{ estado.uf }}">{{ estado.uf }}</option>
+                        {% endfor %}
+                        {% else %}
+                        <p>Nenhum tipo de conselho encontrado</p>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="floatingInput" name="numero_conselho"
+                        placeholder="numero_conselho" required>
+                    <label for="floatingInput">Número do conselho</label>
+                </div>
+
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="floatingInput" name="rqe" placeholder="rqe" required>
+                    <label for="floatingInput">RQE</label>
+                </div>
+
+
+
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="floatingInput" name="valor_consulta"
+                        placeholder="valor_consulta" required>
+                    <label for="floatingInput">Valor da consulta</label>
+                </div>
+
+                <div class="form-floating">
+                    <select type="text" class="form-control" aria-label="Default select example"
+                        placeholder="clinica" name="clinica" id="floatingInput" required>
+                        {% if clinicas %}
+                        <option value="">Selecione</option>
+                        {% for clinica in clinicas %}
+                        <option value="{{ clinica.nome }}">{{ clinica.id}}. {{ clinica.nome }} - {{  clinica.rua}}, {{ clinica.numero}}, {{ clinica.bairro}}, {{ clinica.cidade}}, {{ clinica.estado}}</option>
+                        {% endfor %}
+                        {% else %}
+                        <p>Nenhuma clinica encontrada</p>
+                        {% endif %}
+                    </select>
+                </div>
+
+
+
+
             </div>
 
             <button class="w-100 btn btn-lg btn-primary" type="submit">Cadastrar</button>

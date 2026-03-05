@@ -9,7 +9,7 @@ cursor = conn.cursor()
 
 fake = faker.Faker('pt_BR')
 
-def populate_db():
+def cadastrar_paciente():
     #Pacientes
     for i in range(100):
         nome = fake.name()
@@ -89,9 +89,23 @@ def cadastrar_medico():
     
     conn.commit()
     print(f"\nTotal de {10} medicos adicionados com sucesso!")
+
+def cadastrar_especialidades():
+    especialidades = ['Pediatra', 'Cardiologista', 'Dermatologista', 'Oftalmologista', 'Ortopedista', 'Neurologista', 'Psicólogo', 'Psicóloga', 'Psiquiatra', 'Fisioterapeuta']
+    created_at = fake.date_time()
+    updated_at = fake.date_time()
+    for especialidade in especialidades:
+        cursor.execute("INSERT INTO painel_especialidades (nome, created_at, updated_at) VALUES (?, ?, ?)", (especialidade, created_at, updated_at))
+        print(f"Adicionada especialidade: {especialidade}")
+    conn.commit()
+    print(f"\nTotal de {len(especialidades)} especialidades adicionadas com sucesso!")
+
+
+
+
 if __name__ == "__main__":
     #populate_db()
-    cadastrar_medico()
+    cadastrar_tipo_conselho()
     conn.close()
 
 
