@@ -1,6 +1,7 @@
 import faker
 import sqlite3
 import os
+import random
 
 # Caminho correto para o banco de dados
 db_path = os.path.join(os.path.dirname(__file__), 'db.sqlite3')
@@ -26,15 +27,15 @@ def cadastrar_paciente():
         numero = fake.building_number()
         bairro = fake.city()
         cidade = fake.state()
-        estado = fake.state()
+        estado_id = random.randint(1, 27)
 
         role = 'paciente'
         created_at = fake.date_time()
         updated_at = fake.date_time()
 
-        paciente = (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado, role, created_at, updated_at)
+        paciente = (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, role, created_at, updated_at)
         
-        cursor.execute("INSERT INTO painel_paciente (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", paciente)
+        cursor.execute("INSERT INTO painel_paciente (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", paciente)
         print(f"Adicionado paciente {i+1}: {nome}")
     
     conn.commit()
@@ -60,7 +61,7 @@ def cadastrar_medico():
         numero = fake.building_number()
         bairro = fake.city()
         cidade = fake.state()
-        estado = fake.state()
+        estado_id = random.randint(1, 27)
 
         # Perfil
         foto_masculino='https://super.abril.com.br/wp-content/uploads/2019/01/house.jpg?crop=1&resize=1212,909'
@@ -82,9 +83,9 @@ def cadastrar_medico():
         created_at = fake.date_time()
         updated_at = fake.date_time()
 
-        medico = (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado, foto_perfil, especialidade, role, valor_consulta, tipo_conselho,uf_conselho,numero_conselho, created_at, updated_at)
+        medico = (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, foto_perfil, especialidade, role, valor_consulta, tipo_conselho,uf_conselho,numero_conselho, created_at, updated_at)
         
-        cursor.execute("INSERT INTO painel_medico (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado, foto_perfil, especialidade, role, valor_consulta, tipo_conselho,uf_conselho,numero_conselho, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", medico)
+        cursor.execute("INSERT INTO painel_medico (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, foto_perfil, especialidade, role, valor_consulta, tipo_conselho,uf_conselho,numero_conselho, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", medico)
         print(f"Adicionado medico {i+1}: {nome}")
     
     conn.commit()
@@ -105,7 +106,7 @@ def cadastrar_especialidades():
 
 if __name__ == "__main__":
     #populate_db()
-    cadastrar_tipo_conselho()
+    cadastrar_paciente()
     conn.close()
 
 
