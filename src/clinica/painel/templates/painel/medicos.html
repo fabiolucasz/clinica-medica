@@ -2,7 +2,7 @@
 
 {% block navbar-right %}
 <li class="nav-item">
-    <a class="nav-link" href="#">Novo Medico</a>
+    <a class="nav-link" href="{% url 'painel:cadastrar_medico' %}">Novo Medico</a>
 </li>
 {% endblock %}
 
@@ -55,6 +55,7 @@
 </style>
 
 <div class="container">
+    {% if medicos %}
     {% for medico in medicos %}
     <div class="card" data-medico-id="{{ medico.id }}" onclick="verDetalhesMedico(this)">
         <div class="moldura">
@@ -83,6 +84,9 @@
         </div>
     </div>
     {% endfor %}
+    {% else %}
+    <p>Nenhum médico encontrado.</p>
+    {% endif %}
 </div>
 
 <script>

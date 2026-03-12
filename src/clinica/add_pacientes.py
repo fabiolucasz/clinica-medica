@@ -91,8 +91,8 @@ def cadastrar_medico():
     conn.commit()
     print(f"\nTotal de {10} medicos adicionados com sucesso!")
 if __name__ == "__main__":
-    #populate_db()
-    cadastrar_tipo_conselho()
+    populate_db()
+    #cadastrar_tipo_conselho()
     conn.close()
 
 
