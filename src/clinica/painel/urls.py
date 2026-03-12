@@ -15,7 +15,6 @@ urlpatterns = [
 
     #Medicos
     path("medicos/", views.listar_medicos, name="listar_medicos"),
-    path("cadastrar-medico/", views.cadastrar_medico, name="cadastrar_medico"),
     path("medico/detalhes/<int:id>/", views.medico_detalhes, name="medico_detalhes"),
 
     path('logout/', views.logout_view, name='logout'),
