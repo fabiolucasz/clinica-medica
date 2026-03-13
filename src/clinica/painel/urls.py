@@ -17,6 +17,7 @@ urlpatterns = [
     path("medicos/", views.listar_medicos, name="listar_medicos"),
     path("medico/detalhes/<int:id>/", views.medico_detalhes, name="medico_detalhes"),
     path("cadastrar-medico/", views.cadastrar_medico, name="cadastrar_medico"),
+    path("cadastrar-medico-sala/<int:medico_id>/", views.cadastrar_medico_sala, name="cadastrar_medico_sala"),
 
     path('logout/', views.logout_view, name='logout'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

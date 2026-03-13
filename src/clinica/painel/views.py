@@ -1,8 +1,9 @@
 from datetime import datetime
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from .models import Paciente, Medico, Tipo_conselho, Estados, Clinicas
+from .models import Paciente, Medico, Tipo_conselho, Estados, Clinicas, Especialidades, Salas, Vagas
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -121,6 +122,7 @@ def cadastrar_medico(request):
     tipo_conselho = Tipo_conselho.objects.all()
     clinicas = Clinicas.objects.all()
     estados = Estados.objects.all()
+    especialidades = Especialidades.objects.all()
     if request.method == 'POST':
         # Processar o formulário
         nome = request.POST.get('nome')
@@ -136,9 +138,9 @@ def cadastrar_medico(request):
         estado = request.POST.get('estado')
 
         foto_perfil = request.FILES.get('foto_perfil')
-        especialidade = request.POST.get('especialidade')
-        tipo_conselho = request.POST.get('tipo_conselho')
-        uf_conselho = request.POST.get('uf_conselho')
+        especialidade = request.POST.get('especialidade_id')
+        tipo_conselho = request.POST.get('tipo_conselho_id')
+        uf_conselho = request.POST.get('uf_conselho_id')
         numero_conselho = request.POST.get('numero_conselho')
         rqe = request.POST.get('rqe')
         valor_consulta = request.POST.get('valor_consulta')
@@ -146,6 +148,11 @@ def cadastrar_medico(request):
 
         data_cadastro = datetime.now()
         
+        # Buscar instâncias dos objetos relacionados
+        estado_obj = get_object_or_404(Estados, id=estado)
+        especialidade_obj = get_object_or_404(Especialidades, id=especialidade)
+        tipo_conselho_obj = get_object_or_404(Tipo_conselho, id=tipo_conselho)
+        uf_conselho_obj = get_object_or_404(Estados, id=uf_conselho)
         
         # Criar o medico
         medico = Medico.objects.create(
@@ -159,24 +166,96 @@ def cadastrar_medico(request):
             numero=numero,
             bairro=bairro,
             cidade=cidade,
-            estado=estado,
+            estado=estado_obj,
 
             foto_perfil=foto_perfil,
-            especialidade=especialidade,
-            tipo_conselho=tipo_conselho,
-            uf_conselho=uf_conselho,
+            especialidade=especialidade_obj,
+            tipo_conselho=tipo_conselho_obj,
+            uf_conselho=uf_conselho_obj,
             numero_conselho=numero_conselho,
             rqe=rqe,
             valor_consulta=valor_consulta,
-            upload_documento=upload_documento,
-            data_cadastro=data_cadastro
+            upload_arquivo=upload_documento,
         )
-
-
         
-        return render(request, 'painel/cadastrar_medico.html')
+        # Redirecionar para a página de seleção de vagas com o ID do médico
+        return redirect('painel:cadastrar_medico_sala', medico_id=medico.id)
     
-    return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho, 'estados': estados, 'clinicas': clinicas})
+    return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
+
+
+def cadastrar_medico_sala(request, medico_id):
+    # Buscar o médico cadastrado
+    medico = get_object_or_404(Medico, id=medico_id)
+    
+    clinicas = Clinicas.objects.all()
+    salas = Salas.objects.all()
+    vagas = Vagas.objects.select_related('domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado').all()
+    
+    # Serializar vagas para JSON
+    vagas_data = []
+    for vaga in vagas:
+        vaga_dict = {
+            'id': vaga.id,
+            'sala_id': vaga.sala_id,
+            'turno': vaga.turno,
+            'domingo': vaga.domingo.nome if vaga.domingo else None,
+            'segunda': vaga.segunda.nome if vaga.segunda else None,
+            'terca': vaga.terca.nome if vaga.terca else None,
+            'quarta': vaga.quarta.nome if vaga.quarta else None,
+            'quinta': vaga.quinta.nome if vaga.quinta else None,
+            'sexta': vaga.sexta.nome if vaga.sexta else None,
+            'sabado': vaga.sabado.nome if vaga.sabado else None
+        }
+        vagas_data.append(vaga_dict)
+    
+    if request.method == 'POST':
+        # Processar as vagas selecionadas
+        clinica_id = request.POST.get('clinica')
+        sala_id = request.POST.get('sala')
+        
+        # Buscar instâncias dos objetos relacionados
+        clinica_obj = get_object_or_404(Clinicas, id=clinica_id)
+        sala_obj = get_object_or_404(Salas, id=sala_id)
+        
+        # Processar checkboxes selecionados
+        for key, value in request.POST.items():
+            if key.startswith('vaga_') and value:
+                # Extrair informações do checkbox
+                parts = key.split('_')
+                vaga_id = parts[1]
+                dia = parts[2]
+                
+                # Buscar a vaga
+                vaga = get_object_or_404(Vagas, id=vaga_id)
+                
+                # Atualizar o campo do dia com o médico
+                if dia == 'domingo':
+                    vaga.domingo = medico
+                elif dia == 'segunda':
+                    vaga.segunda = medico
+                elif dia == 'terca':
+                    vaga.terca = medico
+                elif dia == 'quarta':
+                    vaga.quarta = medico
+                elif dia == 'quinta':
+                    vaga.quinta = medico
+                elif dia == 'sexta':
+                    vaga.sexta = medico
+                elif dia == 'sabado':
+                    vaga.sabado = medico
+                
+                vaga.save()
+        
+        return redirect('painel:listar_medicos')
+    
+    return render(request, 'painel/cadastrar_medico_sala.html', {
+        'clinicas': clinicas, 
+        'salas': salas, 
+        'vagas': json.dumps(vagas_data),
+        'medico': medico
+    })
+
 
 @login_required
 def listar_medicos(request):

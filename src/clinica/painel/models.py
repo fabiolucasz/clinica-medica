@@ -10,17 +10,40 @@ class Estados(models.Model):
     def __str__(self):
         return self.nome
 
-
+class Especialidades(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+    
+    def __str__(self):
+        return self.nome
+    
+class Tipo_conselho(models.Model):
+    nome = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    
+    def __str__(self):
+        return self.nome
 
 class Clinicas(models.Model):
     #Identificação
     nome = models.CharField(max_length=100)
+    cnpj = models.CharField(max_length=18, default='00.000.000/0000-00')
+    email = models.EmailField()
+    celular = models.CharField(max_length=20, default='0000000-0000')
+    celular2 = models.CharField(max_length=20, blank=True, null=True)
+    
+    
+    #Endereço
     cep = models.CharField(max_length=9)
     rua = models.CharField(max_length=200)
     numero = models.CharField(max_length=10)
     bairro = models.CharField(max_length=100)
     cidade = models.CharField(max_length=100)
     estado = models.ForeignKey(Estados, on_delete=models.CASCADE)
+    
+    
+    #Metadados
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
         return self.nome
 
@@ -54,17 +77,9 @@ class Paciente(models.Model):
     def __str__(self):
         return self.nome
 
-class Especialidades(models.Model):
-    nome = models.CharField(max_length=100)
+
     
-    def __str__(self):
-        return self.nome
-    
-class Tipo_conselho(models.Model):
-    nome = models.CharField(max_length=100, unique=True, blank=True, null=True)
-    
-    def __str__(self):
-        return self.nome
+
 
 class Medico(models.Model):
     #Identificação
@@ -82,32 +97,23 @@ class Medico(models.Model):
     numero = models.CharField(max_length=10)
     bairro = models.CharField(max_length=100)
     cidade = models.CharField(max_length=100)
-    estado = models.ForeignKey(Estados, on_delete=models.CASCADE)
+    estado = models.ForeignKey(Estados, on_delete=models.CASCADE, related_name='estado')
 
     #Perfil
     foto_perfil = models.ImageField(upload_to='perfil', blank=True, null=True)
-    especialidade = models.ForeignKey(Especialidades, on_delete=models.CASCADE)
-    rqe = models.CharField(max_length=20, blank=True, null=True)
+    especialidade = models.ForeignKey(Especialidades, on_delete=models.CASCADE, blank=True, null=True)
+    rqe = models.CharField(max_length=20, blank=True, null=True, unique=True)
     valor_consulta = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     role = models.CharField(default='medico')
 
-    #Dias da semana e turno
-    segunda = models.CharField(max_length=20, blank=True, null=True)
-    terca = models.CharField(max_length=20, blank=True, null=True)
-    quarta = models.CharField(max_length=20, blank=True, null=True)
-    quinta = models.CharField(max_length=20, blank=True, null=True)
-    sexta = models.CharField(max_length=20, blank=True, null=True)
-
-    #Salas disponíveis
-
     #documentos
     tipo_conselho = models.ForeignKey(Tipo_conselho, on_delete=models.CASCADE, blank=True, null=True)
-    uf_conselho = models.CharField(max_length=2, blank=True, null=True)
-    numero_conselho = models.CharField(max_length=20, blank=True, null=True)
+    uf_conselho = models.ForeignKey(Estados, on_delete=models.CASCADE, blank=True, null=True, related_name='uf_conselho')
+    numero_conselho = models.CharField(max_length=20, blank=True, null=True, unique=True)
+
+
     upload_arquivo = models.FileField(upload_to='arquivos', blank=True, null=True)
     
-
-
     #Metadados
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -120,12 +126,26 @@ class Medico(models.Model):
 class Salas(models.Model):
     nome = models.CharField(max_length=100)
     clinica = models.ForeignKey(Clinicas, on_delete=models.CASCADE)
-    sublocador = models.ForeignKey(Medico, on_delete=models.CASCADE)
-    segunda = models.CharField(max_length=100)
-    terca = models.CharField(max_length=100)
-    quarta = models.CharField(max_length=100)
-    quinta = models.CharField(max_length=100)
-    sexta = models.CharField(max_length=100)
+    
 
     def __str__(self):
         return self.nome
+    
+
+class Vagas(models.Model):
+    sala = models.ForeignKey(Salas, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10)
+    turno = models.CharField(max_length=10)
+    domingo = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='domingo', blank=True, null=True)
+    segunda = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='segunda', blank=True, null=True)
+    terca = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='terca', blank=True, null=True)
+    quarta = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='quarta', blank=True, null=True)
+    quinta = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='quinta', blank=True, null=True)
+    sexta = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='sexta', blank=True, null=True)
+    sabado = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='sabado', blank=True, null=True)
+    
+    class Meta:
+        unique_together = ['sala', 'turno']
+    
+    def __str__(self):
+        return self.sala.nome + ' - ' + self.turno

@@ -10,7 +10,157 @@ cursor = conn.cursor()
 
 fake = faker.Faker('pt_BR')
 
-def populate_db():
+def estados():
+    # Estados
+    estados = [
+        ('Acre', 'AC'),
+        ('Alagoas', 'AL'),
+        ('Amapá', 'AP'),
+        ('Amazonas', 'AM'),
+        ('Bahia', 'BA'),
+        ('Ceará', 'CE'),
+        ('Distrito Federal', 'DF'),
+        ('Espírito Santo', 'ES'),
+        ('Goiás', 'GO'),
+        ('Maranhão', 'MA'),
+        ('Mato Grosso', 'MT'),
+        ('Mato Grosso do Sul', 'MS'),
+        ('Minas Gerais', 'MG'),
+        ('Pará', 'PA'),
+        ('Paraíba', 'PB'),
+        ('Paraná', 'PR'),
+        ('Pernambuco', 'PE'),
+        ('Piauí', 'PI'),
+        ('Rio de Janeiro', 'RJ'),
+        ('Rio Grande do Norte', 'RN'),
+        ('Rio Grande do Sul', 'RS'),
+        ('Rondônia', 'RO'),
+        ('Roraima', 'RR'),
+        ('Santa Catarina', 'SC'),
+        ('São Paulo', 'SP'),
+        ('Sergipe', 'SE'),
+        ('Tocantins', 'TO')
+    ]
+    
+    for nome, uf in estados:
+        cursor.execute("INSERT OR IGNORE INTO painel_estados (nome, uf) VALUES (?, ?)", (nome, uf))
+    
+    conn.commit()
+    print(f"\nTotal de {len(estados)} estados adicionados com sucesso!")
+    
+def especialidades():
+    # Especialidades
+    especialidades = [
+        'Cardiologista',
+        'Dermatologista',
+        'Ginecologista',
+        'Oftalmologista',
+        'Ortopedista',
+        'Pediatra',
+        'Psiquiatra',
+        'Urologista',
+        'Psicólogo(a)'
+    ]
+    
+    for nome in especialidades:
+        cursor.execute("INSERT OR IGNORE INTO painel_especialidades (nome) VALUES (?)", (nome,))
+    
+    conn.commit()
+    print(f"\nTotal de {len(especialidades)} especialidades adicionadas com sucesso!")
+
+
+def tipo_conselho():
+    # Tipo de conselho
+    tipos_conselho = [
+        'CRM',
+        'CRN',
+        'CREFITO',
+        'CRP'
+
+    ]
+    
+    for nome in tipos_conselho:
+        cursor.execute("INSERT OR IGNORE INTO painel_tipo_conselho (nome) VALUES (?)", (nome,))
+    
+    conn.commit()
+    print(f"\nTotal de {len(tipos_conselho)} tipos de conselho adicionados com sucesso!")
+
+def clinicas():
+    # Criar múltiplas clínicas
+    for i in range(5):  # Criar 5 clínicas
+        nome = fake.company()
+        cnpj = fake.cnpj()
+        email = fake.email()
+        celular = fake.phone_number()
+        celular2 = fake.phone_number()
+        
+        # endereço
+        cep = fake.postcode()
+        rua = fake.street_name()
+        numero = fake.building_number()
+        bairro = fake.city()
+        cidade = fake.state()
+        estado_id = random.randint(1, 27)
+        
+        created_at = fake.date_time()
+        updated_at = fake.date_time()
+        
+        clinica = (nome, cnpj, celular, celular2, email, cep, rua, numero, bairro, cidade, estado_id, created_at, updated_at)
+        
+        cursor.execute("INSERT INTO painel_clinicas (nome, cnpj, celular, celular2, email, cep, rua, numero, bairro, cidade, estado_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", clinica)
+        print(f"Adicionado clinica: {nome}")
+    
+    conn.commit()
+    print(f"\nTotal de 5 clínicas adicionadas com sucesso!")
+
+
+def salas():
+    # Salas
+    for i in range(10):
+        nome = f'Consultório {i+1}'
+        clinica_id = 2
+        
+        cursor.execute("INSERT INTO painel_salas (nome, clinica_id) VALUES (?, ?)", (nome, clinica_id))
+        print(f"Adicionado sala: {nome}")
+    
+    conn.commit()
+    print(f"\nTotal de {10} salas adicionadas com sucesso!")
+
+def vagas():
+    # Vagas para cada sala (manhã, tarde, noite)
+    salas_query = "SELECT id FROM painel_salas"
+    cursor.execute(salas_query)
+    salas_ids = cursor.fetchall()
+    
+    turnos = ['manhã', 'tarde', 'noite']
+    vagas_adicionadas = 0
+    vagas_ignoradas = 0
+    
+    for sala_id in salas_ids:
+        for turno in turnos:
+            # Verificar se a vaga já existe
+            check_query = "SELECT COUNT(*) FROM painel_vagas WHERE sala_id = ? AND turno = ?"
+            cursor.execute(check_query, (sala_id[0], turno))
+            count = cursor.fetchone()[0]
+            
+            if count == 0:
+                # Inserir apenas se não existir
+                cursor.execute(
+                    "INSERT INTO painel_vagas (sala_id, status, turno) VALUES (?, ?, ?)",
+                    (sala_id[0], 'disponível', turno)
+                )
+                print(f"Adicionada vaga: Sala {sala_id[0]} - {turno}")
+                vagas_adicionadas += 1
+            else:
+                print(f"Vaga já existe: Sala {sala_id[0]} - {turno} (ignorada)")
+                vagas_ignoradas += 1
+    
+    conn.commit()
+    print(f"\nTotal de {vagas_adicionadas} vagas adicionadas com sucesso!")
+    if vagas_ignoradas > 0:
+        print(f"Total de {vagas_ignoradas} vagas já existentes foram ignoradas.")
+
+def pacientes():
     #Pacientes
     for i in range(100):
         nome = fake.name()
@@ -41,8 +191,7 @@ def populate_db():
     conn.commit()
     print(f"\nTotal de {100} pacientes adicionados com sucesso!")
 
-
-def cadastrar_medico():
+def medico():
     for i in range(10):
         
         
@@ -70,29 +219,36 @@ def cadastrar_medico():
             foto_perfil = foto_masculino
         else:
             foto_perfil = foto_feminino
-        especialidade = fake.random_element(['Clínico Geral', 'Pediatra', 'Cardiologia', 'Dermatologia', 'Oftalmologia'])
+        especialidade_id = random.randint(1,9)
 
         role = 'medico'
         valor_consulta = fake.random_element(['100', '200', '300', '400', '500'])
 
-        tipo_conselho = fake.random_element(['CRM', 'CRP','CREFITO', 'CRN'])
-        uf_conselho = fake.random_element(['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'])
-        numero_conselho = fake.random_element(['123456', '123457', '123458', '123459', '123460'])
+        tipo_conselho_id = random.randint(1,4)
+        uf_conselho_id = random.randint(1,27)
+        numero_conselho = random.randint(100000, 999999)
+        rqe = random.randint(100000, 999999)
         
         # metadados
         created_at = fake.date_time()
         updated_at = fake.date_time()
 
-        medico = (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, foto_perfil, especialidade, role, valor_consulta, tipo_conselho,uf_conselho,numero_conselho, created_at, updated_at)
+        medico = (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, foto_perfil, especialidade_id, role, valor_consulta, tipo_conselho_id, uf_conselho_id, numero_conselho, rqe, created_at, updated_at)
         
-        cursor.execute("INSERT INTO painel_medico (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, foto_perfil, especialidade, role, valor_consulta, tipo_conselho,uf_conselho,numero_conselho, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", medico)
+        cursor.execute("INSERT INTO painel_medico (nome, cpf, celular, email, data_nascimento, sexo, cep, rua, numero, bairro, cidade, estado_id, foto_perfil, especialidade_id, role, valor_consulta, tipo_conselho_id, uf_conselho_id, numero_conselho, rqe, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", medico)
         print(f"Adicionado medico {i+1}: {nome}")
     
     conn.commit()
     print(f"\nTotal de {10} medicos adicionados com sucesso!")
 if __name__ == "__main__":
-    populate_db()
-    #cadastrar_tipo_conselho()
+    # estados()
+    # especialidades()
+    # tipo_conselho()
+    #clinicas()
+    #salas()
+    vagas()
+    # pacientes()
+    #medico()
     conn.close()
 
 

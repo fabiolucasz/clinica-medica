@@ -1,0 +1,259 @@
+{% extends 'painel/base.html' %}
+
+{% block navbar-left %}
+<h1 class="m-auto h3 mb-3 fw-normal">Selecionar Vagas - Dr(a). {{ medico.nome }}</h1>
+{% endblock %}
+
+{% block navbar-right %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'painel:listar_medicos' %}">Médicos</a>
+</li>
+
+{% endblock %}
+
+{% block content %}
+<style>
+    .form-signin {
+        height: 100%;
+        overflow: visible;
+    }
+
+    .order-form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .order-form-child {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-around;
+    }
+
+    .form {
+        padding-top: 1rem;
+        margin: auto;
+    }
+
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+
+    #floatingInput {
+        width: 30rem;
+    }
+
+    button.btn {
+        margin-top: 1rem;
+        width: 10rem !important;
+    }
+</style>
+
+
+<body class="text-center">
+
+    <main class="form-signin">
+        <form class="form" method="post">
+            {% csrf_token %}
+            {% load static %}
+            <input type="hidden" name="medico_id" value="{{ medico.id }}">
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+            <!-- <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57"> -->
+
+            <div class="order-form">
+                <div class="order-form-child">
+                    <div class="column">
+                        <div class="form-floating">
+
+                                <select type="text" class="form-control" id="clinica-select" name="clinica" placeholder="clinica"
+                                required>
+                                    <option value="">Selecione a clínica</option>
+                                    {% if clinicas %}
+                                    {% for clinica in clinicas %}
+                                    <option value="{{ clinica.id }}">{{ clinica.id }} - {{ clinica.nome }}</option>
+                                    {% endfor %}
+                                    {% else %}
+                                    <option value="">Nenhuma clínica encontrada - Cadastre uma clínica primeiro</option>
+                                    {% endif %}
+                                </select>
+                            <label for="clinica-select">Selecione a clínica</label>
+                        </div>
+
+
+
+                        <div class="form-floating" style="margin-bottom: 1rem;">
+                            <select class="form-control" id="sala-select" name="sala" required>
+                                <option value="">Selecione a clínica primeiro</option>
+                                {% for sala in salas %}
+                                <option value="{{ sala.id }}" data-clinica="{{ sala.clinica_id }}" style="display:none;">{{ sala.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="sala-select">Selecione a sala</label>
+                        </div>
+
+                        <!-- Tabela de Turnos e Dias -->
+                        <div id="tabela-turnos" style="display: none; margin-top: 2rem;">
+                            <h5>Disponibilidade de Turnos</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Turno</th>
+                                            <th>Domingo</th>
+                                            <th>Segunda</th>
+                                            <th>Terça</th>
+                                            <th>Quarta</th>
+                                            <th>Quinta</th>
+                                            <th>Sexta</th>
+                                            <th>Sábado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabela-turnos-body">
+                                        <!-- As linhas serão inseridas dinamicamente pelo JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>                
+                </div>
+
+                <button class="w-100 btn btn-lg btn-primary" type="submit">Cadastrar</button>
+            </div>
+
+
+        </form>
+    </main>
+
+    {% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    
+    <script>
+        // Dados das vagas em formato JSON
+        const vagasData = {{ vagas|safe|default:"[]" }};
+        
+        // Organizar vagas por sala
+        const vagasPorSala = {};
+        vagasData.forEach(function(vaga) {
+            vagasPorSala[vaga.sala_id] = vagasPorSala[vaga.sala_id] || [];
+            vagasPorSala[vaga.sala_id].push(vaga);
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const clinicaSelect = document.getElementById('clinica-select');
+            const salaSelect = document.getElementById('sala-select');
+            const tabelaTurnos = document.getElementById('tabela-turnos');
+            const tabelaBody = document.getElementById('tabela-turnos-body');
+
+            clinicaSelect.addEventListener('change', function() {
+                const clinicaId = this.value;
+                const options = salaSelect.querySelectorAll('option');
+                
+                // Resetar o select
+                salaSelect.value = '';
+                
+                // Mostrar/esconder opções baseado na clínica
+                options.forEach(function(option) {
+                    if (option.value === '') {
+                        // Manter a opção padrão visível
+                        option.style.display = 'block';
+                    } else {
+                        // Verificar se a sala pertence à clínica selecionada
+                        const salaClinicaId = option.getAttribute('data-clinica');
+                        option.style.display = (salaClinicaId === clinicaId) ? 'block' : 'none';
+                    }
+                });
+
+                // Esconder tabela quando mudar a clínica
+                tabelaTurnos.style.display = 'none';
+            });
+
+            salaSelect.addEventListener('change', function() {
+                const salaId = this.value;
+                console.log('Sala selecionada:', salaId);
+                console.log('Vagas disponíveis:', vagasPorSala);
+                
+                if (salaId && vagasPorSala[salaId]) {
+                    console.log('Vagas para esta sala:', vagasPorSala[salaId]);
+                    // Limpar tabela
+                    tabelaBody.innerHTML = '';
+                    
+                    // Adicionar linhas para cada turno
+                    vagasPorSala[salaId].forEach(function(vaga) {
+                        console.log('Processando vaga:', vaga);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${vaga.turno}</strong></td>
+                            <td>
+                                <input type="checkbox" 
+                                    name="vaga_${vaga.id}_domingo" 
+                                    value="${vaga.id}"
+                                    ${vaga.domingo ? 'checked disabled' : ''}>
+                                    ${vaga.domingo ? '<small>(' + vaga.domingo + ')</small>' : ''}
+                            </td>
+                            <td>
+                                <input type="checkbox" 
+                                    name="vaga_${vaga.id}_segunda" 
+                                    value="${vaga.id}"
+                                    ${vaga.segunda ? 'checked disabled' : ''}>
+                                    ${vaga.segunda ? '<small>(' + vaga.segunda + ')</small>' : ''}
+                            </td>
+                            <td>
+                                <input type="checkbox" 
+                                    name="vaga_${vaga.id}_terca" 
+                                    value="${vaga.id}"
+                                    ${vaga.terca ? 'checked disabled' : ''}>
+                                    ${vaga.terca ? '<small>(' + vaga.terca + ')</small>' : ''}
+                            </td>
+                            <td>
+                                <input type="checkbox" 
+                                    name="vaga_${vaga.id}_quarta" 
+                                    value="${vaga.id}"
+                                    ${vaga.quarta ? 'checked disabled' : ''}>
+                                    ${vaga.quarta ? '<small>(' + vaga.quarta + ')</small>' : ''}
+                            </td>
+                            <td>
+                                <input type="checkbox" 
+                                    name="vaga_${vaga.id}_quinta" 
+                                    value="${vaga.id}"
+                                    ${vaga.quinta ? 'checked disabled' : ''}>
+                                    ${vaga.quinta ? '<small>(' + vaga.quinta + ')</small>' : ''}
+                            </td>
+                            <td>
+                                <input type="checkbox" 
+                                    name="vaga_${vaga.id}_sexta" 
+                                    value="${vaga.id}"
+                                    ${vaga.sexta ? 'checked disabled' : ''}>
+                                    ${vaga.sexta ? '<small>(' + vaga.sexta + ')</small>' : ''}
+                            </td>
+                            <td>
+                                <input type="checkbox" 
+                                    name="vaga_${vaga.id}_sabado" 
+                                    value="${vaga.id}"
+                                    ${vaga.sabado ? 'checked disabled' : ''}>
+                                    ${vaga.sabado ? '<small>(' + vaga.sabado + ')</small>' : ''}
+                            </td>
+                        `;
+                        tabelaBody.appendChild(row);
+                    });
+                    
+                    // Mostrar tabela
+                    tabelaTurnos.style.display = 'block';
+                    console.log('Tabela exibida');
+                } else {
+                    // Esconder tabela
+                    tabelaTurnos.style.display = 'none';
+                    console.log('Tabela escondida - sem vagas para esta sala');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+</body>
+{% endblock %}
