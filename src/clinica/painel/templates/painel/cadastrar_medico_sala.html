@@ -56,6 +56,7 @@
             {% csrf_token %}
             {% load static %}
             <input type="hidden" name="medico_id" value="{{ medico.id }}">
+            <div id="vagas-data" data-vagas="{{ vagas|default:"[]" }}"></div>
             {% if error %}
             <div class="alert alert-danger" role="alert">
                 {{ error }}
@@ -134,17 +135,18 @@
         crossorigin="anonymous"></script>
     
     <script>
-        // Dados das vagas em formato JSON
-        const vagasData = {{ vagas|safe|default:"[]" }};
-        
-        // Organizar vagas por sala
-        const vagasPorSala = {};
-        vagasData.forEach(function(vaga) {
-            vagasPorSala[vaga.sala_id] = vagasPorSala[vaga.sala_id] || [];
-            vagasPorSala[vaga.sala_id].push(vaga);
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
+            // Obter dados das vagas do data attribute
+            const vagasDataElement = document.getElementById('vagas-data');
+            const vagasData = JSON.parse(vagasDataElement.getAttribute('data-vagas') || '[]');
+            
+            // Organizar vagas por sala
+            const vagasPorSala = {};
+            vagasData.forEach(function(vaga) {
+                vagasPorSala[vaga.sala_id] = vagasPorSala[vaga.sala_id] || [];
+                vagasPorSala[vaga.sala_id].push(vaga);
+            });
+            
             const clinicaSelect = document.getElementById('clinica-select');
             const salaSelect = document.getElementById('sala-select');
             const tabelaTurnos = document.getElementById('tabela-turnos');
