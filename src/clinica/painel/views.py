@@ -190,7 +190,7 @@ def cadastrar_medico_sala(request, medico_id):
     
     clinicas = Clinicas.objects.all()
     salas = Salas.objects.all()
-    vagas = Vagas.objects.select_related('domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado').all()
+    vagas = Vagas.objects.select_related('segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
     
     # Serializar vagas para JSON
     vagas_data = []
@@ -199,13 +199,11 @@ def cadastrar_medico_sala(request, medico_id):
             'id': vaga.id,
             'sala_id': vaga.sala_id,
             'turno': vaga.turno,
-            'domingo': vaga.domingo.nome if vaga.domingo else None,
             'segunda': vaga.segunda.nome if vaga.segunda else None,
             'terca': vaga.terca.nome if vaga.terca else None,
             'quarta': vaga.quarta.nome if vaga.quarta else None,
             'quinta': vaga.quinta.nome if vaga.quinta else None,
             'sexta': vaga.sexta.nome if vaga.sexta else None,
-            'sabado': vaga.sabado.nome if vaga.sabado else None
         }
         vagas_data.append(vaga_dict)
     
@@ -230,9 +228,7 @@ def cadastrar_medico_sala(request, medico_id):
                 vaga = get_object_or_404(Vagas, id=vaga_id)
                 
                 # Atualizar o campo do dia com o médico
-                if dia == 'domingo':
-                    vaga.domingo = medico
-                elif dia == 'segunda':
+                if dia == 'segunda':
                     vaga.segunda = medico
                 elif dia == 'terca':
                     vaga.terca = medico
@@ -242,8 +238,6 @@ def cadastrar_medico_sala(request, medico_id):
                     vaga.quinta = medico
                 elif dia == 'sexta':
                     vaga.sexta = medico
-                elif dia == 'sabado':
-                    vaga.sabado = medico
                 
                 vaga.save()
         
@@ -265,7 +259,19 @@ def listar_medicos(request):
 @login_required
 def medico_detalhes(request, id):
     medico = get_object_or_404(Medico, pk=id)
-    return render(request, 'painel/medico_detalhes.html', {'medico': medico})
+    
+    # Buscar clínicas onde o médico tem vagas alocadas
+    from django.db.models import Q
+    clinicas_query = Vagas.objects.filter(
+        Q(segunda=medico) | Q(terca=medico) | Q(quarta=medico) | 
+        Q(quinta=medico) | Q(sexta=medico)
+    ).values_list('clinica_id', flat=True).distinct()
+    
+    clinicas = Clinicas.objects.filter(id__in=clinicas_query)
+    
+    vagas = Vagas.objects.select_related('segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
+    
+    return render(request, 'painel/medico_detalhes.html', {'medico': medico, 'clinicas': clinicas, 'vagas': vagas})
 
 @login_required
 def agendar_consulta(request):

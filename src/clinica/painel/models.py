@@ -133,16 +133,17 @@ class Salas(models.Model):
     
 
 class Vagas(models.Model):
+    clinica = models.ForeignKey(Clinicas, on_delete=models.CASCADE)
     sala = models.ForeignKey(Salas, on_delete=models.CASCADE)
+    
     status = models.CharField(max_length=10)
     turno = models.CharField(max_length=10)
-    domingo = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='domingo', blank=True, null=True)
+  
     segunda = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='segunda', blank=True, null=True)
     terca = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='terca', blank=True, null=True)
     quarta = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='quarta', blank=True, null=True)
     quinta = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='quinta', blank=True, null=True)
     sexta = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='sexta', blank=True, null=True)
-    sabado = models.ForeignKey(Medico, on_delete=models.CASCADE, related_name='sabado', blank=True, null=True)
     
     class Meta:
         unique_together = ['sala', 'turno']

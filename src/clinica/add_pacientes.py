@@ -128,31 +128,34 @@ def salas():
 
 def vagas():
     # Vagas para cada sala (manhã, tarde, noite)
-    salas_query = "SELECT id FROM painel_salas"
+    salas_query = "SELECT id, clinica_id FROM painel_salas"
     cursor.execute(salas_query)
-    salas_ids = cursor.fetchall()
+    salas_data = cursor.fetchall()
     
     turnos = ['manhã', 'tarde', 'noite']
     vagas_adicionadas = 0
     vagas_ignoradas = 0
     
-    for sala_id in salas_ids:
+    for sala_data in salas_data:
+        sala_id = sala_data[0]
+        clinica_id = sala_data[1]
+        
         for turno in turnos:
             # Verificar se a vaga já existe
             check_query = "SELECT COUNT(*) FROM painel_vagas WHERE sala_id = ? AND turno = ?"
-            cursor.execute(check_query, (sala_id[0], turno))
+            cursor.execute(check_query, (sala_id, turno))
             count = cursor.fetchone()[0]
             
             if count == 0:
-                # Inserir apenas se não existir
+                # Inserir apenas se não existir (agora com clinica_id)
                 cursor.execute(
-                    "INSERT INTO painel_vagas (sala_id, status, turno) VALUES (?, ?, ?)",
-                    (sala_id[0], 'disponível', turno)
+                    "INSERT INTO painel_vagas (sala_id, clinica_id, status, turno) VALUES (?, ?, ?, ?)",
+                    (sala_id, clinica_id, 'disponível', turno)
                 )
-                print(f"Adicionada vaga: Sala {sala_id[0]} - {turno}")
+                print(f"Adicionada vaga: Sala {sala_id} - Clínica {clinica_id} - {turno}")
                 vagas_adicionadas += 1
             else:
-                print(f"Vaga já existe: Sala {sala_id[0]} - {turno} (ignorada)")
+                print(f"Vaga já existe: Sala {sala_id} - Clínica {clinica_id} - {turno} (ignorada)")
                 vagas_ignoradas += 1
     
     conn.commit()
@@ -244,11 +247,11 @@ if __name__ == "__main__":
     # estados()
     # especialidades()
     # tipo_conselho()
-    #clinicas()
-    #salas()
+    # clinicas()
+    # salas()
     vagas()
     # pacientes()
-    #medico()
+    # medico()
     conn.close()
 
 

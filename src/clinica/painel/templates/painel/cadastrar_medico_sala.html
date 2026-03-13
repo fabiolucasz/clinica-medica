@@ -103,13 +103,11 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Turno</th>
-                                            <th>Domingo</th>
                                             <th>Segunda</th>
                                             <th>Terça</th>
                                             <th>Quarta</th>
                                             <th>Quinta</th>
                                             <th>Sexta</th>
-                                            <th>Sábado</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabela-turnos-body">
@@ -193,13 +191,6 @@
                             <td><strong>${vaga.turno}</strong></td>
                             <td>
                                 <input type="checkbox" 
-                                    name="vaga_${vaga.id}_domingo" 
-                                    value="${vaga.id}"
-                                    ${vaga.domingo ? 'checked disabled' : ''}>
-                                    ${vaga.domingo ? '<small>(' + vaga.domingo + ')</small>' : ''}
-                            </td>
-                            <td>
-                                <input type="checkbox" 
                                     name="vaga_${vaga.id}_segunda" 
                                     value="${vaga.id}"
                                     ${vaga.segunda ? 'checked disabled' : ''}>
@@ -232,13 +223,6 @@
                                     value="${vaga.id}"
                                     ${vaga.sexta ? 'checked disabled' : ''}>
                                     ${vaga.sexta ? '<small>(' + vaga.sexta + ')</small>' : ''}
-                            </td>
-                            <td>
-                                <input type="checkbox" 
-                                    name="vaga_${vaga.id}_sabado" 
-                                    value="${vaga.id}"
-                                    ${vaga.sabado ? 'checked disabled' : ''}>
-                                    ${vaga.sabado ? '<small>(' + vaga.sabado + ')</small>' : ''}
                             </td>
                         `;
                         tabelaBody.appendChild(row);

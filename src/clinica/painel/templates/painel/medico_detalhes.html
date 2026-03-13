@@ -102,7 +102,43 @@
         align-items: center;
     }
 
+    .vagas-medico {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        width: 100%;
+    }
 
+    .turno-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .turno-info:last-child {
+        border-bottom: none;
+    }
+
+    .turno-nome {
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    .dias-atendimento {
+        display: flex;
+        gap: 0.25rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+    .dias-atendimento span {
+        background-color: #e9ecef;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+    }
 </style>
 
 <div class="container">
@@ -112,8 +148,8 @@
             <div class="profile-info">
                 <h2>{{ medico.nome }}</h2>
                 <div class="especialidade">{{ medico.especialidade }}</div>
-                <div>{{ medico.tipo_conselho }}-{{ medico.uf_conselho }} {{ medico.numero_conselho }}</div>
-                <div>RQE: 123456789</div>
+                <div>{{ medico.tipo_conselho }}-{{ medico.uf_conselho_id }} {{ medico.numero_conselho }}</div>
+                <div>RQE: {{ medico.rqe }}</div>
             </div>
         </div>
 
@@ -161,9 +197,40 @@
         <div class="local-atendimento">
             <h3>Locais de atendimento</h3>
             <div>
-                <h4>1. Hospital Esquina</h4>
-                <p>Endereço: Rua Esquina, 123</p>
-                <p>Telefone: (11) 1234-5678</p>
+                {% if clinicas %}
+                    {% for clinica in clinicas %}
+                        <h4>{{ forloop.counter }} - {{ clinica.nome }}</h4>
+                        <p>Endereço: {{ clinica.rua }}, {{ clinica.bairro }} - {{ clinica.cidade }} - {{ clinica.estado_id }}</p>
+                        <p>Celular: {{ clinica.celular }}</p>
+                        
+                        <!-- Mostrar vagas do médico nesta clínica -->
+                        <div class="vagas-medico">
+                            <strong>Turnos de atendimento:</strong>
+                            {% for vaga in vagas %}
+                                {% if vaga.clinica.id == clinica.id %}
+                                    {% if vaga.segunda.id == medico.id or vaga.terca.id == medico.id or vaga.quarta.id == medico.id or vaga.quinta.id == medico.id or vaga.sexta.id == medico.id %}
+                                        <div class="turno-info">
+                                            <span class="turno-nome">{{ vaga.turno|title }}:</span>
+                                            <span class="dias-atendimento">
+                                                
+                                                {% if vaga.segunda.id == medico.id %}Seg{% endif %}
+                                                {% if vaga.terca.id == medico.id %}Ter{% endif %}
+                                                {% if vaga.quarta.id == medico.id %}Qua{% endif %}
+                                                {% if vaga.quinta.id == medico.id %}Qui{% endif %}
+                                                {% if vaga.sexta.id == medico.id %}Sex{% endif %}
+                                                
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <hr style="border-bottom: 1px solid #000000;">
+                    {% endfor %}
+                {% else %}
+                    <p>Nenhum local de atendimento cadastrado.</p>
+                {% endif %}
             </div>
         </div>
 
