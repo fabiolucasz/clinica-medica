@@ -3,7 +3,9 @@ import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from .models import Paciente, Medico, Tipo_conselho, Estados, Clinicas, Especialidades, Salas, Vagas
+from django.http import JsonResponse
+from django.core.serializers import serialize
+from .models import Paciente, Medico, Tipo_conselho, Estados, Clinicas, Especialidades, Salas, Vagas, Agendamentos
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -273,13 +275,157 @@ def medico_detalhes(request, id):
     
     return render(request, 'painel/medico_detalhes.html', {'medico': medico, 'clinicas': clinicas, 'vagas': vagas})
 
+
+# Consultas e Agendamentos
+@login_required
+def buscar_pacientes(request):
+    query = request.GET.get('q', '')
+    
+    if len(query) < 2:
+        return JsonResponse({'pacientes': []})
+    
+    pacientes = Paciente.objects.filter(
+        nome__icontains=query
+    ).values('id', 'nome', 'cpf', 'celular')[:10]
+    
+    return JsonResponse({'pacientes': list(pacientes)})
+
 @login_required
 def agendar_consulta(request):
-    return render(request, 'painel/agendar_consulta.html')
+    medicos = Medico.objects.all()
+    vagas = Vagas.objects.select_related('sala', 'clinica', 'segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
+    
+    # Serializar vagas para JSON
+    vagas_data = []
+    for vaga in vagas:
+        vaga_dict = {
+            'clinica': vaga.clinica.nome,
+            'sala': vaga.sala.nome,
+            'turno': vaga.turno,
+            'hora_inicio': str(vaga.hora_inicio),
+            'hora_fim': str(vaga.hora_fim),
+            'max_pacientes': vaga.max_pacientes,
+            'pacientes_atuais': vaga.pacientes_atuais,
+            'segunda': vaga.segunda.id if vaga.segunda else None,
+            'terca': vaga.terca.id if vaga.terca else None,
+            'quarta': vaga.quarta.id if vaga.quarta else None,
+            'quinta': vaga.quinta.id if vaga.quinta else None,
+            'sexta': vaga.sexta.id if vaga.sexta else None,
+        }
+        vagas_data.append(vaga_dict)
+    
+    if request.method == 'POST':
+        # Processar o agendamento
+        paciente_id = request.POST.get('paciente_id')
+        medico_id = request.POST.get('medico')
+        data = request.POST.get('data')
+        turno = request.POST.get('turno')  # Agora é o turno
+        
+        # Validar campos obrigatórios
+        if not all([paciente_id, medico_id, data, turno]):
+            error_message = "Por favor, preencha todos os campos obrigatórios."
+            return render(request, 'painel/agendar_consulta.html', {
+                'medicos': medicos,
+                'vagas_json': json.dumps(vagas_data),
+                'error': error_message
+            })
+        
+        # Buscar paciente
+        paciente = get_object_or_404(Paciente, id=paciente_id)
+        
+        # Buscar médico
+        medico = get_object_or_404(Medico, id=medico_id)
+        
+        # Encontrar a vaga correspondente
+        data_obj = datetime.strptime(data, '%Y-%m-%d').date()
+        dia_semana = data_obj.weekday()  # 0=Segunda, 6=Domingo
+        nomes_dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo']
+        nome_dia = nomes_dias[dia_semana]
+        
+        # Buscar vaga do médico no dia com base no turno
+        vaga = None
+        if nome_dia == 'segunda':
+            vaga = Vagas.objects.filter(segunda=medico, turno=turno).first()
+        elif nome_dia == 'terca':
+            vaga = Vagas.objects.filter(terca=medico, turno=turno).first()
+        elif nome_dia == 'quarta':
+            vaga = Vagas.objects.filter(quarta=medico, turno=turno).first()
+        elif nome_dia == 'quinta':
+            vaga = Vagas.objects.filter(quinta=medico, turno=turno).first()
+        elif nome_dia == 'sexta':
+            vaga = Vagas.objects.filter(sexta=medico, turno=turno).first()
+        
+        if vaga and vaga.pacientes_atuais < vaga.max_pacientes:
+            # Criar agendamento
+            agendamento = Agendamentos.objects.create(
+                clinica=vaga.clinica,
+                sala=vaga.sala,
+                paciente=paciente,
+                medico=medico,
+                turno=vaga.turno,
+                status='agendado'
+            )
+            
+            # Incrementar contador de pacientes
+            vaga.pacientes_atuais += 1
+            vaga.save()
+            
+            # Enviar mensagem de confirmação
+            mensagem = f"Olá {paciente.nome}! Sua consulta com Dr(a). {medico.nome} foi agendada para {data} ({vaga.turno}) na clínica {vaga.clinica.nome}."
+            url = f'http://web.whatsapp.com/send?phone={paciente.celular}&text={mensagem}'
+            
+            try:
+                import webbrowser
+                webbrowser.open(url, new=2)
+            except Exception as e:
+                print(f"Erro ao abrir navegador: {e}")
+            
+            return redirect('painel:listar_consultas')
+        else:
+            # Vaga não disponível
+            error_message = "Desculpe, não há vagas disponíveis para este turno."
+            return render(request, 'painel/agendar_consulta.html', {
+                'medicos': medicos,
+                'vagas_json': json.dumps(vagas_data),
+                'error': error_message
+            })
+    
+    return render(request, 'painel/agendar_consulta.html', {
+        'medicos': medicos,
+        'vagas_json': json.dumps(vagas_data)
+    })
 
 @login_required
 def listar_consultas(request):
-    return render(request, 'painel/listar_consultas.html')
+    clinicas = Clinicas.objects.all()
+    medicos = Medico.objects.all()
+    vagas = Vagas.objects.select_related('sala', 'clinica', 'segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
+    
+    # Filtro por clínica se selecionado
+    clinica_id = request.GET.get('clinica')
+    if clinica_id:
+        # Filtrar vagas pela clínica selecionada
+        vagas = vagas.filter(clinica_id=clinica_id)
+        
+        # Obter médicos que têm vagas nesta clínica
+        medicos_ids = set()
+        for vaga in vagas:
+            if vaga.segunda: medicos_ids.add(vaga.segunda.id)
+            if vaga.terca: medicos_ids.add(vaga.terca.id)
+            if vaga.quarta: medicos_ids.add(vaga.quarta.id)
+            if vaga.quinta: medicos_ids.add(vaga.quinta.id)
+            if vaga.sexta: medicos_ids.add(vaga.sexta.id)
+        
+        medicos = medicos.filter(id__in=medicos_ids)
+    
+    context = {
+        'clinicas': clinicas,
+        'medicos': medicos,
+        'vagas': vagas,
+        'clinica_selecionada': clinica_id
+    }
+    
+    return render(request, 'painel/listar_consultas.html', context)
 
 @login_required
 def editar_consulta(request, id):

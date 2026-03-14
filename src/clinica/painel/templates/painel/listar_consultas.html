@@ -1,0 +1,181 @@
+{% extends 'painel/base.html' %}
+
+{% block navbar-right %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'painel:agendar_consulta' %}">Agendar Consulta</a>
+</li>
+{% endblock %}
+
+{% block title %}Agendamentos{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        width: 90%;
+        margin: auto;
+        padding-top: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .card {
+        margin: auto;
+        width: 18rem;
+        margin-bottom: 2rem;
+        cursor: pointer;
+    }
+
+    .moldura {
+        width: 200px;
+        height: 200px;
+        border-radius: 100%;
+        overflow: hidden;
+        margin: auto;
+        background-color: #464b52;
+    }
+
+    img {
+        margin: auto;
+    }
+
+    .card-body::before {
+        content: " ";
+        display: block;
+        width: 100%;
+        height: 1px;
+        background-color: #464b52;
+        margin-top: 1rem;
+    }
+
+    .card-title {
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="container">
+
+    <!--Início seleção de filtros-->
+
+    <div class="order-form">
+        <div class="order-form-child">
+            <div class="column">
+                <div class="form-floating" style="margin-bottom: 1rem;">
+                    <select type="text" class="form-control" id="clinica-select" name="clinica"
+                        placeholder="clinica" onchange="filtrarMedicos()">
+                        <option value="">Todas as clínicas</option>
+                        {% if clinicas %}
+                        {% for clinica in clinicas %}
+                        <option value="{{ clinica.id }}" {% if clinica_selecionada == clinica.id|stringformat:"s" %}selected{% endif %}>
+                            {{ forloop.counter }} - {{ clinica.nome }}
+                        </option>
+                        {% endfor %}
+                        {% else %}
+                        <option value="">Nenhuma clínica cadastrada</option>
+                        {% endif %}
+                    </select>
+                    <label for="clinica-select">Selecione a clínica</label>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--Fim seleção de filtros-->
+
+
+
+
+
+
+
+
+
+    {% if medicos %}
+    {% for medico in medicos %}
+    <div class="card" data-medico-id="{{ medico.id }}">
+        <div class="moldura">
+            <img src="{{ medico.foto_perfil }}" class="card-img-top" alt="Foto de perfil do médico">
+
+        </div>
+
+        <div class="card-body">
+            <h5 class="card-title text-center">{{ medico.nome }}</h5>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <p class="card-text">Especialidade: {{ medico.especialidade }}</p>
+                </li>
+                <li class="nav-item">
+                    <p class="card-text">{{ medico.tipo_conselho}}-{{ medico.uf_conselho }} {{ medico.numero_conselho }}
+                    </p>
+                </li>
+                <li class="nav-item">
+                    <p class="card-text">Telefone: {{ medico.celular }}</p>
+                </li>
+                <li class="nav-item">
+                    <p class="card-text">Valor: R$ {{ medico.valor_consulta }}</p>
+                </li>
+            </ul>
+
+            <!-- Vagas disponíveis -->
+            <div class="vagas-disponiveis">
+                <h6>Vagas disponíveis:</h6>
+                {% for vaga in vagas %}
+                    {% if vaga.segunda.id == medico.id or vaga.terca.id == medico.id or vaga.quarta.id == medico.id or vaga.quinta.id == medico.id or vaga.sexta.id == medico.id %}
+                        <div class="vaga-info">
+                            <strong>{{ vaga.clinica.nome }}</strong> - {{ vaga.turno|title }}
+                            <br>
+                            <small>
+                                {% if vaga.segunda.id == medico.id %}Seg{% endif %}
+                                {% if vaga.terca.id == medico.id %}Ter{% endif %}
+                                {% if vaga.quarta.id == medico.id %}Qua{% endif %}
+                                {% if vaga.quinta.id == medico.id %}Qui{% endif %}
+                                {% if vaga.sexta.id == medico.id %}Sex{% endif %}
+                                ({{ vaga.hora_inicio|date:"H:i" }} - {{ vaga.hora_fim|date:"H:i" }})
+                            </small>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Botão para agendar -->
+            <div class="text-center mt-3">
+                <button class="btn btn-primary btn-sm" 
+                        data-medico-id="{{ medico.id }}" 
+                        onclick="agendarConsulta(this)">
+                    Agendar Consulta
+                </button>
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>Nenhuma consulta encontrada.</p>
+    {% endif %}
+</div>
+
+<script>
+    function filtrarMedicos() {
+        const clinicaSelect = document.getElementById('clinica-select');
+        const clinicaId = clinicaSelect.value;
+        
+        if (clinicaId) {
+            window.location.href = '/painel/listar-consultas/?clinica=' + clinicaId;
+        } else {
+            window.location.href = '/painel/listar-consultas/';
+        }
+    }
+    
+    function agendarConsulta(button) {
+        const medicoId = button.getAttribute('data-medico-id');
+        window.location.href = '/painel/agendar-consulta/?medico=' + medicoId;
+    }
+    
+    function verDetalhesMedico(element) {
+        let medicoId = element.getAttribute('data-medico-id');
+        window.location.href = '/painel/medico/detalhes/' + medicoId + '/';
+    }
+</script>
+{% endblock %}

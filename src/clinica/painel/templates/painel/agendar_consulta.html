@@ -1,0 +1,585 @@
+{% extends 'painel/base.html' %}
+
+{% block navbar-right %}
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'painel:listar_consultas' %}">Voltar</a>
+</li>
+{% endblock %}
+
+{% block title %}Agendar Consulta{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section h3 {
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+
+    .calendar-container {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .calendar-header {
+        text-align: center;
+        font-weight: bold;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .calendar-day:hover {
+        background-color: #e9ecef;
+    }
+
+    .calendar-day.available {
+        background-color: #d4edda;
+        border-color: #28a745;
+    }
+
+    .calendar-day.unavailable {
+        background-color: #f8d7da;
+        border-color: #dc3545;
+        cursor: not-allowed;
+    }
+
+    .calendar-day.selected {
+        background-color: #007bff;
+        color: white;
+        border-color: #0056b3;
+    }
+
+    .time-slots {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .time-slot {
+        padding: 20px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .time-slot:hover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+
+    .time-slot.selected {
+        border-color: #28a745;
+        background: #d4edda;
+    }
+
+    .time-slot.disabled {
+        background: #f8d7da;
+        border-color: #dc3545;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .turno-titulo {
+        font-weight: bold;
+        font-size: 1.2em;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+
+    .turno-horarios {
+        color: #6c757d;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+
+    .turno-vagas {
+        color: #28a745;
+        font-size: 0.8em;
+        font-weight: 500;
+    }
+
+    .paciente-results {
+        position: absolute;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        width: 100%;
+    }
+
+    .paciente-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .paciente-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .paciente-item:last-child {
+        border-bottom: none;
+    }
+
+    .paciente-info {
+        margin-bottom: 0;
+    }
+
+    .paciente-nome {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .paciente-cpf {
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    .paciente-celular {
+        font-size: 0.85em;
+        color: #007bff;
+    }
+
+    .search-container {
+        position: relative;
+    }
+</style>
+
+<div class="container">
+    <h2 class="text-center mb-4">Agendar Consulta</h2>
+    
+    <!-- Dados das vagas em data attribute -->
+    <div id="vagas-data" data-vagas="{{ vagas_json|default:'[]' }}"></div>
+
+    <form method="post" id="agendamento-form">
+        {% csrf_token %}
+        
+        <!-- Pesquisa de Paciente -->
+        <div class="form-section">
+            <h3>Selecionar Paciente</h3>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="search-container">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="paciente-search" 
+                                   placeholder="Buscar paciente por nome ou CPF" 
+                                   autocomplete="off">
+                            <label for="paciente-search">Buscar Paciente</label>
+                        </div>
+                        
+                        <!-- Lista de resultados da pesquisa -->
+                        <div id="paciente-results" class="paciente-results" style="display: none;">
+                            <!-- Resultados serão adicionados dinamicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Paciente selecionado -->
+                    <div id="paciente-selecionado" class="paciente-selecionado" style="display: none;">
+                        <div class="alert alert-success d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Paciente selecionado:</strong>
+                                <span id="paciente-nome"></span>
+                                <small class="text-muted">(<span id="paciente-cpf"></span>)</small>
+                            </div>
+                            <button type="button" onclick="limparPaciente()" class="btn btn-sm btn-outline-danger">✕</button>
+                        </div>
+                        <input type="hidden" id="paciente-id" name="paciente_id">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações do Médico -->
+        <div class="form-section">
+            <h3>Médico e Clínica</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <select class="form-control" id="medico-select" name="medico" required>
+                            <option value="">Selecione um médico</option>
+                            {% for medico in medicos %}
+                            <option value="{{ medico.id }}" {% if request.GET.medico == medico.id|stringformat:"s" %}selected{% endif %}>
+                                {{ medico.nome }} - {{ medico.especialidade }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <label for="medico-select">Médico</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="clinica-info" readonly placeholder="Clínica">
+                        <label for="clinica-info">Clínica</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seleção de Data -->
+        <div class="form-section">
+            <h3>Selecione uma Data</h3>
+            <div class="mb-3">
+                <input type="month" class="form-control" id="month-select" value="{% now 'Y-m' %}">
+            </div>
+            <div class="calendar-container" id="calendar">
+                <!-- Calendário será gerado por JavaScript -->
+            </div>
+            <input type="hidden" id="data-selecionada" name="data" required>
+        </div>
+
+        <!-- Seleção de Horário -->
+        <div class="form-section">
+            <h3>Selecione um Horário</h3>
+            <div class="time-slots" id="time-slots">
+                <!-- Horários serão gerados por JavaScript -->
+            </div>
+            <input type="hidden" id="turno-selecionado" name="turno" required>
+        </div>
+
+        <!-- Botão de Envio -->
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg">Confirmar Agendamento</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Obter dados das vagas do data attribute
+    const vagasDataElement = document.getElementById('vagas-data');
+    const medicosData = JSON.parse(vagasDataElement.getAttribute('data-vagas') || '[]');
+    
+    let medicosVagas = {};
+    medicosData.forEach(vaga => {
+        ['segunda', 'terca', 'quarta', 'quinta', 'sexta'].forEach(dia => {
+            if (vaga[dia]) {
+                if (!medicosVagas[vaga[dia]]) {
+                    medicosVagas[vaga[dia]] = [];
+                }
+                medicosVagas[vaga[dia]].push({
+                    clinica: vaga.clinica,
+                    sala: vaga.sala,
+                    turno: vaga.turno,
+                    dia: dia,
+                    hora_inicio: vaga.hora_inicio,
+                    hora_fim: vaga.hora_fim,
+                    max_pacientes: vaga.max_pacientes,
+                    pacientes_atuais: vaga.pacientes_atuais
+                });
+            }
+        });
+    });
+
+    let dataSelecionada = null;
+    let horarioSelecionado = null;
+    let medicoSelecionado = null;
+    let pacienteSelecionado = null;
+    let vagaSelecionada = null;
+
+    // Busca de pacientes
+    const pacienteSearch = document.getElementById('paciente-search');
+    const pacienteResults = document.getElementById('paciente-results');
+    const pacienteSelecionadoDiv = document.getElementById('paciente-selecionado');
+    let searchTimeout;
+
+    pacienteSearch.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Limpar timeout anterior
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            pacienteResults.style.display = 'none';
+            return;
+        }
+        
+        // Aguardar 300ms antes de buscar
+        searchTimeout = setTimeout(() => {
+            buscarPacientes(query);
+        }, 300);
+    });
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-container')) {
+            pacienteResults.style.display = 'none';
+        }
+    });
+
+    function buscarPacientes(query) {
+        fetch(`/painel/buscar-pacientes/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                mostrarResultados(data.pacientes);
+            })
+            .catch(error => {
+                console.error('Erro ao buscar pacientes:', error);
+            });
+    }
+
+    function mostrarResultados(pacientes) {
+        if (pacientes.length === 0) {
+            pacienteResults.innerHTML = '<div class="paciente-item">Nenhum paciente encontrado</div>';
+        } else {
+            pacienteResults.innerHTML = pacientes.map(paciente => `
+                <div class="paciente-item" onclick="selecionarPaciente(${paciente.id}, '${paciente.nome}', '${paciente.cpf}', '${paciente.celular}')">
+                    <div class="paciente-info">
+                        <div class="paciente-nome">${paciente.nome}</div>
+                        <div class="paciente-cpf">CPF: ${paciente.cpf}</div>
+                        <div class="paciente-celular">📱 ${paciente.celular}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        pacienteResults.style.display = 'block';
+    }
+
+    function selecionarPaciente(id, nome, cpf, celular) {
+        pacienteSelecionado = id;
+        
+        // Atualizar interface
+        document.getElementById('paciente-nome').textContent = nome;
+        document.getElementById('paciente-cpf').textContent = cpf;
+        document.getElementById('paciente-id').value = id;
+        
+        // Mostrar paciente selecionado
+        pacienteSelecionadoDiv.style.display = 'block';
+        
+        // Limpar busca
+        pacienteSearch.value = '';
+        pacienteResults.style.display = 'none';
+        
+        // Desabilitar campo de busca
+        pacienteSearch.disabled = true;
+        pacienteSearch.placeholder = 'Paciente selecionado';
+    }
+    
+    function limparPaciente() {
+        pacienteSelecionado = null;
+        
+        // Limpar campo hidden
+        document.getElementById('paciente-id').value = '';
+        
+        // Esconder paciente selecionado
+        pacienteSelecionadoDiv.style.display = 'none';
+        
+        // Reabilitar campo de busca
+        pacienteSearch.disabled = false;
+        pacienteSearch.placeholder = 'Digite o nome do paciente...';
+        pacienteSearch.focus();
+    }
+
+    // Gerar calendário
+    function gerarCalendario() {
+        const monthSelect = document.getElementById('month-select');
+        const calendar = document.getElementById('calendar');
+        const [year, month] = monthSelect.value.split('-');
+        
+        calendar.innerHTML = '';
+        
+        // Cabeçalho dos dias da semana
+        const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        diasSemana.forEach(dia => {
+            const header = document.createElement('div');
+            header.className = 'calendar-header';
+            header.textContent = dia;
+            calendar.appendChild(header);
+        });
+        
+        // Primeiro dia do mês
+        const primeiroDia = new Date(year, month - 1, 1);
+        const ultimoDia = new Date(year, month, 0);
+        const diasNoMes = ultimoDia.getDate();
+        const diaSemanaInicio = primeiroDia.getDay();
+        
+        // Preencher dias vazios antes do primeiro dia
+        for (let i = 0; i < diaSemanaInicio; i++) {
+            const emptyDay = document.createElement('div');
+            calendar.appendChild(emptyDay);
+        }
+        
+        // Preencher dias do mês
+        for (let dia = 1; dia <= diasNoMes; dia++) {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'calendar-day';
+            dayElement.textContent = dia;
+            
+            const dataAtual = new Date(year, month - 1, dia);
+            const diaSemana = dataAtual.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
+            const nomesDias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            const nomeDia = nomesDias[diaSemana];
+            
+            // Verificar se médico atende neste dia e se data não é passada
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            
+            if (medicoSelecionado && medicosVagas[medicoSelecionado]) {
+                const atendeNoDia = medicosVagas[medicoSelecionado].some(vaga => vaga.dia === nomeDia);
+                
+                if (atendeNoDia && dataAtual >= hoje) {
+                    dayElement.classList.add('available');
+                    dayElement.onclick = () => selecionarData(dia, month, year);
+                } else {
+                    dayElement.classList.add('unavailable');
+                }
+            } else {
+                dayElement.classList.add('unavailable');
+            }
+            
+            calendar.appendChild(dayElement);
+        }
+    }
+
+    // Selecionar data
+    function selecionarData(dia, month, year) {
+        // Remover seleção anterior
+        document.querySelectorAll('.calendar-day.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // Adicionar seleção ao dia clicado
+        const dias = document.querySelectorAll('.calendar-day');
+        const diaIndex = Array.from(dias).findIndex(el => el.textContent == dia);
+        if (diaIndex !== -1) {
+            dias[diaIndex].classList.add('selected');
+        }
+        
+        dataSelecionada = `${year}-${month.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+        document.getElementById('data-selecionada').value = dataSelecionada;
+        
+        // Gerar horários disponíveis
+        gerarHorarios();
+    }
+
+    // Gerar horários disponíveis
+    function gerarHorarios() {
+        const timeSlots = document.getElementById('time-slots');
+        timeSlots.innerHTML = '';
+        
+        if (!medicoSelecionado || !dataSelecionada) return;
+        
+        const dataObj = new Date(dataSelecionada + 'T00:00:00');
+        const diaSemana = dataObj.getDay();
+        const nomesDias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        const nomeDia = nomesDias[diaSemana];
+        
+        // Encontrar vagas onde o médico está alocado neste dia
+        const vagasDoDia = medicosData.filter(vaga => {
+            return vaga[nomeDia] == medicoSelecionado;
+        });
+        
+        if (vagasDoDia.length === 0) {
+            timeSlots.innerHTML = '<div class="alert alert-warning">Médico não atende neste dia.</div>';
+            return;
+        }
+        
+        vagasDoDia.forEach(vaga => {
+            // Verificar se a vaga já está lotada
+            if (vaga.pacientes_atuais >= vaga.max_pacientes) {
+                return; // Pular para próxima vaga
+            }
+            
+            // Criar slot para o turno
+            const slot = document.createElement('div');
+            slot.className = 'time-slot';
+            
+            // Formatar informações do turno
+            const turnoInfo = `${vaga.turno.toUpperCase()}`;
+            const horarios = `${vaga.hora_inicio} - ${vaga.hora_fim}`;
+            const vagasDisponiveis = vaga.max_pacientes - vaga.pacientes_atuais;
+            
+            slot.innerHTML = `
+                <div class="turno-titulo">${turnoInfo}</div>
+                <div class="turno-horarios">${horarios}</div>
+                <div class="turno-vagas">${vagasDisponiveis} vaga(s) disponível(is)</div>
+            `;
+            
+            // Adicionar evento de clique para selecionar o turno
+            slot.onclick = () => selecionarHorario(vaga.turno, vaga);
+            
+            timeSlots.appendChild(slot);
+        });
+        
+        // Verificar se nenhum horário foi adicionado (todas as vagas lotadas)
+        if (timeSlots.children.length === 0) {
+            timeSlots.innerHTML = '<div class="alert alert-warning">Todos os turnos estão lotados para este dia.</div>';
+        }
+    }
+
+    // Selecionar horário (turno)
+    function selecionarHorario(turno, vaga) {
+        // Remover seleção anterior
+        document.querySelectorAll('.time-slot.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // Adicionar seleção ao turno clicado
+        event.target.closest('.time-slot').classList.add('selected');
+        
+        horarioSelecionado = turno;
+        vagaSelecionada = vaga;
+        
+        // Salvar informações no formulário - usar o primeiro horário do turno
+        document.getElementById('turno-selecionado').value = vaga.turno;
+    }
+
+    // Event listeners
+    document.getElementById('medico-select').addEventListener('change', function() {
+        medicoSelecionado = this.value;
+        
+        // Atualizar informações da clínica
+        if (medicoSelecionado && medicosVagas[medicoSelecionado]) {
+            const clinica = medicosVagas[medicoSelecionado][0].clinica;
+            document.getElementById('clinica-info').value = clinica;
+        }
+        
+        // Regenerar calendário
+        gerarCalendario();
+    });
+
+    document.getElementById('month-select').addEventListener('change', gerarCalendario);
+
+    // Inicializar
+    gerarCalendario();
+</script>
+{% endblock %}
