@@ -8,6 +8,10 @@
   <title>Agenda da Clínica</title>
 {% endblock %}
 
+{% block navbar-right %}
+<a href="{% url 'painel:agendar_consulta' %}" class="btn btn-primary">Agendar Consulta</a>
+{% endblock %}
+
 {% block content %}
 
 
@@ -79,7 +83,7 @@
             {% if clinica_selecionada and salas %}
               {% for sala in salas %}
                 {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data == "2026-03-16" %}
+                  {% if agendamento.data == datas_semana.segunda %}
                     <li class="cd-schedule__event">
                       <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
                          data-content="event-consulta-{{ agendamento.turno }}" 
@@ -112,7 +116,7 @@
             {% if clinica_selecionada and salas %}
               {% for sala in salas %}
                 {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data == "2026-03-17" %}
+                  {% if agendamento.data == datas_semana.terca %}
                     <li class="cd-schedule__event">
                       <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
                          data-content="event-consulta-{{ agendamento.turno }}" 
@@ -137,7 +141,7 @@
             {% if clinica_selecionada and salas %}
               {% for sala in salas %}
                 {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data == "2026-03-18" %}
+                  {% if agendamento.data == datas_semana.quarta %}
                     <li class="cd-schedule__event">
                       <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
                          data-content="event-consulta-{{ agendamento.turno }}" 
@@ -162,7 +166,7 @@
             {% if clinica_selecionada and salas %}
               {% for sala in salas %}
                 {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data == "2026-03-19" %}
+                  {% if agendamento.data == datas_semana.quinta %}
                     <li class="cd-schedule__event">
                       <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
                          data-content="event-consulta-{{ agendamento.turno }}" 
@@ -187,7 +191,7 @@
             {% if clinica_selecionada and salas %}
               {% for sala in salas %}
                 {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data == "2026-03-20" %}
+                  {% if agendamento.data == datas_semana.sexta %}
                     <li class="cd-schedule__event">
                       <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
                          data-content="event-consulta-{{ agendamento.turno }}" 
@@ -234,7 +238,7 @@
   <script>
     class CalendarManager {
       constructor() {
-        this.baseDate = new Date(2026, 2, 15); 
+        this.baseDate = new Date(); // Data atual
         this.currentWeekOffset = 0;
         this.init();
       }
@@ -258,7 +262,9 @@
       
       getMondayOfWeek(offset = 0) {
         const monday = new Date(this.baseDate);
-        monday.setDate(monday.getDate() + (offset * 7) + 1);
+        const day = monday.getDay();
+        const diff = monday.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para segunda-feira
+        monday.setDate(diff + (offset * 7));
         return monday;
       }
       

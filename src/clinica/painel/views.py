@@ -128,6 +128,7 @@ def cadastrar_medico(request):
     if request.method == 'POST':
         # Processar o formulário
         nome = request.POST.get('nome')
+        email = request.POST.get('email')
         celular = request.POST.get('celular')
         cpf = request.POST.get('cpf')
         data_nascimento = request.POST.get('data_nascimento')
@@ -156,32 +157,53 @@ def cadastrar_medico(request):
         tipo_conselho_obj = get_object_or_404(Tipo_conselho, id=tipo_conselho)
         uf_conselho_obj = get_object_or_404(Estados, id=uf_conselho)
         
-        # Criar o medico
-        medico = Medico.objects.create(
-            nome=nome,
-            celular=celular,
-            cpf=cpf,
-            data_nascimento=data_nascimento,
-            sexo=sexo,
-            cep=cep,
-            rua=rua,
-            numero=numero,
-            bairro=bairro,
-            cidade=cidade,
-            estado=estado_obj,
+        try:
+            # Criar o medico
+            medico = Medico.objects.create(
+                nome=nome,
+                email=email,
+                celular=celular,
+                cpf=cpf,
+                data_nascimento=data_nascimento,
+                sexo=sexo,
+                cep=cep,
+                rua=rua,
+                numero=numero,
+                bairro=bairro,
+                cidade=cidade,
+                estado=estado_obj,
 
-            foto_perfil=foto_perfil,
-            especialidade=especialidade_obj,
-            tipo_conselho=tipo_conselho_obj,
-            uf_conselho=uf_conselho_obj,
-            numero_conselho=numero_conselho,
-            rqe=rqe,
-            valor_consulta=valor_consulta,
-            upload_arquivo=upload_documento,
-        )
-        
-        # Redirecionar para a página de seleção de vagas com o ID do médico
-        return redirect('painel:cadastrar_medico_sala', medico_id=medico.id)
+                foto_perfil=foto_perfil,
+                especialidade=especialidade_obj,
+                tipo_conselho=tipo_conselho_obj,
+                uf_conselho=uf_conselho_obj,
+                numero_conselho=numero_conselho,
+                rqe=rqe,
+                valor_consulta=valor_consulta,
+                upload_arquivo=upload_documento,
+            )
+            
+            # Redirecionar para a página de seleção de vagas com o ID do médico
+            return redirect('painel:cadastrar_medico_sala', medico_id=medico.id)
+            
+        except Exception as e:
+            # Tratar erro de email duplicado
+            if "UNIQUE constraint failed: painel_medico.email" in str(e):
+                error_message = "Este e-mail já está cadastrado. Por favor, use outro e-mail."
+            elif "UNIQUE constraint failed: painel_medico.cpf" in str(e):
+                error_message = "Este CPF já está cadastrado. Por favor, verifique os dados."
+            elif "UNIQUE constraint failed: painel_medico.celular" in str(e):
+                error_message = "Este celular já está cadastrado. Por favor, use outro número."
+            else:
+                error_message = f"Erro ao cadastrar médico: {str(e)}"
+            
+            return render(request, 'painel/cadastrar_medico.html', {
+                'tipo_conselho': tipo_conselho,
+                'especialidades': especialidades,
+                'estados': estados,
+                'clinicas': clinicas,
+                'error': error_message
+            })
     
     return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
 
@@ -364,6 +386,8 @@ def agendar_consulta(request):
                 medico=medico,
                 data_consulta=data_obj,  # Adicionar data da consulta
                 turno=vaga.turno,
+                hora_inicio=vaga.hora_inicio,  # Adicionar hora de início
+                hora_fim=vaga.hora_fim,      # Adicionar hora de fim
                 status='agendado'
             )
             
@@ -398,6 +422,7 @@ def agendar_consulta(request):
 
 @login_required
 def listar_consultas(request):
+    from datetime import date, timedelta
     clinicas = Clinicas.objects.all()
     clinica_selecionada = request.GET.get('clinica')
     
@@ -408,9 +433,9 @@ def listar_consultas(request):
         for sala in salas_da_clinica:
             agendamentos_sala = []
             
-            from datetime import date, timedelta
             for dia_offset in range(7):
                 data_dia = date.today() + timedelta(days=dia_offset)
+                data_str = data_dia.strftime('%Y-%m-%d')
                 
                 agendamentos_dia = Agendamentos.objects.filter(
                     sala=sala,
@@ -433,7 +458,7 @@ def listar_consultas(request):
                         'especialidade': especialidade,
                         'hora_inicio': hora_inicio,
                         'hora_fim': hora_fim,
-                        'data': agendamento.data_consulta.strftime('%Y-%m-%d'),
+                        'data': data_str,
                         'turno': agendamento.turno,
                         'total_pacientes': Agendamentos.objects.filter(
                             sala=sala, medico=agendamento.medico,
@@ -449,13 +474,27 @@ def listar_consultas(request):
         context = {
             'clinicas': clinicas,
             'clinica_selecionada': clinica_selecionada,
-            'salas': salas_data
+            'salas': salas_data,
+            'datas_semana': {
+                'segunda': (date.today() + timedelta(days=0)).strftime('%Y-%m-%d'),
+                'terca': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
+                'quarta': (date.today() + timedelta(days=2)).strftime('%Y-%m-%d'),
+                'quinta': (date.today() + timedelta(days=3)).strftime('%Y-%m-%d'),
+                'sexta': (date.today() + timedelta(days=4)).strftime('%Y-%m-%d'),
+            }
         }
     else:
         context = {
             'clinicas': clinicas,
             'clinica_selecionada': clinica_selecionada,
-            'salas': []
+            'salas': [],
+            'datas_semana': {
+                'segunda': (date.today() + timedelta(days=0)).strftime('%Y-%m-%d'),
+                'terca': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
+                'quarta': (date.today() + timedelta(days=2)).strftime('%Y-%m-%d'),
+                'quinta': (date.today() + timedelta(days=3)).strftime('%Y-%m-%d'),
+                'sexta': (date.today() + timedelta(days=4)).strftime('%Y-%m-%d'),
+            }
         }
     
     return render(request, 'painel/listar_consultas.html', context)
