@@ -1,5 +1,5 @@
-from typing import Optional
 from django.db import models
+import datetime
 
 
 
@@ -162,7 +162,10 @@ class Agendamentos(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
     medico = models.ForeignKey(Medico, on_delete=models.CASCADE)
     
+    data_consulta = models.DateField(default=datetime.datetime.now)
     turno = models.CharField(max_length=10)
+    hora_inicio = models.TimeField(default='00:00')
+    hora_fim = models.TimeField(default='23:59')
     status = models.CharField(max_length=10)
     
     def __str__(self):

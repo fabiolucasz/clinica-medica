@@ -362,6 +362,7 @@ def agendar_consulta(request):
                 sala=vaga.sala,
                 paciente=paciente,
                 medico=medico,
+                data_consulta=data_obj,  # Adicionar data da consulta
                 turno=vaga.turno,
                 status='agendado'
             )
@@ -398,32 +399,64 @@ def agendar_consulta(request):
 @login_required
 def listar_consultas(request):
     clinicas = Clinicas.objects.all()
-    medicos = Medico.objects.all()
-    vagas = Vagas.objects.select_related('sala', 'clinica', 'segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
+    clinica_selecionada = request.GET.get('clinica')
     
-    # Filtro por clínica se selecionado
-    clinica_id = request.GET.get('clinica')
-    if clinica_id:
-        # Filtrar vagas pela clínica selecionada
-        vagas = vagas.filter(clinica_id=clinica_id)
+    if clinica_selecionada:
+        salas_da_clinica = Salas.objects.filter(clinica_id=clinica_selecionada)
+        salas_data = []
         
-        # Obter médicos que têm vagas nesta clínica
-        medicos_ids = set()
-        for vaga in vagas:
-            if vaga.segunda: medicos_ids.add(vaga.segunda.id)
-            if vaga.terca: medicos_ids.add(vaga.terca.id)
-            if vaga.quarta: medicos_ids.add(vaga.quarta.id)
-            if vaga.quinta: medicos_ids.add(vaga.quinta.id)
-            if vaga.sexta: medicos_ids.add(vaga.sexta.id)
+        for sala in salas_da_clinica:
+            agendamentos_sala = []
+            
+            from datetime import date, timedelta
+            for dia_offset in range(7):
+                data_dia = date.today() + timedelta(days=dia_offset)
+                
+                agendamentos_dia = Agendamentos.objects.filter(
+                    sala=sala,
+                    data_consulta=data_dia
+                ).select_related('paciente', 'medico').order_by('data_consulta')
+                
+                for agendamento in agendamentos_dia:
+                    if agendamento.turno == 'manhã':
+                        hora_inicio, hora_fim = '08:00', '12:00'
+                    elif agendamento.turno == 'tarde':
+                        hora_inicio, hora_fim = '13:00', '17:00'
+                    else:
+                        hora_inicio, hora_fim = '17:30', '21:30'
+                    
+                    especialidade = getattr(agendamento.medico, 'especialidade', None)
+                    
+                    agendamentos_sala.append({
+                        'paciente': agendamento.paciente.nome,
+                        'medico': agendamento.medico.nome,
+                        'especialidade': especialidade,
+                        'hora_inicio': hora_inicio,
+                        'hora_fim': hora_fim,
+                        'data': agendamento.data_consulta.strftime('%Y-%m-%d'),
+                        'turno': agendamento.turno,
+                        'total_pacientes': Agendamentos.objects.filter(
+                            sala=sala, medico=agendamento.medico,
+                            data_consulta=data_dia, turno=agendamento.turno
+                        ).count()
+                    })
+            
+            salas_data.append({
+                'nome': sala.nome,
+                'agendamentos_dia': agendamentos_sala
+            })
         
-        medicos = medicos.filter(id__in=medicos_ids)
-    
-    context = {
-        'clinicas': clinicas,
-        'medicos': medicos,
-        'vagas': vagas,
-        'clinica_selecionada': clinica_id
-    }
+        context = {
+            'clinicas': clinicas,
+            'clinica_selecionada': clinica_selecionada,
+            'salas': salas_data
+        }
+    else:
+        context = {
+            'clinicas': clinicas,
+            'clinica_selecionada': clinica_selecionada,
+            'salas': []
+        }
     
     return render(request, 'painel/listar_consultas.html', context)
 
