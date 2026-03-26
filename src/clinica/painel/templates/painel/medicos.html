@@ -1,8 +1,13 @@
 {% extends 'painel/base.html' %}
 
-{% block navbar-right %}
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'painel:cadastrar_medico' %}">Novo Medico</a>
+{% block sidebar-items %}
+<li>
+    <a href="{% url 'painel:cadastrar_medico' %}" class="nav-link link-dark">
+        <svg class="bi me-2" width="16" height="16">
+            <use xlink:href="#people-circle"></use>
+        </svg>
+        Cadastrar Médico
+    </a>
 </li>
 {% endblock %}
 

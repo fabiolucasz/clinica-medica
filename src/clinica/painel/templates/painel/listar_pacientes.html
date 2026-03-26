@@ -1,18 +1,18 @@
 {% extends 'painel/base.html' %}
 
-{% block navbar-left %}
-
-{% endblock %}
-
-{% block navbar-right %}
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'painel:cadastrar_paciente' %}">Novo Paciente</a>
+{% block sidebar-items %}
+<li>
+    <a href="{% url 'painel:cadastrar_paciente' %}" class="nav-link link-dark">
+        <svg class="bi me-2" width="16" height="16">
+            <use xlink:href="#people-circle"></use>
+        </svg>
+        Cadastrar Pacientes
+    </a>
 </li>
 {% endblock %}
 
 {% block content %}
 <style>
-
     .table-container {
         max-height: 80vh;
         overflow-y: auto;
@@ -38,9 +38,10 @@
 
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; margin-top: 5rem;">
-<form class="m-auto w-50" onsubmit="return false;">
-    <input class="form-control me-2" type="search" placeholder="Buscar por nome ou CPF" id="buscar" aria-label="Search">
-</form>
+    <form class="m-auto w-50" onsubmit="return false;">
+        <input class="form-control me-2" type="search" placeholder="Buscar por nome ou CPF" id="buscar"
+            aria-label="Search">
+    </form>
 </div>
 
 <div class="table-container">

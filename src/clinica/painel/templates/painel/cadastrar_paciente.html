@@ -1,12 +1,9 @@
 {% extends 'painel/base.html' %}
 
-{% block navbar-left %}
-<h1 class="m-auto h3 mb-3 fw-normal">Novo Paciente</h1>
-{% endblock %}
 
 {% block navbar-right %}
 <li class="nav-item">
-    <a class="nav-link" href="{% url 'painel:listar_pacientes' %}">Pacientes</a>
+    <a class="nav-link" href="{% url 'painel:listar_pacientes' %}">Voltar</a>
 </li>
 
 {% endblock %}
