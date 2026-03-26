@@ -1,6 +1,5 @@
 {% load static %}
 <div class="cd-schedule-modal__event-info">
-    {% if agendamentos %}
 	{% for agendamento in agendamentos %}
 	<div class="mini-card">
 		<div class="medico-header">
@@ -16,7 +15,4 @@
 		</div>
 	</div>
 	{% endfor %}
-    {% else %}
-    <p>Nenhum agendamento encontrado para este período.</p>
-    {% endif %}
 </div>

@@ -13,9 +13,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import webbrowser
 
-@login_required
-def index(request):
-    return render(request, 'painel/painel.html')
 
 # Views dos Pacientes
 @login_required
@@ -422,43 +419,87 @@ def agendar_consulta(request):
 
 @login_required
 def listar_consultas(request):
-    from datetime import date, timedelta
+    from datetime import date, timedelta, datetime
     clinicas = Clinicas.objects.all()
     clinica_selecionada = request.GET.get('clinica')
+    medico_selecionado = request.GET.get('medico')
+    
+    # Obter parâmetros de data ou usar semana atual
+    data_inicio_param = request.GET.get('data_inicio')
+    data_fim_param = request.GET.get('data_fim')
+    
+    if data_inicio_param and data_fim_param:
+        # Converter parâmetros para data
+        try:
+            data_inicio = datetime.strptime(data_inicio_param, '%d/%m').date()
+            # Ajustar para o ano atual
+            data_inicio = data_inicio.replace(year=date.today().year)
+            data_fim = datetime.strptime(data_fim_param, '%d/%m').date()
+            data_fim = data_fim.replace(year=date.today().year)
+        except ValueError:
+            # Se falhar, usar semana atual
+            data_inicio = date.today()
+            while data_inicio.weekday() != 0:  # Encontrar segunda-feira
+                data_inicio -= timedelta(days=1)
+            data_fim = data_inicio + timedelta(days=4)
+    else:
+        # Usar semana atual
+        data_inicio = date.today()
+        while data_inicio.weekday() != 0:  # Encontrar segunda-feira
+            data_inicio -= timedelta(days=1)
+        data_fim = data_inicio + timedelta(days=4)
     
     if clinica_selecionada:
+        print(f"DEBUG: Clinica selecionada: {clinica_selecionada}")
+        print(f"DEBUG: Data início: {data_inicio}, Data fim: {data_fim}")
         salas_da_clinica = Salas.objects.filter(clinica_id=clinica_selecionada)
+        print(f"DEBUG: Salas encontradas: {salas_da_clinica.count()}")
+        
+        # Obter médicos que trabalham na clínica selecionada através das vagas
+        from django.db.models import Q
+        medicos_da_clinica = Medico.objects.filter(
+            Q(segunda__sala__clinica_id=clinica_selecionada) |
+            Q(terca__sala__clinica_id=clinica_selecionada) |
+            Q(quarta__sala__clinica_id=clinica_selecionada) |
+            Q(quinta__sala__clinica_id=clinica_selecionada) |
+            Q(sexta__sala__clinica_id=clinica_selecionada)
+        ).distinct()
+        print(f"DEBUG: Médicos encontrados: {medicos_da_clinica.count()}")
+        
         salas_data = []
         
         for sala in salas_da_clinica:
             agendamentos_sala = []
             
-            for dia_offset in range(7):
-                data_dia = date.today() + timedelta(days=dia_offset)
+            for dia_offset in range(5):  # Segunda a Sexta
+                data_dia = data_inicio + timedelta(days=dia_offset)
                 data_str = data_dia.strftime('%Y-%m-%d')
                 
-                agendamentos_dia = Agendamentos.objects.filter(
+                # Filtrar por médico se selecionado
+                agendamentos_query = Agendamentos.objects.filter(
                     sala=sala,
                     data_consulta=data_dia
-                ).select_related('paciente', 'medico').order_by('data_consulta')
+                )
+                
+                if medico_selecionado:
+                    agendamentos_query = agendamentos_query.filter(medico_id=medico_selecionado)
+                
+                agendamentos_dia = agendamentos_query.select_related('paciente', 'medico').order_by('data_consulta')
+                
+                if agendamentos_dia:
+                    print(f"DEBUG: Encontrados {agendamentos_dia.count()} agendamentos para sala {sala.nome} em {data_str}")
                 
                 for agendamento in agendamentos_dia:
-                    if agendamento.turno == 'manhã':
-                        hora_inicio, hora_fim = '08:00', '12:00'
-                    elif agendamento.turno == 'tarde':
-                        hora_inicio, hora_fim = '13:00', '17:00'
-                    else:
-                        hora_inicio, hora_fim = '17:30', '21:30'
-                    
                     especialidade = getattr(agendamento.medico, 'especialidade', None)
+                    especialidade_nome = especialidade.nome if especialidade else 'Geral'
                     
                     agendamentos_sala.append({
                         'paciente': agendamento.paciente.nome,
                         'medico': agendamento.medico.nome,
-                        'especialidade': especialidade,
-                        'hora_inicio': hora_inicio,
-                        'hora_fim': hora_fim,
-                        'data': data_str,
+                        'especialidade': especialidade_nome,
+                        'hora_inicio': agendamento.hora_inicio.strftime('%H:%M') if agendamento.hora_inicio else '08:00',
+                        'hora_fim': agendamento.hora_fim.strftime('%H:%M') if agendamento.hora_fim else '12:00',
+                        'data_consulta': data_str,
                         'turno': agendamento.turno,
                         'total_pacientes': Agendamentos.objects.filter(
                             sala=sala, medico=agendamento.medico,
@@ -474,26 +515,30 @@ def listar_consultas(request):
         context = {
             'clinicas': clinicas,
             'clinica_selecionada': clinica_selecionada,
+            'medicos': medicos_da_clinica,
+            'medico_selecionado': medico_selecionado,
             'salas': salas_data,
             'datas_semana': {
-                'segunda': (date.today() + timedelta(days=0)).strftime('%Y-%m-%d'),
-                'terca': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
-                'quarta': (date.today() + timedelta(days=2)).strftime('%Y-%m-%d'),
-                'quinta': (date.today() + timedelta(days=3)).strftime('%Y-%m-%d'),
-                'sexta': (date.today() + timedelta(days=4)).strftime('%Y-%m-%d'),
+                'segunda': (data_inicio).strftime('%Y-%m-%d'),
+                'terca': (data_inicio + timedelta(days=1)).strftime('%Y-%m-%d'),
+                'quarta': (data_inicio + timedelta(days=2)).strftime('%Y-%m-%d'),
+                'quinta': (data_inicio + timedelta(days=3)).strftime('%Y-%m-%d'),
+                'sexta': (data_inicio + timedelta(days=4)).strftime('%Y-%m-%d'),
             }
         }
     else:
         context = {
             'clinicas': clinicas,
             'clinica_selecionada': clinica_selecionada,
+            'medicos': [],
+            'medico_selecionado': medico_selecionado,
             'salas': [],
             'datas_semana': {
-                'segunda': (date.today() + timedelta(days=0)).strftime('%Y-%m-%d'),
-                'terca': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
-                'quarta': (date.today() + timedelta(days=2)).strftime('%Y-%m-%d'),
-                'quinta': (date.today() + timedelta(days=3)).strftime('%Y-%m-%d'),
-                'sexta': (date.today() + timedelta(days=4)).strftime('%Y-%m-%d'),
+                'segunda': (data_inicio).strftime('%Y-%m-%d'),
+                'terca': (data_inicio + timedelta(days=1)).strftime('%Y-%m-%d'),
+                'quarta': (data_inicio + timedelta(days=2)).strftime('%Y-%m-%d'),
+                'quinta': (data_inicio + timedelta(days=3)).strftime('%Y-%m-%d'),
+                'sexta': (data_inicio + timedelta(days=4)).strftime('%Y-%m-%d'),
             }
         }
     
