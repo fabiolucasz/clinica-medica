@@ -270,17 +270,8 @@
                 <a href="{% url 'painel:listar_pacientes' %}" class="nav-link link-dark">Pacientes</a>
                 <a href="{% url 'painel:listar_medicos' %}" class="nav-link link-dark">Médicos</a>
                 <a href="{% url 'painel:listar_consultas' %}" class="nav-link link-dark">Consultas</a>
-                <div class="dropdown">
-                    <a class="nav-link link-dark dropdown-toggle" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer">
-                        Configurações
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                        <li><a class="dropdown-item" href="{% url 'painel:listar_clinicas' %}">Clinicas</a></li>
-                        <li><a class="dropdown-item" href="{% url 'painel:listar_clinicas' %}">Especialidades</a></li>
-                        <li><a class="dropdown-item" href="{% url 'painel:listar_clinicas' %}">Estados</a></li>
-                        <li><a class="dropdown-item" href="{% url 'painel:listar_clinicas' %}">Tipos de Conselho</a></li>
-                    </ul>
-                </div>
+                <a href="{% url 'painel:listar_clinicas' %}" class="nav-link link-dark">Configurações</a>
+
 
                 {% block navbar-left %}
                 {% endblock %}

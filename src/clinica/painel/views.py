@@ -555,11 +555,7 @@ def excluir_consulta(request, id):
 
 # Configurações da clínica
 
-@login_required
-def config(request):
-    return render(request, 'painel/config.html')
-
-## Clinica
+## CRUD Clinica
 @login_required
 def cadastrar_clinica(request):
     estados = Estados.objects.all()
@@ -605,6 +601,7 @@ def listar_clinicas(request):
     estados = Estados.objects.all()
     return render(request, 'painel/listar_clinicas.html', {'clinicas': clinicas, 'estados': estados})
 
+@login_required
 def editar_clinica(request, id):
     clinica = get_object_or_404(Clinicas, pk=id)
     
@@ -628,12 +625,13 @@ def editar_clinica(request, id):
     
     return render(request, 'painel/editar_clinica.html', {'clinica': clinica})
 
+@login_required
 def excluir_clinica(request, id):
     clinica = get_object_or_404(Clinicas, pk=id)
     clinica.delete()
     return redirect('painel:listar_clinicas')
 
-## Salas
+## CRUD Salas
 
 @login_required
 def listar_salas(request):
@@ -691,6 +689,140 @@ def excluir_sala(request, id):
     sala.delete()
     # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
     return redirect(f'/painel/config-salas/?clinica={clinica_id}')
+
+## CRUD Especialidades
+
+@login_required
+def listar_especialidades(request):
+    especialidades = Especialidades.objects.all()
+
+
+    
+    return render(request, 'painel/listar_especialidades.html', {
+        'especialidades': especialidades
+    })
+
+@login_required
+def cadastrar_especialidade(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+
+        if nome:
+            especialidade = Especialidades.objects.create(
+                nome=nome
+            )
+
+            return redirect(f'/painel/especialidades')
+
+    return render(request, 'painel/cadastrar_especialidade.html')
+
+@login_required
+def editar_especialidade(request, id):
+    especialidade = get_object_or_404(Especialidades, pk=id)
+
+    if request.method == 'POST':
+        especialidade.nome = request.POST.get('nome')
+        especialidade.save()
+        
+        return redirect(f'/painel/especialidades/')
+    
+    return render(request, 'painel/editar_especialidade.html', {'especialidade': especialidade})
+
+@login_required
+def excluir_especialidade(request, id):
+    especialidade = get_object_or_404(Especialidades, pk=id)
+    especialidade.delete()
+    return redirect(f'/painel/especialidades/')
+
+## CRUD Conselhos
+@login_required
+def listar_conselhos(request):
+    conselhos = Tipo_conselho.objects.all()
+
+    return render(request, 'painel/listar_conselhos.html', {
+        'conselhos': conselhos
+    })
+
+@login_required
+def cadastrar_conselho(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+
+        if nome:
+            conselho = Tipo_conselho.objects.create(
+                nome=nome
+            )
+
+            return redirect('/painel/conselhos')
+
+    return render(request, 'painel/cadastrar_conselho.html')
+
+@login_required
+def editar_conselho(request, id):
+    conselho = get_object_or_404(Tipo_conselho, pk=id)
+
+    if request.method == 'POST':
+        conselho.nome = request.POST.get('nome')
+        conselho.save()
+        
+        return redirect(f'/painel/conselhos/')
+    
+    return render(request, 'painel/editar_conselho.html', {'conselho': conselho})
+
+@login_required
+def excluir_conselho(request, id):
+    conselho = get_object_or_404(Tipo_conselho, pk=id)
+    conselho.delete()
+    return redirect(f'/painel/conselhos/')
+
+
+## Estados
+@login_required
+def listar_estados(request):
+    estados = Estados.objects.all()
+
+    return render(request, 'painel/listar_estados.html', {
+        'estados': estados
+    })
+
+@login_required
+def cadastrar_estado(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        uf = request.POST.get('uf')
+
+        if nome and uf:
+            estado = Estados.objects.create(
+                nome=nome,
+                uf=uf
+            )
+
+            return redirect('/painel/estados')
+
+    return render(request, 'painel/cadastrar_estado.html')
+
+@login_required
+def editar_estado(request, id):
+    estado = get_object_or_404(Estados, pk=id)
+
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        uf = request.POST.get('uf')
+        
+        if nome and uf:
+            estado.nome = nome
+            estado.uf = uf
+            estado.save()
+            
+            return redirect(f'/painel/estados/')
+    
+    return render(request, 'painel/editar_estado.html', {'estado': estado})
+
+@login_required
+def excluir_estado(request, id):
+    estado = get_object_or_404(Estados, pk=id)
+    estado.delete()
+    return redirect(f'/painel/estados/')
 
 @login_required
 def logout_view(request):

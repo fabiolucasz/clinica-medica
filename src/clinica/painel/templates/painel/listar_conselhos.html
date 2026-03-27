@@ -8,7 +8,6 @@
 {% endblock %}
 
 {% block sidebar-items %}
-
 <li class="nav-item">
     <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
 </li>
@@ -48,36 +47,18 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-12">
-      <h2 class="mb-4 m-auto">Salas da Clínica</h2>
-      
-      <!-- Seletor de Clínica -->
-      <div class="row mb-4">
-        <div class="col-md-4">
-          <div class="form-floating">
-            <select class="form-select" id="clinica-select" name="clinica" onchange="filtrarSalas()">
-              <option value="">Selecione uma clínica</option>
-              {% for clinica in clinicas %}
-              <option value="{{ clinica.id }}" {% if clinica_selecionada == clinica.id|stringformat:"s" %}selected{% endif %}>
-                  {{ clinica.nome }}
-              </option>
-              {% endfor %}
-            </select>
-            <label for="clinica-select">Clínica</label>
-          </div>
-        </div>
-      </div>
+      <h2 class="mb-4 m-auto">Conselhos</h2>
 
       <!-- Tabela de Salas -->
-      {% if clinica_selecionada %}
+      {% if conselhos %}
       <div class="card" style="margin-bottom: 2rem;">
         <div class="card-header">
-            <h5 class="mb-0">Cadastrar Sala</h5>
+            <h5 class="mb-0">Cadastrar novo conselho</h5>
         </div>
         <div class="card-body">
-            <form method="post" action="{% url 'painel:cadastrar_sala' %}" style="display: flex; gap: 0.5rem; align-items: center;">
+            <form method="post" action="{% url 'painel:cadastrar_conselho' %}" style="display: flex; gap: 0.5rem; align-items: center;">
                 {% csrf_token %}
-                <input type="text" class="form-control" placeholder="Nome da sala" name="nome" required style="max-width: 300px;">
-                <input type="hidden" name="clinica" value="{{ clinica_selecionada }}">
+                <input type="text" class="form-control" placeholder="Nome do conselho" name="nome" required style="max-width: 300px;">
                 <button type="submit" class="btn btn-primary">Cadastrar</button>
             </form>
         </div>
@@ -85,27 +66,27 @@
 
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0">Salas cadastradas</h5>
+          <h5 class="mb-0">Conselhos cadastrados</h5>
         </div>
         <div class="card-body">
-          {% if salas %}
+          {% if conselhos %}
           <div class="table-responsive">
             <table class="table table-striped table-hover">
               <thead>
                 <tr>
                   <th></th>
-                  <th>Nome da Sala</th>
+                  <th>Conselhos</th>
                 </tr>
               </thead>
               <tbody>
-                {% for sala in salas %}
+                {% for conselho in conselhos %}
                 <tr style="cursor: pointer;" 
-                data-sala-id="{{ sala.id }}" 
-                data-sala-nome="{{ sala.nome }}"
-                data-sala-clinica-id="{{ sala.clinica_id }}"
-                onclick="abrirModalSala(this)">
+                data-conselho-id="{{ conselho.id }}" 
+                data-conselho-nome="{{ conselho.nome }}"
+                data-conselho-clinica-id="{{ conselho.clinica_id }}"
+                onclick="abrirModalConselho(this)">
                   <th>{{ forloop.counter }}</th>
-                  <td>{{ sala.nome }}</td>
+                  <td>{{ conselho.nome }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -114,16 +95,11 @@
           {% else %}
           <div class="alert alert-info" role="alert">
             <i class="bi bi-info-circle"></i>
-            Nenhuma sala encontrada para esta clínica.
-            <a href="{% url 'painel:cadastrar_sala' %}" class="alert-link">Cadastrar uma nova sala</a>
+            Nenhum conselho cadastrado.
+            <a href="{% url 'painel:cadastrar_conselho' %}" class="alert-link">Cadastrar um novo conselho</a>
           </div>
           {% endif %}
         </div>
-      </div>
-      {% else %}
-      <div class="alert alert-warning" role="alert">
-        <i class="bi bi-exclamation-triangle"></i>
-        Por favor, selecione uma clínica para visualizar as salas.
       </div>
       {% endif %}
     </div>
@@ -131,21 +107,21 @@
 </div>
 
 <!-- Modal de Edição -->
-<div class="modal fade" id="editarSalaModal" tabindex="-1" aria-labelledby="editarSalaModalLabel"
+<div class="modal fade" id="editarConselhoModal" tabindex="-1" aria-labelledby="editarConselhoModalLabel"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editarSalaModalLabel">Editar Sala</h5>
+                <h5 class="modal-title" id="editarConselhoModalLabel">Editar Conselho</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="formEditarSala" method="post">
+                <form id="formEditarConselho" method="post">
                     {% csrf_token %}
-                    <input type="hidden" id="sala-id" name="sala_id">
+                    <input type="hidden" id="conselho-id" name="conselho_id">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Dados da Sala</h6>
+                            <h6>Dados do Conselho</h6>
                             <p><strong>Nome:</strong> <input type="text" class="form-control" id="modal-nome"
                                     name="nome" required></p>
                 </form>
@@ -160,50 +136,30 @@
 </div>
 
 <script>
-function filtrarSalas() {
-  const clinicaSelect = document.getElementById('clinica-select');
-  const clinicaId = clinicaSelect.value;
-  
-  if (clinicaId) {
-    const url = new URL(window.location);
-    url.searchParams.set('clinica', clinicaId);
-    window.location.href = url.toString();
-  } else {
-    const url = new URL(window.location);
-    url.searchParams.delete('clinica');
-    window.location.href = url.toString();
-  }
-}
-
-    let salaAtualId = null;
+    let conselhoAtualId = null;
 
 
-    function abrirModalSala(element) {
-        const id = element.dataset.salaId;
-        const nome = element.dataset.salaNome;
-        
-        salaAtualId = id;
-
-        // Preencher o ID do clinica no formulário
-        document.getElementById('sala-id').value = id;
+    function abrirModalConselho(element) {
+        const id = element.dataset.conselhoId;
+        const nome = element.dataset.conselhoNome;
 
         // Preencher os dados do modal
         document.getElementById('modal-nome').value = nome;  
 
         // Configurar ações dos botões
         document.getElementById('btn-editar').onclick = function () {
-            document.getElementById('formEditarSala').action = '/painel/editar-sala/' + id + '/';
-            document.getElementById('formEditarSala').submit();
+            document.getElementById('formEditarConselho').action = '/painel/conselho/editar/' + id + '/';
+            document.getElementById('formEditarConselho').submit();
         };
 
         document.getElementById('btn-excluir').onclick = function () {
-            if (confirm('Tem certeza que deseja excluir esta sala?')) {
-                window.location.href = '/painel/excluir-sala/' + id + '/';
+            if (confirm('Tem certeza que deseja excluir este conselho?')) {
+                window.location.href = '/painel/conselho/excluir/' + id + '/';
             }
         };
 
         // Abrir o modal
-        const modal = new bootstrap.Modal(document.getElementById('editarSalaModal'));
+        const modal = new bootstrap.Modal(document.getElementById('editarConselhoModal'));
         modal.show();
     }
 

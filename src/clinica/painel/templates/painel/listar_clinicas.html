@@ -1,7 +1,6 @@
 {% extends "painel/base.html" %}
 
-{% block sidebar-items %}
-<li class="nav-item">
+{% block sidebar-items %}<li class="nav-item">
     <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
 </li>
 
@@ -13,6 +12,24 @@
 
 <li class="nav-item">
     <a href="{% url 'painel:listar_salas' %}" class="nav-link link-dark">Salas</a>
+</li>
+
+<hr>
+
+<li class="nav-item">
+    <a href="{% url 'painel:listar_especialidades' %}" class="nav-link link-dark">Especialidades</a>
+</li>
+
+<hr>
+
+<li class="nav-item">
+    <a href="{% url 'painel:listar_conselhos' %}" class="nav-link link-dark">Conselhos</a>
+</li>
+
+<hr>
+
+<li class="nav-item">
+    <a href="{% url 'painel:listar_estados' %}" class="nav-link link-dark">Estados</a>
 </li>
 
 {% endblock %}

@@ -183,13 +183,13 @@
 
             // Configurar ações dos botões
             document.getElementById('btn-editar').onclick = function () {
-                document.getElementById('form-editar-paciente').action = '/painel/editar-paciente/' + id + '/';
+                document.getElementById('form-editar-paciente').action = '/painel/paciente/editar/' + id + '/';
                 document.getElementById('form-editar-paciente').submit();
             };
 
             document.getElementById('btn-excluir').onclick = function () {
                 if (confirm('Tem certeza que deseja excluir este paciente?')) {
-                    window.location.href = '/painel/excluir-paciente/' + id + '/';
+                    window.location.href = '/painel/paciente/excluir/' + id + '/';
                 }
             };
 
