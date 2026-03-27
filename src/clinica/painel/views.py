@@ -559,6 +559,7 @@ def excluir_consulta(request, id):
 def config(request):
     return render(request, 'painel/config.html')
 
+## Clinica
 @login_required
 def cadastrar_clinica(request):
     estados = Estados.objects.all()
@@ -632,6 +633,64 @@ def excluir_clinica(request, id):
     clinica.delete()
     return redirect('painel:listar_clinicas')
 
+## Salas
+
+@login_required
+def listar_salas(request):
+    clinicas = Clinicas.objects.all()
+    clinica_selecionada = request.GET.get('clinica')
+    
+    if clinica_selecionada:
+        salas = Salas.objects.filter(clinica_id=clinica_selecionada)
+    else:
+        salas = Salas.objects.none()
+    
+    return render(request, 'painel/listar_salas.html', {
+        'salas': salas, 
+        'clinicas': clinicas,
+        'clinica_selecionada': clinica_selecionada
+    })
+
+@login_required
+def cadastrar_sala(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        clinica_id = request.POST.get('clinica')
+
+        if nome and clinica_id:
+            clinica_obj = get_object_or_404(Clinicas, pk=clinica_id)
+
+            sala = Salas.objects.create(
+                nome=nome,
+                clinica=clinica_obj
+            )
+
+            # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+            return redirect(f'/painel/config-salas/?clinica={clinica_id}')
+
+    return render(request, 'painel/cadastrar_sala.html')
+
+@login_required
+def editar_sala(request, id):
+    sala = get_object_or_404(Salas, pk=id)
+
+    if request.method == 'POST':
+        sala.nome = request.POST.get('nome')
+        sala.descricao = request.POST.get('descricao')
+        sala.save()
+        
+        # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+        return redirect(f'/painel/config-salas/?clinica={sala.clinica.id}')
+    
+    return render(request, 'painel/editar_sala.html', {'sala': sala})
+
+@login_required
+def excluir_sala(request, id):
+    sala = get_object_or_404(Salas, pk=id)
+    clinica_id = sala.clinica.id
+    sala.delete()
+    # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+    return redirect(f'/painel/config-salas/?clinica={clinica_id}')
 
 @login_required
 def logout_view(request):

@@ -24,11 +24,19 @@ urlpatterns = [
     path("editar-consulta/<int:id>/", views.editar_consulta, name="editar_consulta"),
     
     #Configurações
+    
+    ## Clinica
     path("config/", views.config, name="config"),
     path("config-clinicas/", views.listar_clinicas, name="listar_clinicas"),
     path("cadastrar-clinica/", views.cadastrar_clinica, name="cadastrar_clinica"),
     path("editar-clinica/<int:id>/", views.editar_clinica, name="editar_clinica"),
     path("excluir-clinica/<int:id>/", views.excluir_clinica, name="excluir_clinica"),
+    
+    ## Salas
+    path("config-salas/", views.listar_salas, name="listar_salas"),
+    path("cadastrar-sala/", views.cadastrar_sala, name="cadastrar_sala"),
+    path("editar-sala/<int:id>/", views.editar_sala, name="editar_sala"),
+    path("excluir-sala/<int:id>/", views.excluir_sala, name="excluir_sala"),
 
     path('logout/', views.logout_view, name='logout'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

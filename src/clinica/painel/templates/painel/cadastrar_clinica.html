@@ -1,5 +1,23 @@
 {% extends 'painel/base.html' %}
 
+{% block title %}Cadastrar Clinica{% endblock %}
+
+{% block sidebar-items %}
+<li class="nav-item">
+    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
+</li>
+
+<li class="nav-item">
+    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link link-dark">Clinicas</a>
+</li>
+
+<hr>
+
+<li class="nav-item">
+    <a href="{% url 'painel:listar_salas' %}" class="nav-link link-dark">Salas</a>
+</li>
+
+{% endblock %}
 
 {% block navbar-right %}
 <li class="nav-item">

@@ -2,11 +2,17 @@
 
 {% block sidebar-items %}
 <li class="nav-item">
-    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link link-dark">Clinicas cadastradas</a>
+    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
 </li>
 
 <li class="nav-item">
-    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
+    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link link-dark">Clinicas</a>
+</li>
+
+<hr>
+
+<li class="nav-item">
+    <a href="{% url 'painel:listar_salas' %}" class="nav-link link-dark">Salas</a>
 </li>
 
 {% endblock %}
@@ -43,9 +49,6 @@
                 <td>{{ clinica.estado.nome }}</td>
                 <td>{{ clinica.celular }}</td>
                 <td>{{ clinica.email }}</td>
-                <td>
-
-                </td>
             </tr>
             {% endfor %}
             {% else %}
