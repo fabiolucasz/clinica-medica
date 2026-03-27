@@ -22,6 +22,13 @@ urlpatterns = [
     path("buscar-pacientes/", views.buscar_pacientes, name="buscar_pacientes"),
     path("listar-consultas/", views.listar_consultas, name="listar_consultas"),
     path("editar-consulta/<int:id>/", views.editar_consulta, name="editar_consulta"),
+    
+    #Configurações
+    path("config/", views.config, name="config"),
+    path("config-clinicas/", views.listar_clinicas, name="listar_clinicas"),
+    path("cadastrar-clinica/", views.cadastrar_clinica, name="cadastrar_clinica"),
+    path("editar-clinica/<int:id>/", views.editar_clinica, name="editar_clinica"),
+    path("excluir-clinica/<int:id>/", views.excluir_clinica, name="excluir_clinica"),
 
     path('logout/', views.logout_view, name='logout'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

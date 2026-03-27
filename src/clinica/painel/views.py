@@ -10,7 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
+from django.utils import timezone
 import webbrowser
 
 
@@ -553,6 +553,84 @@ def excluir_consulta(request, id):
     return render(request, 'painel/excluir_consulta.html')
 
 
+# Configurações da clínica
+
+@login_required
+def config(request):
+    return render(request, 'painel/config.html')
+
+@login_required
+def cadastrar_clinica(request):
+    estados = Estados.objects.all()
+    
+    if request.method == 'POST':
+        # Processar o formulário
+        nome = request.POST.get('nome')
+        celular = request.POST.get('celular')
+        celular2 = request.POST.get('celular2')
+        email = request.POST.get('email')
+        cnpj = request.POST.get('cnpj')
+        cep = request.POST.get('cep')
+        rua = request.POST.get('rua')
+        numero = request.POST.get('numero')
+        bairro = request.POST.get('bairro')
+        cidade = request.POST.get('cidade')
+        estado = request.POST.get('estado')
+        
+        estado_obj = Estados.objects.get(id=estado)
+        
+        # Criar a clínica
+        clinica = Clinicas.objects.create(
+            nome=nome,
+            celular=celular,
+            celular2=celular2,
+            email=email,
+            cnpj=cnpj,
+            cep=cep,
+            rua=rua,
+            numero=numero,
+            bairro=bairro,
+            cidade=cidade,
+            estado=estado_obj
+        )
+        
+        return redirect('painel:listar_clinicas')
+    
+    return render(request, 'painel/cadastrar_clinica.html', {'estados': estados})
+
+@login_required
+def listar_clinicas(request):
+    clinicas = Clinicas.objects.all()
+    estados = Estados.objects.all()
+    return render(request, 'painel/listar_clinicas.html', {'clinicas': clinicas, 'estados': estados})
+
+def editar_clinica(request, id):
+    clinica = get_object_or_404(Clinicas, pk=id)
+    
+    if request.method == 'POST':
+        # Processar o formulário
+        clinica.nome = request.POST.get('nome')
+        clinica.cep = request.POST.get('cep')
+        clinica.rua = request.POST.get('rua')
+        clinica.numero = request.POST.get('numero')
+        clinica.bairro = request.POST.get('bairro')
+        clinica.cidade = request.POST.get('cidade')
+        clinica.estado_id = request.POST.get('estado')
+        clinica.celular = request.POST.get('celular')
+        clinica.celular2 = request.POST.get('celular2')
+        clinica.cnpj = request.POST.get('cnpj')
+        clinica.email = request.POST.get('email')
+        
+        clinica.save()
+        
+        return redirect('painel:listar_clinicas')
+    
+    return render(request, 'painel/editar_clinica.html', {'clinica': clinica})
+
+def excluir_clinica(request, id):
+    clinica = get_object_or_404(Clinicas, pk=id)
+    clinica.delete()
+    return redirect('painel:listar_clinicas')
 
 
 @login_required
