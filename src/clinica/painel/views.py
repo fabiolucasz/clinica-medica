@@ -28,6 +28,7 @@ def cadastrar_paciente(request):
         # Processar o formulário
         nome = request.POST.get('nome')
         celular = request.POST.get('celular')
+        email = request.POST.get('email')
         cpf = request.POST.get('cpf')
         data_nascimento = request.POST.get('data_nascimento')
         sexo = request.POST.get('sexo')
@@ -45,6 +46,7 @@ def cadastrar_paciente(request):
         paciente = Paciente.objects.create(
             nome=nome,
             celular=celular,
+            email=email,
             cpf=cpf,
             data_nascimento=data_nascimento,
             sexo=sexo,
@@ -67,14 +69,15 @@ def cadastrar_paciente(request):
             print(f"Erro ao abrir navegador: {e}")
         
         # Redirecionar para a lista de pacientes
-        return redirect('painel:index')
+        return redirect('painel:listar_pacientes')
         
     return render(request, 'painel/cadastrar_paciente.html', {'estados': estados})
 
 @login_required
 def listar_pacientes(request):
     pacientes = Paciente.objects.all()
-    return render(request, 'painel/listar_pacientes.html', {'pacientes': pacientes})
+    estados = Estados.objects.all()
+    return render(request, 'painel/listar_pacientes.html', {'pacientes': pacientes, 'estados': estados})
 
 @login_required
 def editar_paciente(request, id):
@@ -84,6 +87,7 @@ def editar_paciente(request, id):
         # Processar o formulário
         paciente.nome = request.POST.get('nome')
         paciente.celular = request.POST.get('celular')
+        paciente.email = request.POST.get('email')
         paciente.cpf = request.POST.get('cpf')
         data_nascimento_obj = request.POST.get('data_nascimento')
         nascimento_iso = data_nascimento_obj.split('/')[2] + '-' + data_nascimento_obj.split('/')[1] + '-' + data_nascimento_obj.split('/')[0]
@@ -94,18 +98,16 @@ def editar_paciente(request, id):
         paciente.numero = request.POST.get('numero')
         paciente.bairro = request.POST.get('bairro')
         paciente.cidade = request.POST.get('cidade')
-        estado_uf = request.POST.get('estado')
+        estado_id = request.POST.get('estado')
         
-        # Buscar a instância de Estados pelo UF
-        estado_obj = get_object_or_404(Estados, uf=estado_uf)
+        # Buscar a instância de Estados pelo ID
+        estado_obj = get_object_or_404(Estados, id=estado_id)
         paciente.estado = estado_obj
         
         paciente.save()
-        mensagem_boas_vindas(request, paciente.celular, paciente.nome)
-        
         return redirect('painel:listar_pacientes')
     
-    return redirect('painel:listar_pacientes')
+    return render(request, 'painel/editar_paciente.html')
 
 @login_required
 def excluir_paciente(request, id):

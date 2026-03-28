@@ -1,6 +1,7 @@
 {% extends "painel/base.html" %}
 
-{% block sidebar-items %}<li class="nav-item">
+{% block sidebar-items %}
+<li class="nav-item">
     <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
 </li>
 
@@ -149,8 +150,6 @@
     </div>
 </div>
 
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Dados das clínicas em formato JSON
     let clinicaAtualId = null;
@@ -206,10 +205,5 @@
         modal.show();
     }
 
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('pt-BR');
-    }
 </script>
 {% endblock %}

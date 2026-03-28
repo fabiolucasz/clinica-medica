@@ -3,9 +3,6 @@
 {% block sidebar-items %}
 <li>
     <a href="{% url 'painel:cadastrar_paciente' %}" class="nav-link link-dark">
-        <svg class="bi me-2" width="16" height="16">
-            <use xlink:href="#people-circle"></use>
-        </svg>
         Cadastrar Pacientes
     </a>
 </li>
@@ -118,15 +115,24 @@
                                     name="bairro"></p>
                             <p><strong>Cidade:</strong> <input type="text" class="form-control" id="modal-cidade"
                                     name="cidade"></p>
-                            <p><strong>Estado:</strong> <input type="text" class="form-control" id="modal-estado"
-                                    name="estado"></p>
+                            <p><strong>Estado:</strong> 
+                                {% if estados %}
+                                
+                                    <select class="form-control" id="modal-estado"
+                                        name="estado">
+                                        {% for estado in estados %}
+                                        <option value="{{ estado.id }}">{{ estado.nome }}</option>
+                                        {% endfor %}
+                                    </select>
+
+                                {% else %}
+                                <p>Nenhum estado encontrado</p>
+                                {% endif %}
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Agendar</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Prontuário</button>
                 <button type="button" class="btn btn-warning" id="btn-editar">Editar</button>
                 <button type="button" class="btn btn-danger" id="btn-excluir">Excluir</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -179,7 +185,6 @@
             document.getElementById('modal-numero').value = numero;
             document.getElementById('modal-bairro').value = bairro;
             document.getElementById('modal-cidade').value = cidade;
-            document.getElementById('modal-estado').value = estado;
 
             // Configurar ações dos botões
             document.getElementById('btn-editar').onclick = function () {
@@ -233,7 +238,4 @@
         });
 
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
     {% endblock %}
