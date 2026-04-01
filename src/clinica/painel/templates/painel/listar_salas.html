@@ -115,7 +115,7 @@
           <div class="alert alert-info" role="alert">
             <i class="bi bi-info-circle"></i>
             Nenhuma sala encontrada para esta clínica.
-            <a href="{% url 'painel:cadastrar_sala' %}" class="alert-link">Cadastrar uma nova sala</a>
+            <strong>Cadastrar uma nova sala.</strong>
           </div>
           {% endif %}
         </div>
@@ -192,13 +192,13 @@ function filtrarSalas() {
 
         // Configurar ações dos botões
         document.getElementById('btn-editar').onclick = function () {
-            document.getElementById('formEditarSala').action = '/painel/editar-sala/' + id + '/';
+            document.getElementById('formEditarSala').action = '/painel/sala/editar/' + id + '/';
             document.getElementById('formEditarSala').submit();
         };
 
         document.getElementById('btn-excluir').onclick = function () {
             if (confirm('Tem certeza que deseja excluir esta sala?')) {
-                window.location.href = '/painel/excluir-sala/' + id + '/';
+                window.location.href = '/painel/sala/excluir/' + id + '/';
             }
         };
 

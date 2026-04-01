@@ -1,146 +1,294 @@
 {% extends 'painel/base.html' %}
 
+
+
 {% block sidebar-items %}
+
 <li>
+
     <a href="{% url 'painel:cadastrar_paciente' %}" class="nav-link link-dark">
+
         Cadastrar Pacientes
+
     </a>
+
 </li>
+
 {% endblock %}
 
+
+
 {% block content %}
+
 <style>
+
     .table-container {
+
         max-height: 80vh;
+
         overflow-y: auto;
+
         margin: auto;
+
         width: 80%;
+
         border: 1px solid #dee2e6;
+
         border-radius: 0.375rem;
+
     }
+
+
 
     .table {
+
         margin: 0;
+
         width: 100%;
+
         height: 100%;
+
     }
 
+
+
     .table thead th {
+
         position: sticky;
+
         top: 0;
+
         background-color: #f8f9fa;
+
         z-index: 10;
+
     }
+
 </style>
 
 
+
+
+
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; margin-top: 5rem;">
+
     <form class="m-auto w-50" onsubmit="return false;">
+
         <input class="form-control me-2" type="search" placeholder="Buscar por nome ou CPF" id="buscar"
+
             aria-label="Search">
+
     </form>
+
 </div>
+
+
 
 <div class="table-container">
+
     <table class="table table-striped">
+
         <thead>
+
             <tr>
+
                 <th>Nome</th>
+
                 <th>CPF</th>
+
                 <th>Celular</th>
+
                 <th>Data Nascimento</th>
+
             </tr>
+
         </thead>
+
         <tbody>
+
             {% for paciente in pacientes %}
+
             <tr style="cursor: pointer;" data-paciente-id="{{ paciente.id }}" data-paciente-nome="{{ paciente.nome }}"
+
                 data-paciente-email="{{ paciente.email }}" data-paciente-celular="{{ paciente.celular }}"
+
                 data-paciente-cpf="{{ paciente.cpf }}"
+
                 data-paciente-data-nascimento="{{ paciente.data_nascimento|date:'Y-m-d' }}"
+
                 data-paciente-sexo="{{ paciente.sexo }}" data-paciente-cep="{{ paciente.cep }}"
+
                 data-paciente-rua="{{ paciente.rua }}" data-paciente-numero="{{ paciente.numero }}"
+
                 data-paciente-bairro="{{ paciente.bairro }}" data-paciente-cidade="{{ paciente.cidade }}"
+
                 data-paciente-estado="{{ paciente.estado }}" onclick="abrirModalPaciente(this)">
+
                 <td>{{ paciente.nome }}</td>
+
                 <td>{{ paciente.cpf }}</td>
+
                 <td>{{ paciente.celular }}</td>
+
                 <td>{{ paciente.data_nascimento|date:"d/m/Y" }}</td>
+
             </tr>
+
             {% empty %}
+
             <tr>
+
                 <td colspan="5" class="text-center">Nenhum paciente cadastrado.</td>
+
             </tr>
+
             {% endfor %}
+
         </tbody>
+
     </table>
+
 </div>
+
 </div>
+
 <!-- Modal Detalhes do Paciente -->
+
 <div class="modal fade" id="modalPaciente" tabindex="-1" aria-labelledby="modalPacienteLabel" aria-hidden="true">
+
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+
         <div class="modal-content">
+
             <div class="modal-header">
+
                 <h5 class="modal-title" id="modalPacienteLabel">Detalhes do Paciente</h5>
+
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
             </div>
+
             <div class="modal-body">
+
                 <form id="form-editar-paciente" method="post">
+
                     {% csrf_token %}
+
                     <input type="hidden" id="paciente-id" name="paciente_id">
+
                     <div class="row">
+
                         <div class="col-md-6">
+
                             <h6>Dados Pessoais</h6>
+
                             <p><strong>Nome:</strong> <input type="text" class="form-control" id="modal-nome"
+
                                     name="nome"></p>
+
                             <p><strong>Email:</strong> <input type="email" class="form-control" id="modal-email"
+
                                     name="email"></p>
+
                             <p><strong>Celular:</strong> <input type="text" class="form-control" id="modal-celular"
+
                                     name="celular"></p>
+
                             <p><strong>CPF:</strong> <input type="text" class="form-control" id="modal-cpf" name="cpf">
+
                             </p>
+
                             <p><strong>Data Nascimento:</strong> <input type="text" class="form-control"
+
                                     id="modal-data-nascimento" name="data_nascimento"></p>
+
                             <p><strong>Sexo:</strong> <input type="text" class="form-control" id="modal-sexo"
+
                                     name="sexo"></p>
+
                         </div>
+
                         <div class="col-md-6">
+
                             <h6>Endereço</h6>
+
                             <p><strong>CEP:</strong> <input type="text" class="form-control" id="modal-cep" name="cep">
+
                             </p>
+
                             <p><strong>Rua:</strong> <input type="text" class="form-control" id="modal-rua" name="rua">
+
                             </p>
+
                             <p><strong>Número:</strong> <input type="text" class="form-control" id="modal-numero"
+
                                     name="numero"></p>
+
                             <p><strong>Bairro:</strong> <input type="text" class="form-control" id="modal-bairro"
+
                                     name="bairro"></p>
+
                             <p><strong>Cidade:</strong> <input type="text" class="form-control" id="modal-cidade"
+
                                     name="cidade"></p>
+
                             <p><strong>Estado:</strong> 
+
                                 {% if estados %}
+
                                 
+
                                     <select class="form-control" id="modal-estado"
+
                                         name="estado">
+
                                         {% for estado in estados %}
+
                                         <option value="{{ estado.id }}">{{ estado.nome }}</option>
+
                                         {% endfor %}
+
                                     </select>
 
+
+
                                 {% else %}
+
                                 <p>Nenhum estado encontrado</p>
+
                                 {% endif %}
+
                         </div>
+
                     </div>
+
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-warning" id="btn-editar">Editar</button>
-                <button type="button" class="btn btn-danger" id="btn-excluir">Excluir</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
 
             </div>
+
+            <div class="modal-footer">
+
+                <button type="button" class="btn btn-warning" id="btn-editar">Editar</button>
+
+                <button type="button" class="btn btn-danger" id="btn-excluir">Excluir</button>
+
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+
+
+
+            </div>
+
         </div>
+
     </div>
+
     <!-- Fim Modal -->
+
+
+
+
+
+
 
 
 
@@ -148,94 +296,186 @@
 
     {% endblock %}
 
+
+
     {% block extra_js %}
+
     <script>
+
         let pacienteAtualId = null;
 
 
+
+
+
         function abrirModalPaciente(element) {
+
             const id = element.dataset.pacienteId;
+
             const nome = element.dataset.pacienteNome;
+
             const email = element.dataset.pacienteEmail;
+
             const celular = element.dataset.pacienteCelular;
+
             const cpf = element.dataset.pacienteCpf;
+
             const dataNascimento = element.dataset.pacienteDataNascimento;
+
             const sexo = element.dataset.pacienteSexo;
+
             const cep = element.dataset.pacienteCep;
+
             const rua = element.dataset.pacienteRua;
+
             const numero = element.dataset.pacienteNumero;
+
             const bairro = element.dataset.pacienteBairro;
+
             const cidade = element.dataset.pacienteCidade;
+
             const estado = element.dataset.pacienteEstado;
+
+
 
             pacienteAtualId = id;
 
+
+
             // Preencher o ID do paciente no formulário
+
             document.getElementById('paciente-id').value = id;
 
+
+
             // Preencher os dados do modal
+
             document.getElementById('modal-nome').value = nome;
+
             document.getElementById('modal-email').value = email;
+
             document.getElementById('modal-celular').value = celular;
+
             document.getElementById('modal-cpf').value = cpf;
+
             document.getElementById('modal-data-nascimento').value = formatDate(dataNascimento);
+
             document.getElementById('modal-sexo').value = sexo;
+
             document.getElementById('modal-cep').value = cep;
+
             document.getElementById('modal-rua').value = rua;
+
             document.getElementById('modal-numero').value = numero;
+
             document.getElementById('modal-bairro').value = bairro;
+
             document.getElementById('modal-cidade').value = cidade;
 
+
+
             // Configurar ações dos botões
+
             document.getElementById('btn-editar').onclick = function () {
+
                 document.getElementById('form-editar-paciente').action = '/painel/paciente/editar/' + id + '/';
+
                 document.getElementById('form-editar-paciente').submit();
+
             };
+
+
 
             document.getElementById('btn-excluir').onclick = function () {
+
                 if (confirm('Tem certeza que deseja excluir este paciente?')) {
+
                     window.location.href = '/painel/paciente/excluir/' + id + '/';
+
                 }
+
             };
 
+
+
             // Abrir o modal
+
             const modal = new bootstrap.Modal(document.getElementById('modalPaciente'));
+
             modal.show();
+
         }
+
+
 
         function formatDate(dateString) {
+
             if (!dateString) return '';
+
             const date = new Date(dateString);
+
             return date.toLocaleDateString('pt-BR');
+
         }
 
+
+
         // Funcionalidade de busca em tempo real
+
         document.addEventListener('DOMContentLoaded', function () {
+
             const buscaInput = document.getElementById('buscar');
+
             const tabela = document.querySelector('tbody');
+
             const linhas = Array.from(tabela.querySelectorAll('tr'));
 
+
+
             buscaInput.addEventListener('input', function () {
+
                 const termoBusca = this.value.toLowerCase().trim();
 
+
+
                 linhas.forEach(linha => {
+
                     if (linha.querySelector('.text-center')) {
+
                         // Linha de "Nenhum paciente cadastrado"
+
                         linha.style.display = termoBusca === '' ? '' : 'none';
+
                         return;
+
                     }
+
+
 
                     const nome = linha.cells[0].textContent.toLowerCase();
+
                     const cpf = linha.cells[1].textContent.toLowerCase();
 
+
+
                     if (nome.includes(termoBusca) || cpf.includes(termoBusca)) {
+
                         linha.style.display = '';
+
                     } else {
+
                         linha.style.display = 'none';
+
                     }
+
                 });
+
             });
+
         });
 
+
+
     </script>
+
     {% endblock %}

@@ -44,7 +44,6 @@
         <thead>
             <tr>
                 <th>Nome</th>
-                <th>Endereço</th>
                 <th>Cidade</th>
                 <th>Estado</th>
                 <th>Celular</th>
@@ -62,9 +61,8 @@
                 data-clinica-cnpj="{{ clinica.cnpj }}" data-clinica-email="{{ clinica.email }}"
                 onclick="abrirModalClinica(this)">
                 <td>{{ clinica.nome }}</td>
-                <td>{{ clinica.rua }}, {{ clinica.numero }} - {{ clinica.bairro }}</td>
                 <td>{{ clinica.cidade }}</td>
-                <td>{{ clinica.estado.nome }}</td>
+                <td>{{ clinica.estado_nome }}</td>
                 <td>{{ clinica.celular }}</td>
                 <td>{{ clinica.email }}</td>
             </tr>
@@ -190,13 +188,13 @@
 
         // Configurar ações dos botões
         document.getElementById('btn-editar').onclick = function () {
-            document.getElementById('formEditarClinica').action = '/painel/editar-clinica/' + id + '/';
+            document.getElementById('formEditarClinica').action = '/painel/clinica/editar/' + id + '/';
             document.getElementById('formEditarClinica').submit();
         };
 
         document.getElementById('btn-excluir').onclick = function () {
             if (confirm('Tem certeza que deseja excluir esta clínica?')) {
-                window.location.href = '/painel/excluir-clinica/' + id + '/';
+                window.location.href = '/painel/clinica/excluir/' + id + '/';
             }
         };
 

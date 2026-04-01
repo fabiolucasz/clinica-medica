@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+from struct import pack
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -12,7 +13,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from django.utils import timezone
 import webbrowser
+import requests
 
+base_url = 'http://127.0.0.1:8001'
 
 # Views dos Pacientes
 @login_required
@@ -41,7 +44,6 @@ def cadastrar_paciente(request):
         
         # Buscar a instância de Estados pelo UF
         estado_obj = get_object_or_404(Estados, uf=estado_uf)
-        
         # Criar o paciente
         paciente = Paciente.objects.create(
             nome=nome,
@@ -560,7 +562,10 @@ def excluir_consulta(request, id):
 ## CRUD Clinica
 @login_required
 def cadastrar_clinica(request):
-    estados = Estados.objects.all()
+    url_clinicas = f'{base_url}/clinicas/'
+    url_estados = f'{base_url}/estados/'
+    
+    estados = requests.get(url_estados).json()
     
     if request.method == 'POST':
         # Processar o formulário
@@ -575,76 +580,101 @@ def cadastrar_clinica(request):
         bairro = request.POST.get('bairro')
         cidade = request.POST.get('cidade')
         estado = request.POST.get('estado')
-        
-        estado_obj = Estados.objects.get(id=estado)
-        
-        # Criar a clínica
-        clinica = Clinicas.objects.create(
-            nome=nome,
-            celular=celular,
-            celular2=celular2,
-            email=email,
-            cnpj=cnpj,
-            cep=cep,
-            rua=rua,
-            numero=numero,
-            bairro=bairro,
-            cidade=cidade,
-            estado=estado_obj
-        )
-        
-        return redirect('painel:listar_clinicas')
-    
+
+        try:
+            response = requests.post(url_clinicas, json={
+                'nome': nome,
+                'celular': celular,
+                'celular2': celular2,
+                'email': email,
+                'cnpj': cnpj,
+                'cep': cep,
+                'rua': rua,
+                'numero': numero,
+                'bairro': bairro,
+                'cidade': cidade,
+                'estado': estado
+            })
+            if response.status_code == 200:
+                return redirect('painel:listar_clinicas')
+        except Exception as e:
+            return redirect('painel:cadastrar_clinica', {'message': f'Erro ao cadastrar clínica: {str(e)}'})
     return render(request, 'painel/cadastrar_clinica.html', {'estados': estados})
 
 @login_required
 def listar_clinicas(request):
-    clinicas = Clinicas.objects.all()
-    estados = Estados.objects.all()
+    url_clinicas = f'{base_url}/clinicas/'
+    url_estados = f'{base_url}/estados/'
+    clinicas = requests.get(url_clinicas).json()
+    estados = requests.get(url_estados).json()
     return render(request, 'painel/listar_clinicas.html', {'clinicas': clinicas, 'estados': estados})
 
 @login_required
 def editar_clinica(request, id):
-    clinica = get_object_or_404(Clinicas, pk=id)
+    url_clinica_id = f'{base_url}/clinicas/{id}/'
+    clinica_id = requests.get(url_clinica_id).json()
     
     if request.method == 'POST':
         # Processar o formulário
-        clinica.nome = request.POST.get('nome')
-        clinica.cep = request.POST.get('cep')
-        clinica.rua = request.POST.get('rua')
-        clinica.numero = request.POST.get('numero')
-        clinica.bairro = request.POST.get('bairro')
-        clinica.cidade = request.POST.get('cidade')
-        clinica.estado_id = request.POST.get('estado')
-        clinica.celular = request.POST.get('celular')
-        clinica.celular2 = request.POST.get('celular2')
-        clinica.cnpj = request.POST.get('cnpj')
-        clinica.email = request.POST.get('email')
+        nome = request.POST.get('nome')
+        cep = request.POST.get('cep')
+        rua = request.POST.get('rua')
+        numero = request.POST.get('numero')
+        bairro = request.POST.get('bairro')
+        cidade = request.POST.get('cidade')
+        estado = request.POST.get('estado')
+        celular = request.POST.get('celular')
+        celular2 = request.POST.get('celular2')
+        cnpj = request.POST.get('cnpj')
+        email = request.POST.get('email')
+        try:
+            response = requests.put(url_clinica_id, json={
+                'nome': nome,
+                'cep': cep,
+                'rua': rua,
+                'numero': numero,
+                'bairro': bairro,
+                'cidade': cidade,
+                'estado': estado,
+                'celular': celular,
+                'celular2': celular2,
+                'cnpj': cnpj,
+                'email': email
+            })
+            if response.status_code == 200:
+                return redirect('painel:listar_clinicas')
+        except Exception as e:
+            return redirect('painel:listar_clinicas')
+            
         
-        clinica.save()
-        
-        return redirect('painel:listar_clinicas')
+
     
-    return render(request, 'painel/editar_clinica.html', {'clinica': clinica})
+    return render(request, 'painel:listar_clinicas', {'clinica': clinica_id})
 
 @login_required
 def excluir_clinica(request, id):
-    clinica = get_object_or_404(Clinicas, pk=id)
-    clinica.delete()
+    url_clinica_id = f'{base_url}/clinicas/{id}/'
+    response = requests.delete(url_clinica_id)
+    if response.status_code == 200:
+        return redirect('painel:listar_clinicas')
     return redirect('painel:listar_clinicas')
 
 ## CRUD Salas
 
 @login_required
 def listar_salas(request):
-    clinicas = Clinicas.objects.all()
+    url_clinicas = f'{base_url}/clinicas/'
+    
+    clinicas = requests.get(url_clinicas).json()
     clinica_selecionada = request.GET.get('clinica')
+
+    url_salas_by_clinica_id = f'{base_url}/salas/clinica/{clinica_selecionada}'
+    
     
     if clinica_selecionada:
-        salas = Salas.objects.filter(clinica_id=clinica_selecionada)
-    else:
-        salas = Salas.objects.none()
-    
+        salas = requests.get(url_salas_by_clinica_id).json()
+    else: 
+        salas = None
     return render(request, 'painel/listar_salas.html', {
         'salas': salas, 
         'clinicas': clinicas,
@@ -653,93 +683,143 @@ def listar_salas(request):
 
 @login_required
 def cadastrar_sala(request):
+    url = f'{base_url}/salas/'
     if request.method == 'POST':
         nome = request.POST.get('nome')
         clinica_id = request.POST.get('clinica')
 
         if nome and clinica_id:
-            clinica_obj = get_object_or_404(Clinicas, pk=clinica_id)
-
-            sala = Salas.objects.create(
-                nome=nome,
-                clinica=clinica_obj
-            )
-
-            # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
-            return redirect(f'/painel/config-salas/?clinica={clinica_id}')
+            response = requests.post(url, json={
+                'nome': nome,
+                'clinica': clinica_id
+            })
+            if response.status_code == 200:
+                return redirect(f'/painel/salas/?clinica={clinica_id}')
 
     return render(request, 'painel/cadastrar_sala.html')
 
 @login_required
 def editar_sala(request, id):
-    sala = get_object_or_404(Salas, pk=id)
+    url = f'{base_url}/salas/{id}/'
+    sala = requests.get(url).json()
 
     if request.method == 'POST':
-        sala.nome = request.POST.get('nome')
-        sala.descricao = request.POST.get('descricao')
-        sala.save()
+        nome = request.POST.get('nome')
+
+        response = requests.put(url, json={
+            'nome': nome
+        })
         
-        # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
-        return redirect(f'/painel/config-salas/?clinica={sala.clinica.id}')
+        if response.status_code == 200:
+            # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+            return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
     
     return render(request, 'painel/editar_sala.html', {'sala': sala})
 
 @login_required
 def excluir_sala(request, id):
-    sala = get_object_or_404(Salas, pk=id)
-    clinica_id = sala.clinica.id
-    sala.delete()
-    # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
-    return redirect(f'/painel/config-salas/?clinica={clinica_id}')
+    url = f'{base_url}/salas/{id}/'
+    sala = requests.get(url).json()
+    response = requests.delete(url)
+    if response.status_code == 200:
+        # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+        return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
+    return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
 
 ## CRUD Especialidades
 
 @login_required
 def listar_especialidades(request):
-    especialidades = Especialidades.objects.all()
+    url = f'{base_url}/especialidades/'
+    response = requests.get(url)
+    especialidades = response.json()
 
-
-    
+    #especialidades = Especialidades.objects.all()
+  
     return render(request, 'painel/listar_especialidades.html', {
         'especialidades': especialidades
     })
 
 @login_required
 def cadastrar_especialidade(request):
+    url = f'{base_url}/especialidades/'
+    
     if request.method == 'POST':
         nome = request.POST.get('nome')
 
         if nome:
-            especialidade = Especialidades.objects.create(
-                nome=nome
-            )
-
-            return redirect(f'/painel/especialidades')
+            response = requests.post(url, json={
+                'nome': nome
+            })
+            if response.status_code == 200:
+                return redirect(f'/painel/especialidades')
+            else:
+                return render(request, 'painel/cadastrar_especialidade.html', {'error': 'Erro ao cadastrar especialidade'})
 
     return render(request, 'painel/cadastrar_especialidade.html')
 
 @login_required
 def editar_especialidade(request, id):
-    especialidade = get_object_or_404(Especialidades, pk=id)
-
+    url = f'{base_url}/especialidades/{id}/'
+    
+    # Buscar dados atuais da especialidade na API
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            especialidade_data = response.json()
+            especialidade = {
+                'id': especialidade_data.get('id'),
+                'nome': especialidade_data.get('nome')
+            }
+        else:
+            return redirect('painel:listar_especialidades')
+    except requests.exceptions.RequestException:
+        return redirect('painel:listar_especialidades')
+    
     if request.method == 'POST':
-        especialidade.nome = request.POST.get('nome')
-        especialidade.save()
+        nome = request.POST.get('nome')
         
-        return redirect(f'/painel/especialidades/')
+        if nome:
+            try:
+                response = requests.put(url, json={'nome': nome})
+                if response.status_code == 200:
+                    return redirect('painel:listar_especialidades')
+                else:
+                    return render(request, 'painel/editar_especialidade.html', {
+                        'especialidade': especialidade, 
+                        'error': f'Erro ao editar especialidade: Status {response.status_code}'
+                    })
+            except requests.exceptions.RequestException as e:
+                return render(request, 'painel/editar_especialidade.html', {
+                    'especialidade': especialidade, 
+                    'error': f'Erro de conexão com API: {str(e)}'
+                })
     
     return render(request, 'painel/editar_especialidade.html', {'especialidade': especialidade})
 
 @login_required
 def excluir_especialidade(request, id):
-    especialidade = get_object_or_404(Especialidades, pk=id)
-    especialidade.delete()
-    return redirect(f'/painel/especialidades/')
+    url = f'{base_url}/especialidades/{id}/'
+    
+    try:
+        response = requests.delete(url)
+        if response.status_code == 200:
+            return redirect('painel:listar_especialidades')
+        else:
+            return render(request, 'painel/listar_especialidades.html', {
+                'error': f'Erro ao excluir especialidade: Status {response.status_code}'
+            })
+    except requests.exceptions.RequestException as e:
+        return render(request, 'painel/listar_especialidades.html', {
+            'error': f'Erro de conexão com API: {str(e)}'
+        })
 
 ## CRUD Conselhos
 @login_required
 def listar_conselhos(request):
-    conselhos = Tipo_conselho.objects.all()
+    url = f'{base_url}/tipo-conselho/'
+    response = requests.get(url)
+    conselhos = response.json()
 
     return render(request, 'painel/listar_conselhos.html', {
         'conselhos': conselhos
@@ -747,41 +827,61 @@ def listar_conselhos(request):
 
 @login_required
 def cadastrar_conselho(request):
+    url = f'{base_url}/tipo-conselho/'
     if request.method == 'POST':
         nome = request.POST.get('nome')
 
         if nome:
-            conselho = Tipo_conselho.objects.create(
-                nome=nome
-            )
-
-            return redirect('/painel/conselhos')
+            response = requests.post(url, json={
+                'nome': nome
+            })
+            if response.status_code == 200:
+                return redirect('/painel/conselhos')
+            else:
+                return render(request, 'painel/cadastrar_conselho.html', {'error': 'Erro ao cadastrar conselho'})
 
     return render(request, 'painel/cadastrar_conselho.html')
 
 @login_required
 def editar_conselho(request, id):
-    conselho = get_object_or_404(Tipo_conselho, pk=id)
+    url = f'{base_url}/tipo-conselho/{id}/'
+    response = requests.get(url)
+    conselho = response.json()
 
     if request.method == 'POST':
-        conselho.nome = request.POST.get('nome')
-        conselho.save()
-        
-        return redirect(f'/painel/conselhos/')
+        nome = request.POST.get('nome')
+        response = requests.put(url, json={
+            'nome': nome
+        })
+        if response.status_code == 200:
+            return redirect('/painel/conselhos')
+        else:
+            return render(request, 'painel/editar_conselho.html', {'conselho': conselho, 'error': 'Erro ao editar conselho'})
     
     return render(request, 'painel/editar_conselho.html', {'conselho': conselho})
 
 @login_required
 def excluir_conselho(request, id):
-    conselho = get_object_or_404(Tipo_conselho, pk=id)
-    conselho.delete()
-    return redirect(f'/painel/conselhos/')
-
+    url = f'{base_url}/tipo-conselho/{id}/'
+    try:
+        
+        response = requests.delete(url)
+        if response.status_code == 200:
+            return redirect('painel:listar_conselhos')
+        else:
+            return render(request, 'painel/listar_conselhos.html', {
+                'error': f'Erro ao excluir conselho: Status {response.status_code}'})
+    except requests.exceptions.RequestException as e:
+        return render(request, 'painel/listar_conselhos.html', {
+            'error': f'Erro de conexão com API: {str(e)}'
+            })
 
 ## Estados
 @login_required
 def listar_estados(request):
-    estados = Estados.objects.all()
+    url = f'{base_url}/estados/'
+    response = requests.get(url)
+    estados = response.json()
 
     return render(request, 'painel/listar_estados.html', {
         'estados': estados
@@ -789,42 +889,51 @@ def listar_estados(request):
 
 @login_required
 def cadastrar_estado(request):
+    url = f'{base_url}/estados/'
     if request.method == 'POST':
         nome = request.POST.get('nome')
         uf = request.POST.get('uf')
 
         if nome and uf:
-            estado = Estados.objects.create(
-                nome=nome,
-                uf=uf
-            )
-
-            return redirect('/painel/estados')
+            response = requests.post(url, json={
+                'nome': nome,
+                'uf': uf
+            })
+            if response.status_code == 200:
+                return redirect('/painel/estados')
+            else:
+                return render(request, 'painel/cadastrar_estado.html', {'error': 'Erro ao cadastrar estado'})
 
     return render(request, 'painel/cadastrar_estado.html')
 
 @login_required
 def editar_estado(request, id):
-    estado = get_object_or_404(Estados, pk=id)
-
+    url = f'{base_url}/estados/{id}/'
+    estado = requests.get(url).json()
     if request.method == 'POST':
         nome = request.POST.get('nome')
         uf = request.POST.get('uf')
         
         if nome and uf:
-            estado.nome = nome
-            estado.uf = uf
-            estado.save()
-            
-            return redirect(f'/painel/estados/')
+            response = requests.put(url, json={
+                'nome': nome,
+                'uf': uf
+            })
+            if response.status_code == 200:
+                return redirect('/painel/estados')
+            else:
+                return render(request, 'painel/editar_estado.html', {'estado': estado, 'error': 'Erro ao editar estado'})
     
     return render(request, 'painel/editar_estado.html', {'estado': estado})
 
 @login_required
 def excluir_estado(request, id):
-    estado = get_object_or_404(Estados, pk=id)
-    estado.delete()
-    return redirect(f'/painel/estados/')
+    url = f'{base_url}/estados/{id}/'
+    response = requests.delete(url)
+    if response.status_code == 200:
+        return redirect('/painel/estados')
+    else:
+        return render(request, 'painel/listar_estados.html', {'error': 'Erro ao excluir estado'})
 
 @login_required
 def logout_view(request):
