@@ -54,7 +54,8 @@
 <body>
 
   <!-- Navbar -->
-  {% if user.is_authenticated and user.is_staff %}
+  {% with user_role=request.session.user_data.role %}
+  {% if user_role == "administrador" %}
   <nav class="navbar navbar-expand-lg" style="margin-left: 4.5rem; width: calc(100% - 4.5rem);">
     <div class="container-fluid">
       
@@ -64,16 +65,18 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <a class="nav-link">Seja bem vindo, {{ user.username }}</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/painel/">Painel</a>
+            <a class="nav-link" href="{% url 'painel:listar_pacientes' %}">Painel</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout/">Sair</a>
           </li>
       </div>
     </div>
   </nav>
 
-  {% elif user.is_authenticated %}
+  {% elif user_role == 'paciente' %}
 
     <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
@@ -84,13 +87,36 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <a class="nav-link">Seja bem vindo, {{ user.username }}</a>
+            <a class="nav-link">Seja bem vindo, {{ request.session.user_data.nome }}</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="/area-paciente/dashboard/">Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'area_paciente:logout' %}">Sair</a>
+            <a class="nav-link" href="/logout/">Sair</a>
+          </li>
+      </div>
+    </div>
+  </nav>
+
+  {% elif user_role == 'medico' %}
+
+    <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Clínica Mirna</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link">Seja bem vindo, {{ request.session.user_data.nome }}</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/area-paciente/dashboard/">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout/">Sair</a>
           </li>
       </div>
     </div>
@@ -106,7 +132,7 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/accounts/login/">Login</a>
+            <a class="nav-link" href="/login/">Login</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#">Agendar</a>
@@ -116,7 +142,7 @@
   </nav>
   
   {% endif %}
-  
+  {% endwith %}
 
 
   <!-- Conteúdo principal -->

@@ -14,11 +14,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from django.utils import timezone
 import webbrowser
 import requests
+from mysite.views import token_required
 
 base_url = 'http://127.0.0.1:8001'
 
 # Views dos Pacientes
-@login_required
+
 def cadastrar_paciente(request):
     """
     Cadastra um novo paciente
@@ -75,13 +76,13 @@ def cadastrar_paciente(request):
         
     return render(request, 'painel/cadastrar_paciente.html', {'estados': estados})
 
-@login_required
+@token_required
 def listar_pacientes(request):
     pacientes = Paciente.objects.all()
     estados = Estados.objects.all()
     return render(request, 'painel/listar_pacientes.html', {'pacientes': pacientes, 'estados': estados})
 
-@login_required
+@token_required
 def editar_paciente(request, id):
     paciente = get_object_or_404(Paciente, pk=id)
     
@@ -111,7 +112,7 @@ def editar_paciente(request, id):
     
     return render(request, 'painel/editar_paciente.html')
 
-@login_required
+
 def excluir_paciente(request, id):
     paciente = get_object_or_404(Paciente, pk=id)
     paciente.delete()
@@ -120,7 +121,7 @@ def excluir_paciente(request, id):
 
 #Views dos Médicos
 
-@login_required
+
 def cadastrar_medico(request):
     tipo_conselho = Tipo_conselho.objects.all()
     clinicas = Clinicas.objects.all()
@@ -276,12 +277,12 @@ def cadastrar_medico_sala(request, medico_id):
     })
 
 
-@login_required
+
 def listar_medicos(request):
     medicos = Medico.objects.all()
     return render(request, 'painel/medicos.html', {'medicos': medicos})
 
-@login_required
+
 def medico_detalhes(request, id):
     medico = get_object_or_404(Medico, pk=id)
     
@@ -300,7 +301,7 @@ def medico_detalhes(request, id):
 
 
 # Consultas e Agendamentos
-@login_required
+
 def buscar_pacientes(request):
     query = request.GET.get('q', '')
     
@@ -313,7 +314,7 @@ def buscar_pacientes(request):
     
     return JsonResponse({'pacientes': list(pacientes)})
 
-@login_required
+
 def agendar_consulta(request):
     medicos = Medico.objects.all()
     vagas = Vagas.objects.select_related('sala', 'clinica', 'segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
@@ -421,7 +422,7 @@ def agendar_consulta(request):
         'vagas_json': json.dumps(vagas_data)
     })
 
-@login_required
+
 def listar_consultas(request):
     from datetime import date, timedelta, datetime
     clinicas = Clinicas.objects.all()
@@ -548,11 +549,11 @@ def listar_consultas(request):
     
     return render(request, 'painel/listar_consultas.html', context)
 
-@login_required
+
 def editar_consulta(request, id):
     return render(request, 'painel/editar_consulta.html')
 
-@login_required
+
 def excluir_consulta(request, id):
     return render(request, 'painel/excluir_consulta.html')
 
@@ -560,7 +561,7 @@ def excluir_consulta(request, id):
 # Configurações da clínica
 
 ## CRUD Clinica
-@login_required
+
 def cadastrar_clinica(request):
     url_clinicas = f'{base_url}/clinicas/'
     url_estados = f'{base_url}/estados/'
@@ -601,7 +602,7 @@ def cadastrar_clinica(request):
             return redirect('painel:cadastrar_clinica', {'message': f'Erro ao cadastrar clínica: {str(e)}'})
     return render(request, 'painel/cadastrar_clinica.html', {'estados': estados})
 
-@login_required
+
 def listar_clinicas(request):
     url_clinicas = f'{base_url}/clinicas/'
     url_estados = f'{base_url}/estados/'
@@ -609,7 +610,7 @@ def listar_clinicas(request):
     estados = requests.get(url_estados).json()
     return render(request, 'painel/listar_clinicas.html', {'clinicas': clinicas, 'estados': estados})
 
-@login_required
+
 def editar_clinica(request, id):
     url_clinica_id = f'{base_url}/clinicas/{id}/'
     clinica_id = requests.get(url_clinica_id).json()
@@ -651,7 +652,7 @@ def editar_clinica(request, id):
     
     return render(request, 'painel:listar_clinicas', {'clinica': clinica_id})
 
-@login_required
+
 def excluir_clinica(request, id):
     url_clinica_id = f'{base_url}/clinicas/{id}/'
     response = requests.delete(url_clinica_id)
@@ -661,7 +662,7 @@ def excluir_clinica(request, id):
 
 ## CRUD Salas
 
-@login_required
+
 def listar_salas(request):
     url_clinicas = f'{base_url}/clinicas/'
     
@@ -681,7 +682,7 @@ def listar_salas(request):
         'clinica_selecionada': clinica_selecionada
     })
 
-@login_required
+
 def cadastrar_sala(request):
     url = f'{base_url}/salas/'
     if request.method == 'POST':
@@ -698,7 +699,7 @@ def cadastrar_sala(request):
 
     return render(request, 'painel/cadastrar_sala.html')
 
-@login_required
+
 def editar_sala(request, id):
     url = f'{base_url}/salas/{id}/'
     sala = requests.get(url).json()
@@ -716,7 +717,7 @@ def editar_sala(request, id):
     
     return render(request, 'painel/editar_sala.html', {'sala': sala})
 
-@login_required
+
 def excluir_sala(request, id):
     url = f'{base_url}/salas/{id}/'
     sala = requests.get(url).json()
@@ -728,7 +729,7 @@ def excluir_sala(request, id):
 
 ## CRUD Especialidades
 
-@login_required
+
 def listar_especialidades(request):
     url = f'{base_url}/especialidades/'
     response = requests.get(url)
@@ -740,7 +741,7 @@ def listar_especialidades(request):
         'especialidades': especialidades
     })
 
-@login_required
+
 def cadastrar_especialidade(request):
     url = f'{base_url}/especialidades/'
     
@@ -758,7 +759,7 @@ def cadastrar_especialidade(request):
 
     return render(request, 'painel/cadastrar_especialidade.html')
 
-@login_required
+
 def editar_especialidade(request, id):
     url = f'{base_url}/especialidades/{id}/'
     
@@ -797,7 +798,7 @@ def editar_especialidade(request, id):
     
     return render(request, 'painel/editar_especialidade.html', {'especialidade': especialidade})
 
-@login_required
+
 def excluir_especialidade(request, id):
     url = f'{base_url}/especialidades/{id}/'
     
@@ -815,7 +816,7 @@ def excluir_especialidade(request, id):
         })
 
 ## CRUD Conselhos
-@login_required
+
 def listar_conselhos(request):
     url = f'{base_url}/tipo-conselho/'
     response = requests.get(url)
@@ -825,7 +826,7 @@ def listar_conselhos(request):
         'conselhos': conselhos
     })
 
-@login_required
+
 def cadastrar_conselho(request):
     url = f'{base_url}/tipo-conselho/'
     if request.method == 'POST':
@@ -842,7 +843,7 @@ def cadastrar_conselho(request):
 
     return render(request, 'painel/cadastrar_conselho.html')
 
-@login_required
+
 def editar_conselho(request, id):
     url = f'{base_url}/tipo-conselho/{id}/'
     response = requests.get(url)
@@ -860,7 +861,7 @@ def editar_conselho(request, id):
     
     return render(request, 'painel/editar_conselho.html', {'conselho': conselho})
 
-@login_required
+
 def excluir_conselho(request, id):
     url = f'{base_url}/tipo-conselho/{id}/'
     try:
@@ -877,7 +878,7 @@ def excluir_conselho(request, id):
             })
 
 ## Estados
-@login_required
+
 def listar_estados(request):
     url = f'{base_url}/estados/'
     response = requests.get(url)
@@ -887,7 +888,7 @@ def listar_estados(request):
         'estados': estados
     })
 
-@login_required
+
 def cadastrar_estado(request):
     url = f'{base_url}/estados/'
     if request.method == 'POST':
@@ -906,7 +907,7 @@ def cadastrar_estado(request):
 
     return render(request, 'painel/cadastrar_estado.html')
 
-@login_required
+
 def editar_estado(request, id):
     url = f'{base_url}/estados/{id}/'
     estado = requests.get(url).json()
@@ -926,7 +927,7 @@ def editar_estado(request, id):
     
     return render(request, 'painel/editar_estado.html', {'estado': estado})
 
-@login_required
+
 def excluir_estado(request, id):
     url = f'{base_url}/estados/{id}/'
     response = requests.delete(url)
@@ -935,7 +936,7 @@ def excluir_estado(request, id):
     else:
         return render(request, 'painel/listar_estados.html', {'error': 'Erro ao excluir estado'})
 
-@login_required
+
 def logout_view(request):
     logout(request)
     return redirect('login')

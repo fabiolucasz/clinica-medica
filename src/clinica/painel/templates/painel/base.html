@@ -76,7 +76,8 @@
 <body>
 
 
-    {% if user.is_authenticated and user.is_staff %}
+    {% with user_role=request.session.user_data.role %}
+    {% if user_role == "administrador" %}
     {% load static %}
 
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -254,9 +255,10 @@
 
     </div>
     {% endif %}
-
-    <!-- Navbar -->
-    {% if user.is_authenticated and user.is_staff %}
+    {% endwith %}
+<!-- Navbar -->
+    {% with user_role=request.session.user_data.role %}
+    {% if user_role == "administrador" %}
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <div class="title" style="margin-right: auto; width: 280px;">
@@ -272,18 +274,77 @@
                 <a href="{% url 'painel:listar_consultas' %}" class="nav-link link-dark">Consultas</a>
                 <a href="{% url 'painel:listar_clinicas' %}" class="nav-link link-dark">Configurações</a>
 
-
                 {% block navbar-left %}
                 {% endblock %}
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        
+                    <li class="nav-item">
+                        <a class="nav-link link-dark" href="{% url 'painel:logout' %}">Sair</a>
+                    </li>
                     {% block navbar-right %}
                     {% endblock %}
                 </ul>
             </div>
         </div>
     </nav>
-    {% endif %}
 
+  {% elif user_role == 'paciente' %}
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <div class="title" style="margin-right: auto; width: 280px;">
+                <h3>Clínica Médica</h3>
+            </div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link link-dark">Seja bem vindo, {{ request.session.user_data.nome }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link link-dark" href="{% url 'painel:logout' %}">Sair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+  {% elif user_role == 'medico' %}
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <div class="title" style="margin-right: auto; width: 280px;">
+                <h3>Clínica Médica</h3>
+            </div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link link-dark">Seja bem vindo, {{ request.session.user_data.nome }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link link-dark" href="{% url 'painel:logout' %}">Sair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+ 
+  {% else %}
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <div class="title" style="margin-right: auto; width: 280px;">
+                <h3>Clínica Médica</h3>
+            </div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link link-dark" href="{% url 'painel:login' %}">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+   {% endif %}
+  {% endwith %}
 
 
     <!-- Conteúdo principal -->
