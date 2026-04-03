@@ -24,13 +24,15 @@ def cadastrar_paciente(request):
     """
     Cadastra um novo paciente
     """
-    estados = Estados.objects.all()
+    url_estados = f'{base_url}/estados/'
+    estados = requests.get(url_estados).json()
 
     # TODO: Implementar a verificação de CPF válido e preenchimento automático do campo de CEP, Mensagem de erro caso o CPF seja inválido ou já cadastrado.
 
     if request.method == 'POST':
         # Processar o formulário
         nome = request.POST.get('nome')
+        senha = request.POST.get('senha')
         celular = request.POST.get('celular')
         email = request.POST.get('email')
         cpf = request.POST.get('cpf')
@@ -42,24 +44,36 @@ def cadastrar_paciente(request):
         bairro = request.POST.get('bairro')
         cidade = request.POST.get('cidade')
         estado_uf = request.POST.get('estado')
-        
-        # Buscar a instância de Estados pelo UF
-        estado_obj = get_object_or_404(Estados, uf=estado_uf)
-        # Criar o paciente
-        paciente = Paciente.objects.create(
-            nome=nome,
-            celular=celular,
-            email=email,
-            cpf=cpf,
-            data_nascimento=data_nascimento,
-            sexo=sexo,
-            cep=cep,
-            rua=rua,
-            numero=numero,
-            bairro=bairro,
-            cidade=cidade,
-            estado=estado_obj,
-        )
+        foto_perfil = request.POST.get('foto')
+        try:
+            response = requests.post(
+                f'{base_url}/pacientes/',
+                json={
+                    'nome': nome,
+                    'password': senha,
+                    'celular': celular,
+                    'email': email,
+                    'cpf': cpf,
+                    'data_nascimento': data_nascimento,
+                    'sexo': sexo,
+                    'cep': cep,
+                    'rua': rua,
+                    'numero': numero,
+                    'bairro': bairro,
+                    'cidade': cidade,
+                    'estado': estado_uf,
+                    'role': "paciente",
+                    'foto_perfil': foto_perfil
+                })
+            
+            if response.status_code == 200:
+                return redirect('painel:listar_pacientes')
+            else:
+                print(f"Erro na API - Status: {response.status_code}")
+                print(f"Resposta: {response.text}")
+        except Exception as e:
+            print(f"Erro ao cadastrar paciente: {e}")
+            return redirect('painel:listar_pacientes')
         
         # Enviar mensagem de boas-vindas
         mensagem = f"Seja bem-vindo(a) a nossa clínica, {nome.upper()}! Estamos felizes em tê-lo(a) conosco."
@@ -76,46 +90,110 @@ def cadastrar_paciente(request):
         
     return render(request, 'painel/cadastrar_paciente.html', {'estados': estados})
 
-@token_required
+
 def listar_pacientes(request):
-    pacientes = Paciente.objects.all()
-    estados = Estados.objects.all()
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('mysite:login_view')
+    
+    # Headers com autenticação
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        url_pacientes = f'{base_url}/pacientes/'
+        url_estados = f'{base_url}/estados/'
+        
+        # Requisições com autenticação
+        pacientes_response = requests.get(url_pacientes, headers=headers)
+        estados_response = requests.get(url_estados, headers=headers)
+        
+        if pacientes_response.status_code == 200:
+            pacientes = pacientes_response.json()
+        else:
+            pacientes = []
+            
+        if estados_response.status_code == 200:
+            estados = estados_response.json()
+        else:
+            estados = []
+            
+    except Exception as e:
+        pacientes = []
+        estados = []
+        print(f"Erro ao buscar dados da API: {e}")
+    
     return render(request, 'painel/listar_pacientes.html', {'pacientes': pacientes, 'estados': estados})
 
 @token_required
 def editar_paciente(request, id):
-    paciente = get_object_or_404(Paciente, pk=id)
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('mysite:login_view')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    url_paciente_id = f'{base_url}/pacientes/{id}/'
+    
+    try:
+        paciente_response = requests.get(url_paciente_id, headers=headers)
+        if paciente_response.status_code == 200:
+            paciente = paciente_response.json()
+        else:
+            paciente = {}
+    except Exception as e:
+        paciente = {}
+        print(f"Erro ao buscar paciente: {e}")
     
     if request.method == 'POST':
         # Processar o formulário
-        paciente.nome = request.POST.get('nome')
-        paciente.celular = request.POST.get('celular')
-        paciente.email = request.POST.get('email')
-        paciente.cpf = request.POST.get('cpf')
-        data_nascimento_obj = request.POST.get('data_nascimento')
-        nascimento_iso = data_nascimento_obj.split('/')[2] + '-' + data_nascimento_obj.split('/')[1] + '-' + data_nascimento_obj.split('/')[0]
-        paciente.data_nascimento = nascimento_iso
-        paciente.sexo = request.POST.get('sexo')
-        paciente.cep = request.POST.get('cep')
-        paciente.rua = request.POST.get('rua')
-        paciente.numero = request.POST.get('numero')
-        paciente.bairro = request.POST.get('bairro')
-        paciente.cidade = request.POST.get('cidade')
+        nome = request.POST.get('nome')
+        celular = request.POST.get('celular')
+        email = request.POST.get('email')
+        cpf = request.POST.get('cpf')
+        data_nascimento = request.POST.get('data_nascimento')
+        sexo = request.POST.get('sexo')
+        cep = request.POST.get('cep')
+        rua = request.POST.get('rua')
+        numero = request.POST.get('numero')
+        bairro = request.POST.get('bairro')
+        cidade = request.POST.get('cidade')
         estado_id = request.POST.get('estado')
+        foto_perfil = request.POST.get('foto', 'string')
         
-        # Buscar a instância de Estados pelo ID
-        estado_obj = get_object_or_404(Estados, id=estado_id)
-        paciente.estado = estado_obj
-        
-        paciente.save()
-        return redirect('painel:listar_pacientes')
+        try:
+            response = requests.put(url_paciente_id, json={
+                'nome': nome,
+                'email': email,
+                'celular': celular,
+                'cpf': cpf,
+                'data_nascimento': data_nascimento,
+                'sexo': sexo,
+                'cep': cep,
+                'rua': rua,
+                'numero': numero,
+                'bairro': bairro,
+                'cidade': cidade,
+                'estado': int(estado_id) if estado_id else 0,
+                'role': "paciente",
+                'foto_perfil': foto_perfil
+            }, headers=headers)
+            
+
+            
+            if response.status_code == 200:
+                return redirect('painel:listar_pacientes')
+        except Exception as e:
+            print(f"Erro ao editar paciente: {e}")
     
-    return render(request, 'painel/editar_paciente.html')
+    return render(request, 'painel/editar_paciente.html', {'paciente': paciente})
 
 
 def excluir_paciente(request, id):
-    paciente = get_object_or_404(Paciente, pk=id)
-    paciente.delete()
+    url_paciente_id = f'{base_url}/pacientes/{id}/'
+    response = requests.delete(url_paciente_id)
+    if response.status_code == 200:
+        return redirect('painel:listar_pacientes')
     return redirect('painel:listar_pacientes')
 
 
@@ -647,9 +725,6 @@ def editar_clinica(request, id):
         except Exception as e:
             return redirect('painel:listar_clinicas')
             
-        
-
-    
     return render(request, 'painel:listar_clinicas', {'clinica': clinica_id})
 
 
