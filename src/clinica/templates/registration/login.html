@@ -15,6 +15,16 @@
         {{ error }}
       </div>
     {% endif %}
+    
+    <!-- Messages framework -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
     <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57">
     <h1 class="h3 mb-3 fw-normal">Faça seu login</h1>
 

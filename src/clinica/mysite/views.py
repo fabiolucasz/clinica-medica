@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 import requests
 
 # Create your views here.
@@ -9,12 +10,14 @@ def token_required(view_func):
     def wrapper(request, *args, **kwargs):
         token = request.session.get('fastapi_token')
         if not token:
-            return redirect('login_view')
+            return redirect('/login/')
         
-        # Opcional: validar o token a cada requisição
-        # validated = validate_token(token)
-        # if not validated:
-        #     return redirect('login_view')
+        # Validar o token a cada requisição
+        validated = validate_token(token)
+        if not validated:
+            # Token expirado ou inválido - fazer logout automático
+            request.session.flush()
+            return redirect('/login/')
         
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -74,4 +77,21 @@ def validate_token(token):
 def logout_view(request):
     # Limpar a sessão
     request.session.flush()
-    return redirect('login_view')
+    return redirect('/login/')
+
+
+def check_token(request):
+    """Endpoint para verificação AJAX do token"""
+    token = request.session.get('fastapi_token')
+    
+    if not token:
+        return JsonResponse({'valid': False}, status=401)
+    
+    # Validar o token
+    validated = validate_token(token)
+    if not validated:
+        # Limpar sessão se token expirou
+        request.session.flush()
+        return JsonResponse({'valid': False}, status=401)
+    
+    return JsonResponse({'valid': True})

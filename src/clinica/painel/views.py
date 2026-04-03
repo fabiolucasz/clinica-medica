@@ -86,7 +86,7 @@ def cadastrar_paciente(request):
             print(f"Erro ao abrir navegador: {e}")
         
         # Redirecionar para a lista de pacientes
-        return redirect('painel:listar_pacientes')
+        return redirect('/painel/listar_pacientes/')
         
     return render(request, 'painel/cadastrar_paciente.html', {'estados': estados})
 
@@ -95,7 +95,7 @@ def listar_pacientes(request):
     # Obter token da sessão
     token = request.session.get('fastapi_token')
     if not token:
-        return redirect('mysite:login_view')
+        return redirect('/login/')
     
     # Headers com autenticação
     headers = {'Authorization': f'Bearer {token}'}
@@ -130,7 +130,7 @@ def editar_paciente(request, id):
     # Obter token da sessão
     token = request.session.get('fastapi_token')
     if not token:
-        return redirect('mysite:login_view')
+        return redirect('/login/')
     
     headers = {'Authorization': f'Bearer {token}'}
     url_paciente_id = f'{base_url}/pacientes/{id}/'
