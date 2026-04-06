@@ -351,51 +351,132 @@ def cadastrar_medico_sala(request, medico_id):
     vagas_request = f'{api_base_url}/vagas'
     
     try:
-        medico_response = requests.get(medico_request, headers=headers)
-        clinicas_response = requests.get(clinicas_request, headers=headers)
-        salas_response = requests.get(salas_request, headers=headers)
-        vagas_response = requests.get(vagas_request, headers=headers)
+        # Usar requisições concorrentes com ThreadPoolExecutor para melhor performance
+        import concurrent.futures
         
-        medico_response.raise_for_status()
-        clinicas_response.raise_for_status()
-        salas_response.raise_for_status()
-        vagas_response.raise_for_status()
+        def fazer_requisicao(url):
+            return requests.get(url, headers=headers)
         
-        if medico_response.status_code == 200:
-            medico = medico_response.json()
-        if clinicas_response.status_code == 200:
-            clinicas = clinicas_response.json()
-        if salas_response.status_code == 200:
-            salas = salas_response.json()
-        if vagas_response.status_code == 200:
-            vagas = vagas_response.json()
+        urls = [medico_request, clinicas_request, salas_request, vagas_request]
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            future_to_url = {executor.submit(fazer_requisicao, url): url for url in urls}
+            
+            responses = {}
+            for future in concurrent.futures.as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    response = future.result()
+                    response.raise_for_status()
+                    responses[url] = response
+                except requests.exceptions.RequestException as e:
+                    print(f"Erro na requisição {url}: {e}")
+                    return redirect('/login/')
+        
+        # Extrair dados das respostas
+        medico = responses[medico_request].json() if medico_request in responses else {}
+        clinicas = responses[clinicas_request].json() if clinicas_request in responses else []
+        salas = responses[salas_request].json() if salas_request in responses else []
+        vagas = responses[vagas_request].json() if vagas_request in responses else []
+        
+        # Debug: Verificar se o médico foi encontrado
+        print(f"DEBUG: Médico ID buscado: {medico_id}")
+        print(f"DEBUG: Médico encontrado: {medico}")
+        print(f"DEBUG: Status da requisição médico: {responses[medico_request].status_code if medico_request in responses else 'N/A'}")
+        
+        if not medico or 'id' not in medico:
+            print(f"DEBUG: Médico não encontrado ou dados inválidos!")
+            return redirect('painel:listar_medicos')
     except requests.exceptions.RequestException as e:
         print(f"Erro na requisição: {e}")
         return redirect('/login/')
     
+    # Usar sempre a primeira clínica disponível e carregar suas vagas diretamente
+    clinica_padrao = clinicas[0] if clinicas else None
+    
+    if clinica_padrao:
+        clinica_id = clinica_padrao['id']
+        print(f"DEBUG: Usando clínica padrão: {clinica_padrao['nome']} (ID: {clinica_id})")
+        
+        # Buscar vagas da clínica padrão
+        vagas_clinica_request = f'{api_base_url}/vagas/clinica/{clinica_id}'
+        try:
+            vagas_clinica_response = requests.get(vagas_clinica_request, headers=headers)
+            vagas_clinica_response.raise_for_status()
+            if vagas_clinica_response.status_code == 200:
+                vagas = vagas_clinica_response.json()
+                print(f"DEBUG: Vagas carregadas da clínica padrão {clinica_id}: {len(vagas)} vagas")
+                
+                # Enriquecer as vagas com nomes dos médicos (igual à API)
+                if vagas:
+                    # Coletar todos os IDs de médicos únicos
+                    medicos_ids = set()
+                    for vaga in vagas:
+                        dias_medicos = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
+                        for dia in dias_medicos:
+                            medico_id = vaga.get(dia)
+                            if medico_id and medico_id != 0:
+                                medicos_ids.add(medico_id)
+                    
+                    # Buscar todos os médicos em lote
+                    medicos_nomes = {}
+                    if medicos_ids:
+                        print(f"DEBUG: Buscando {len(medicos_ids)} médicos em lote para enriquecer vagas")
+                        for medico_id_busca in medicos_ids:
+                            try:
+                                medico_response = requests.get(f'{api_base_url}/medicos/{medico_id_busca}', headers=headers)
+                                if medico_response.status_code == 200:
+                                    medico_encontrado = medico_response.json()
+                                    medicos_nomes[medico_id_busca] = medico_encontrado.get('nome', 'Médico não encontrado')
+                                else:
+                                    medicos_nomes[medico_id_busca] = 'Médico não encontrado'
+                            except:
+                                medicos_nomes[medico_id_busca] = 'Erro ao buscar médico'
+                    
+                    # Enriquecer dados das vagas com nomes dos médicos
+                    for vaga in vagas:
+                        dias_medicos = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
+                        for dia in dias_medicos:
+                            medico_id_vaga = vaga.get(dia)
+                            if medico_id_vaga and medico_id_vaga != 0:
+                                vaga[f'{dia}_nome'] = medicos_nomes.get(medico_id_vaga, 'Médico não encontrado')
+                                print(f"DEBUG: Vaga {vaga.get('id')} - {dia}: médico {medico_id_vaga} -> {medicos_nomes.get(medico_id_vaga, 'Médico não encontrado')}")
+                            else:
+                                vaga[f'{dia}_nome'] = None
+                                print(f"DEBUG: Vaga {vaga.get('id')} - {dia}: vaga livre")
+            else:
+                vagas = []
+                print(f"DEBUG: Erro ao buscar vagas da clínica padrão - Status: {vagas_clinica_response.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao buscar vagas da clínica padrão: {e}")
+            vagas = []
+    else:
+        vagas = []
+        print("DEBUG: Nenhuma clínica encontrada")
+    
     if request.method == 'POST':
-        # Processar as vagas selecionadas
-        clinica_id = request.POST.get('clinica')
+        # Processar as vagas selecionadas usando a clínica padrão
+        clinica_id = clinica_padrao['id'] if clinica_padrao else None
         sala_id = request.POST.get('sala')
         
-        # Buscar vagas da clínica selecionada para exibição
-        if clinica_id:
-            vagas_clinica_request = f'{api_base_url}/vagas/clinica/{clinica_id}'
-            try:
-                vagas_clinica_response = requests.get(vagas_clinica_request, headers=headers)
-                vagas_clinica_response.raise_for_status()
-                if vagas_clinica_response.status_code == 200:
-                    vagas_clinica = vagas_clinica_response.json()
-                else:
-                    vagas_clinica = []
-            except requests.exceptions.RequestException as e:
-                print(f"Erro ao buscar vagas da clínica: {e}")
-                vagas_clinica = []
-        else:
-            vagas_clinica = vagas  # Usar todas as vagas se nenhuma clínica selecionada
+        # Pegar o medico_id do formulário (hidden field)
+        medico_id_form = request.POST.get('medico_id')
+        print(f"DEBUG: medico_id da URL: {medico_id}")
+        print(f"DEBUG: medico_id do formulário: {medico_id_form}")
+        
+        # Usar o medico_id do formulário (prioridade) ou da URL
+        medico_id_atual = medico_id_form if medico_id_form else medico_id
+        print(f"DEBUG: medico_id final usado: {medico_id_atual}")
         
         # Processar todos os selectboxes - agrupar por vaga_id
         vagas_atualizadas = {}
+        
+        print(f"\nDEBUG: Processando formulário POST:")
+        print(f"Médico atual ID: {medico_id_atual}")
+        print(f"Dados recebidos:")
+        for key, value in request.POST.items():
+            if key.startswith('vaga_'):
+                print(f"  {key}: {value}")
         
         # Primeiro, agrupar todos os dados por vaga_id
         for key, value in request.POST.items():
@@ -404,41 +485,102 @@ def cadastrar_medico_sala(request, medico_id):
                 vaga_id = parts[1]
                 dia = parts[2]
                 
-                if vaga_id not in vagas_atualizadas:
-                    vagas_atualizadas[vaga_id] = {}
-                
-                # Atribuir médico ou None conforme seleção
-                vagas_atualizadas[vaga_id][dia] = medico_id if value and value.strip() else None
+                # Apenas processar se o valor não estiver vazio e for o ID do médico atual
+                if value and value.strip() and value == str(medico_id_atual):
+                    if vaga_id not in vagas_atualizadas:
+                        vagas_atualizadas[vaga_id] = {}
+                    
+                    # Atribuir médico atual APENAS para os campos selecionados
+                    vagas_atualizadas[vaga_id][dia] = medico_id_atual
         
-        # Agora, para cada vaga, buscar dados atuais e criar JSON completo
-        for vaga_id, dias_selecionados in vagas_atualizadas.items():
-            try:
-                # Buscar dados atuais da vaga
-                vaga_response = requests.get(f'{api_base_url}/vagas/{vaga_id}', headers=headers)
-                vaga_response.raise_for_status()
-                vaga_atual = vaga_response.json()
+        print(f"Vagas a serem atualizadas: {vagas_atualizadas}\n")
+        
+        # Otimização: Processar vagas em lote usando requisições concorrentes diretas
+        if vagas_atualizadas:
+            print(f"DEBUG: Processando {len(vagas_atualizadas)} vagas em paralelo")
+            
+            # Primeiro, buscar todas as vagas atuais para manter os médicos existentes
+            def buscar_vaga_atual(vaga_id):
+                try:
+                    response = requests.get(f'{api_base_url}/vagas/{vaga_id}', headers=headers)
+                    response.raise_for_status()
+                    return vaga_id, response.json()
+                except requests.exceptions.RequestException as e:
+                    print(f"❌ Erro ao buscar vaga {vaga_id}: {e}")
+                    return vaga_id, None
+            
+            # Buscar vagas em paralelo
+            with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+                future_to_vaga = {executor.submit(buscar_vaga_atual, vaga_id): vaga_id for vaga_id in vagas_atualizadas.keys()}
                 
-                # Criar JSON completo para atualização
-                update_data = {
-                    "status": vaga_atual.get("status", ""),
-                    "segunda": dias_selecionados.get("segunda", vaga_atual.get("segunda")),
-                    "terca": dias_selecionados.get("terca", vaga_atual.get("terca")),
-                    "quarta": dias_selecionados.get("quarta", vaga_atual.get("quarta")),
-                    "quinta": dias_selecionados.get("quinta", vaga_atual.get("quinta")),
-                    "sexta": dias_selecionados.get("sexta", vaga_atual.get("sexta")),
-                    "max_pacientes": vaga_atual.get("max_pacientes", 0),
-                    "pacientes_atuais": vaga_atual.get("pacientes_atuais", 0)
-                }
+                vagas_atuais = {}
+                for future in concurrent.futures.as_completed(future_to_vaga):
+                    vaga_id = future_to_vaga[future]
+                    try:
+                        vaga_id_result, vaga_data = future.result()
+                        if vaga_data:
+                            vagas_atuais[vaga_id_result] = vaga_data
+                    except Exception as e:
+                        print(f"❌ Erro ao processar vaga {vaga_id}: {e}")
+            
+            # Agora atualizar mantendo os médicos existentes
+            def atualizar_vaga_com_preservacao(vaga_id):
+                try:
+                    dias_selecionados = vagas_atualizadas[vaga_id]
+                    vaga_atual = vagas_atuais.get(vaga_id)
+                    
+                    if not vaga_atual:
+                        return vaga_id, False, "Vaga não encontrada"
+                    
+                    print(f"DEBUG: Vaga {vaga_id} - Estado ANTES da atualização:")
+                    print(f"  Segunda: {vaga_atual.get('segunda')} -> será: {dias_selecionados.get('segunda') if 'segunda' in dias_selecionados else vaga_atual.get('segunda')}")
+                    print(f"  Terça: {vaga_atual.get('terca')} -> será: {dias_selecionados.get('terca') if 'terca' in dias_selecionados else vaga_atual.get('terca')}")
+                    print(f"  Quarta: {vaga_atual.get('quarta')} -> será: {dias_selecionados.get('quarta') if 'quarta' in dias_selecionados else vaga_atual.get('quarta')}")
+                    print(f"  Quinta: {vaga_atual.get('quinta')} -> será: {dias_selecionados.get('quinta') if 'quinta' in dias_selecionados else vaga_atual.get('quinta')}")
+                    print(f"  Sexta: {vaga_atual.get('sexta')} -> será: {dias_selecionados.get('sexta') if 'sexta' in dias_selecionados else vaga_atual.get('sexta')}")
+                    
+                    # Manter os médicos existentes e atualizar apenas os dias selecionados
+                    update_data = {
+                        "segunda": dias_selecionados.get("segunda") if "segunda" in dias_selecionados else vaga_atual.get("segunda"),
+                        "terca": dias_selecionados.get("terca") if "terca" in dias_selecionados else vaga_atual.get("terca"),
+                        "quarta": dias_selecionados.get("quarta") if "quarta" in dias_selecionados else vaga_atual.get("quarta"),
+                        "quinta": dias_selecionados.get("quinta") if "quinta" in dias_selecionados else vaga_atual.get("quinta"),
+                        "sexta": dias_selecionados.get("sexta") if "sexta" in dias_selecionados else vaga_atual.get("sexta"),
+                    }
+                    
+                    # Remover apenas valores None (quando usuário deselecionou)
+                    update_data = {k: v for k, v in update_data.items() if v is not None}
+                    
+                    print(f"DEBUG: Atualizando vaga {vaga_id} com dados: {update_data}")
+                    
+                    update_response = requests.put(f'{api_base_url}/vagas/{vaga_id}', json=update_data, headers=headers)
+                    update_response.raise_for_status()
+                    return vaga_id, True, "Sucesso"
+                    
+                except requests.exceptions.RequestException as e:
+                    return vaga_id, False, str(e)
+            
+            # Processar todas as atualizações em paralelo
+            with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+                future_to_vaga = {executor.submit(atualizar_vaga_com_preservacao, vaga_id): vaga_id for vaga_id in vagas_atualizadas.keys()}
                 
-                # Atualizar a vaga via API com JSON completo
-                vaga_update_request = f'{api_base_url}/vagas/{vaga_id}/'
-                update_response = requests.put(vaga_update_request, json=update_data, headers=headers)
-                update_response.raise_for_status()
+                sucessos = 0
+                falhas = 0
+                for future in concurrent.futures.as_completed(future_to_vaga):
+                    vaga_id = future_to_vaga[future]
+                    try:
+                        vaga_id_result, success, message = future.result()
+                        if success:
+                            print(f"✅ Vaga {vaga_id_result} atualizada com sucesso")
+                            sucessos += 1
+                        else:
+                            print(f"❌ Erro ao atualizar vaga {vaga_id_result}: {message}")
+                            falhas += 1
+                    except Exception as e:
+                        print(f"❌ Erro ao processar atualização da vaga {vaga_id}: {e}")
+                        falhas += 1
                 
-                print(f"✅ Vaga {vaga_id} atualizada com JSON completo: {update_data}")
-                
-            except requests.exceptions.RequestException as e:
-                print(f"❌ Erro ao atualizar vaga {vaga_id}: {e}")
+                print(f"DEBUG: Processamento concluído - {sucessos} sucessos, {falhas} falhas")
         
         # Redirecionar sempre após processar o formulário
         return redirect('painel:listar_medicos')
@@ -449,6 +591,11 @@ def cadastrar_medico_sala(request, medico_id):
         'vagas': json.dumps(vagas),
         'medico': medico
     })
+    
+    # Debug final para garantir que o médico correto foi passado
+    print(f"DEBUG FINAL - Médico passado para template: {medico}")
+    print(f"DEBUG FINAL - Médico ID: {medico.get('id') if medico else 'N/A'}")
+    print(f"DEBUG FINAL - Médico Nome: {medico.get('nome') if medico else 'N/A'}")
 
 
 # Consultas e Agendamentos

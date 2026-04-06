@@ -2,6 +2,12 @@
 
 {% block navbar-left %}
 <h1 class="m-auto h3 mb-3 fw-normal">Selecionar Vagas - Dr(a). {{ medico.nome }}</h1>
+<!-- Debug: Verificar dados do médico -->
+<script>
+console.log('DEBUG TEMPLATE - Médico ID: {{ medico.id }}');
+console.log('DEBUG TEMPLATE - Médico Nome: {{ medico.nome }}');
+console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
+</script>
 {% endblock %}
 
 {% block navbar-right %}
@@ -70,7 +76,7 @@
             <div class="order-form">
                 <div class="order-form-child">
                     <div class="column">
-                        <div class="form-floating">
+                        <!-- <div class="form-floating">
 
                                 <select type="text" class="form-control" id="clinica-select" name="clinica" placeholder="clinica"
                                 required>
@@ -84,8 +90,12 @@
                                     {% endif %}
                                 </select>
                             <label for="clinica-select">Selecione a clínica</label>
-                        </div>
+                        </div> -->
 
+                    </div>                
+                <div class="order-form">
+                <div class="order-form-child">
+                    <div class="column">
                         <!-- Tabela de Turnos e Dias -->
                         <div id="tabela-turnos" style="display: none; margin-top: 2rem;">
                             <h5>Disponibilidade de Vagas</h5>
@@ -108,11 +118,16 @@
                                 </table>
                             </div>
                         </div>
-
                     </div>                
                 </div>
 
-                <button class="w-100 btn btn-lg btn-primary" type="submit">Cadastrar</button>
+                <button class="w-100 btn btn-lg btn-primary" type="submit" id="btn-cadastrar">
+                    <span id="btn-text">Cadastrar</span>
+                    <span id="btn-loading" style="display: none;">
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Processando...
+                    </span>
+                </button>
             </div>
 
 
@@ -120,20 +135,30 @@
     </main>
 
     {% block extra_js %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Obter dados das vagas do data attribute
+            // Cache de elementos DOM para melhor performance
             const vagasDataElement = document.getElementById('vagas-data');
+            const tabelaTurnos = document.getElementById('tabela-turnos');
+            const tabelaBody = document.getElementById('tabela-turnos-body');
+            
+            // Obter dados das vagas do data attribute
             let vagasData = [];
             
             try {
                 const vagasJson = vagasDataElement.getAttribute('data-vagas') || '[]';
+                console.log('DEBUG: JSON bruto das vagas:', vagasJson);
                 if (vagasJson && vagasJson !== '[]' && vagasJson.trim() !== '') {
                     vagasData = JSON.parse(vagasJson);
+                    console.log('DEBUG: Vagas parseadas:', vagasData);
+                    console.log('DEBUG: Número de vagas:', vagasData.length);
+                } else {
+                    console.log('DEBUG: Nenhuma vaga encontrada ou JSON vazio');
                 }
             } catch (e) {
                 console.error('Erro ao fazer parse das vagas:', e);
@@ -141,167 +166,138 @@
                 vagasData = [];
             }
             
-            const clinicaSelecionadaElement = document.getElementById('clinica-selecionada');
-            const clinicaSelecionada = clinicaSelecionadaElement ? parseInt(clinicaSelecionadaElement.value) : null;
-            
-            // Organizar vagas por sala (para compatibilidade com o código existente)
-            const vagasPorSala = {};
-            vagasData.forEach(function(vaga) {
-                vagasPorSala[vaga.sala] = vagasPorSala[vaga.sala] || [];
-                vagasPorSala[vaga.sala].push(vaga);
-            });
-            
-            const clinicaSelect = document.getElementById('clinica-select');
-            const tabelaTurnos = document.getElementById('tabela-turnos');
-            const tabelaBody = document.getElementById('tabela-turnos-body');
-
-            // Se houver clínica pré-selecionada, definir o valor mas não disparar evento
-            if (clinicaSelecionada) {
-                clinicaSelect.value = clinicaSelecionada;
-                // Apenas renderizar a tabela, não submeter novamente
-                renderizarTabelaVagas();
-            }
-
-            clinicaSelect.addEventListener('change', function() {
-                const clinicaId = this.value;
-                
-                if (!clinicaId) {
-                    // Se nenhuma clínica selecionada, esconder tabela
+            // Renderizar tabela diretamente com as vagas carregadas
+            function renderizarTabelaVagas() {
+                if (vagasData.length === 0) {
                     tabelaTurnos.style.display = 'none';
-                    tabelaBody.innerHTML = '';
                     return;
                 }
                 
-                // Submeter o formulário para buscar vagas da clínica selecionada
-                // Criar um formulário temporário para submeter sem os checkboxes
-                const tempForm = document.createElement('form');
-                tempForm.method = 'POST';
-                tempForm.action = window.location.href;
+                console.log('DEBUG: Renderizando tabela com', vagasData.length, 'vagas');
                 
-                // Adicionar CSRF token
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-                if (csrfToken) {
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = 'csrfmiddlewaretoken';
-                    csrfInput.value = csrfToken.value;
-                    tempForm.appendChild(csrfInput);
-                }
+                // Limpar tabela de forma eficiente
+                tabelaBody.innerHTML = '';
                 
-                // Adicionar clínica selecionada
-                const clinicaInput = document.createElement('input');
-                clinicaInput.type = 'hidden';
-                clinicaInput.name = 'clinica';
-                clinicaInput.value = clinicaId;
-                tempForm.appendChild(clinicaInput);
+                // Usar DocumentFragment para melhor performance
+                const fragment = document.createDocumentFragment();
                 
-                // Adicionar médico ID
-                const medicoIdInput = document.createElement('input');
-                medicoIdInput.type = 'hidden';
-                medicoIdInput.name = 'medico_id';
-                medicoIdInput.value = document.querySelector('[name=medico_id]').value;
-                tempForm.appendChild(medicoIdInput);
-                
-                // Submeter o formulário
-                document.body.appendChild(tempForm);
-                tempForm.submit();
-            });
-
-            // Função para renderizar tabela de vagas
-            function renderizarTabelaVagas() {
-                console.log('Vagas disponíveis:', vagasData);
-                
-                if (vagasData.length > 0) {
-                    // Limpar tabela
-                    tabelaBody.innerHTML = '';
+                // Adicionar linhas para cada vaga
+                vagasData.forEach(function(vaga) {
+                    const row = document.createElement('tr');
                     
-                    // Agrupar vagas por sala para mostrar nome da sala
-                    const vagasPorSalaComNome = {};
-                    vagasData.forEach(function(vaga) {
-                        const salaKey = vaga.sala;
-                        if (!vagasPorSalaComNome[salaKey]) {
-                            vagasPorSalaComNome[salaKey] = {
-                                nomeSala: vaga.sala_nome || `Sala ${salaKey}`,
-                                vagas: []
-                            };
+                    // Célula da sala
+                    const salaCell = document.createElement('td');
+                    salaCell.textContent = vaga.sala_nome || `Sala ${vaga.sala}`;
+                    row.appendChild(salaCell);
+                    
+                    // Célula do turno
+                    const turnoCell = document.createElement('td');
+                    const turnoNome = vaga.turno === 1 ? 'Manhã' : vaga.turno === 2 ? 'Tarde' : 'Noite';
+                    turnoCell.textContent = turnoNome;
+                    row.appendChild(turnoCell);
+                    
+                    // Células dos dias da semana
+                    const dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
+                    dias.forEach(function(dia) {
+                        const diaCell = document.createElement('td');
+                        
+                        // Verificar se já tem médico ocupando a vaga
+                        const medicoId = vaga[dia];
+                        const medicoNome = vaga[`${dia}_nome`];
+                        
+                        if (medicoId && medicoId != 0 && medicoNome) {
+                            // Vaga ocupada - mostrar nome do médico e bloquear
+                            const divOcupado = document.createElement('div');
+                            divOcupado.className = 'd-flex align-items-center';
+                            
+                            const nomeMedico = document.createElement('span');
+                            nomeMedico.className = 'badge bg-danger me-2';
+                            nomeMedico.textContent = medicoNome;
+                            divOcupado.appendChild(nomeMedico);
+                            
+                            const lockIcon = document.createElement('i');
+                            lockIcon.className = 'bi bi-lock-fill text-muted';
+                            divOcupado.appendChild(lockIcon);
+                            
+                            // Input hidden para manter o valor
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = `vaga_${vaga.id}_${dia}`;
+                            hiddenInput.value = medicoId;
+                            divOcupado.appendChild(hiddenInput);
+                            
+                            diaCell.appendChild(divOcupado);
+                        } else {
+                            // Vaga livre - permitir seleção
+                            const select = document.createElement('select');
+                            select.className = 'form-select form-select-sm';
+                            select.name = `vaga_${vaga.id}_${dia}`;
+                            
+                            // Opção vazia
+                            const emptyOption = document.createElement('option');
+                            emptyOption.value = '';
+                            select.appendChild(emptyOption);
+                            
+                            // Opção do médico atual
+                            const medicoOption = document.createElement('option');
+                            medicoOption.value = '{{ medico.id }}';
+                            medicoOption.textContent = '{{ medico.nome }}';
+                            select.appendChild(medicoOption);
+                            
+                            diaCell.appendChild(select);
                         }
-                        vagasPorSalaComNome[salaKey].vagas.push(vaga);
+                        
+                        row.appendChild(diaCell);
                     });
                     
-                    // Adicionar linhas para cada vaga
-                    vagasData.forEach(function(vaga) {
-                        console.log('Processando vaga:', vaga);
-                        const row = document.createElement('tr');
-                        
-                        // Obter nome da sala
-                        const nomeSala = vaga.sala_nome || `Sala ${vaga.sala}`;
-                        
-                        row.innerHTML = `
-                            <td><strong>${nomeSala}</strong></td>
-                            <td><strong>${vaga.turno}º</strong></td>
-                            <td>
-                                <select class="form-select form-select-sm" 
-                                    name="vaga_${vaga.id}_segunda" 
-                                    ${vaga.segunda ? 'disabled' : ''}>
-                                    <option value="">-</option>
-                                    <option value="${vaga.id}" ${vaga.segunda ? 'selected' : ''}>Dr(a). {{ medico.nome }}</option>
-                                </select>
-                                ${vaga.segunda ? '<small class="text-muted">(Ocupado)</small>' : ''}
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm" 
-                                    name="vaga_${vaga.id}_terca" 
-                                    ${vaga.terca ? 'disabled' : ''}>
-                                    <option value="">-</option>
-                                    <option value="${vaga.id}" ${vaga.terca ? 'selected' : ''}>Dr(a). {{ medico.nome }}</option>
-                                </select>
-                                ${vaga.terca ? '<small class="text-muted">(Ocupado)</small>' : ''}
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm" 
-                                    name="vaga_${vaga.id}_quarta" 
-                                    ${vaga.quarta ? 'disabled' : ''}>
-                                    <option value="">-</option>
-                                    <option value="${vaga.id}" ${vaga.quarta ? 'selected' : ''}>Dr(a). {{ medico.nome }}</option>
-                                </select>
-                                ${vaga.quarta ? '<small class="text-muted">(Ocupado)</small>' : ''}
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm" 
-                                    name="vaga_${vaga.id}_quinta" 
-                                    ${vaga.quinta ? 'disabled' : ''}>
-                                    <option value="">-</option>
-                                    <option value="${vaga.id}" ${vaga.quinta ? 'selected' : ''}>Dr(a). {{ medico.nome }}</option>
-                                </select>
-                                ${vaga.quinta ? '<small class="text-muted">(Ocupado)</small>' : ''}
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm" 
-                                    name="vaga_${vaga.id}_sexta" 
-                                    ${vaga.sexta ? 'disabled' : ''}>
-                                    <option value="">-</option>
-                                    <option value="${vaga.id}" ${vaga.sexta ? 'selected' : ''}>Dr(a). {{ medico.nome }}</option>
-                                </select>
-                                ${vaga.sexta ? '<small class="text-muted">(Ocupado)</small>' : ''}
-                            </td>
-                        `;
-                        tabelaBody.appendChild(row);
-                    });
-                    
-                    // Mostrar tabela
-                    tabelaTurnos.style.display = 'block';
-                    console.log('Tabela exibida');
-                } else {
-                    // Esconder tabela
-                    tabelaTurnos.style.display = 'none';
-                    console.log('Tabela escondida - sem vagas');
+                    fragment.appendChild(row);
+                });
+                
+                tabelaBody.appendChild(fragment);
+                tabelaTurnos.style.display = 'block';
+                console.log('DEBUG: Tabela exibida com sucesso');
+            }
+            
+            // Renderizar tabela na carga da página
+            renderizarTabelaVagas();
+            
+            // Adicionar feedback visual no envio do formulário
+            const form = document.querySelector('.form');
+            const btnCadastrar = document.getElementById('btn-cadastrar');
+            const btnText = document.getElementById('btn-text');
+            const btnLoading = document.getElementById('btn-loading');
+            
+            form.addEventListener('submit', function(e) {
+                // Verificar se há vagas selecionadas
+                const selects = document.querySelectorAll('select[name^="vaga_"]');
+                let temVagaSelecionada = false;
+                
+                selects.forEach(function(select) {
+                    if (select.value && select.value.trim() !== '') {
+                        temVagaSelecionada = true;
+                    }
+                });
+                
+                if (!temVagaSelecionada) {
+                    e.preventDefault();
+                    alert('Por favor, selecione pelo menos uma vaga antes de cadastrar.');
+                    return;
                 }
-            }
-
-            // Se houver vagas carregadas (após seleção de clínica), mostrar tabela
-            if (vagasData.length > 0) {
-                renderizarTabelaVagas();
-            }
+                
+                // Remover selects vazios para não enviar como null
+                selects.forEach(function(select) {
+                    if (!select.value || select.value.trim() === '') {
+                        select.remove();
+                    }
+                });
+                
+                // Mostrar loading
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'inline-block';
+                btnCadastrar.disabled = true;
+                
+                console.log('DEBUG: Formulário enviado, mostrando loading');
+            });
         });
     </script>
 {% endblock %}
