@@ -210,7 +210,7 @@ def cadastrar_medico(request):
     url_clinicas = f'{base_url}/clinicas/'
     url_estados = f'{base_url}/estados/'
     url_especialidades = f'{base_url}/especialidades/'
-    url_medico = f'{base_url}/medicos/'
+    url_medico = f'{base_url}/medicos'
     
     tipo_conselho = requests.get(url_conselho).json()
     clinicas = requests.get(url_clinicas).json()
@@ -231,22 +231,19 @@ def cadastrar_medico(request):
         bairro = request.POST.get('bairro')
         cidade = request.POST.get('cidade')
         estado = request.POST.get('estado')
-
-        foto_perfil = request.FILES.get('foto_perfil')
+        foto_perfil = request.POST.get('foto_perfil')
         especialidade = request.POST.get('especialidade_id')
         tipo_conselho = request.POST.get('tipo_conselho_id')
         uf_conselho = request.POST.get('uf_conselho_id')
         numero_conselho = request.POST.get('numero_conselho')
         rqe = request.POST.get('rqe')
         valor_consulta = request.POST.get('valor_consulta')
-        upload_documento = request.FILES.get('upload_documento')
+        upload_documento = request.POST.get('upload_documento')
         senha = request.POST.get('senha')
 
         try:
-            # Criar o medico
-            response = requests.post(
-                f'{url_medico}',  # URL corrigida: plural
-                json={
+            # === DEBUG: Exibir dados sendo enviados ===
+            data_payload = {
                 "nome": nome,
                 "email": email,
                 "celular": celular,
@@ -258,18 +255,30 @@ def cadastrar_medico(request):
                 "numero": numero,
                 "bairro": bairro,
                 "cidade": cidade,
-                "estado": int(estado) if estado else 0,
+                "estado": estado,
                 "role": "medico",
                 "foto_perfil": foto_perfil,
-                "especialidade": int(especialidade) if especialidade else 0,
+                "especialidade": especialidade,
                 "rqe": rqe,
                 "valor_consulta": valor_consulta,
-                "tipo_conselho": int(tipo_conselho) if tipo_conselho else 0,
-                "uf_conselho": int(uf_conselho) if uf_conselho else 0,
+                "tipo_conselho": tipo_conselho,
+                "uf_conselho": uf_conselho,
                 "numero_conselho": numero_conselho,
                 "upload_arquivo": upload_documento,
                 "password": senha,
-            })
+            }
+            
+            print("\n" + "="*50)
+            print("DEBUG - Payload enviado para API:")
+            print("="*50)
+            for key, value in data_payload.items():
+                print(f"{key}: {repr(value)} (tipo: {type(value).__name__})")
+            print("="*50 + "\n")
+            
+            # Criar o medico
+            response = requests.post(
+                f'{base_url}/medicos',  
+                json=data_payload)
             
             print(f"Status Code: {response.status_code}")
             print(f"Response: {response.text}")
@@ -302,6 +311,8 @@ def cadastrar_medico(request):
             
             return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
 
+    return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
+
 
 def listar_medicos(request):
     token = request.session.get('fastapi_token')
@@ -309,7 +320,7 @@ def listar_medicos(request):
         return redirect('/login/')
     headers = {'Authorization': f'Bearer {token}'}
     try:
-        url_medicos = f'{base_url}/medicos/'
+        url_medicos = f'{base_url}/medicos'
         response = requests.get(url_medicos, headers=headers)
         
         if response.status_code == 200:
@@ -950,70 +961,11 @@ def editar_especialidade(request, id):
                     'error': f'Erro de conexão com API: {str(e)}'
                 })
     
-    return render(request, 'painel/editar_especialidade.html', {'especialidade': especialidade})
-
-
-def cadastrar_medico(request):
-    url = f'{base_url}/medicos/'
-    url_tipo_conselho = f'{base_url}/tipo-conselho/'
-    url_especialidades = f'{base_url}/especialidades/'
-    url_estados = f'{base_url}/estados/'
-    url_clinicas = f'{base_url}/clinicas/'
-    
-    tipo_conselho = requests.get(url_tipo_conselho).json()
-    especialidades = requests.get(url_especialidades).json()
-    estados = requests.get(url_estados).json()
-    clinicas = requests.get(url_clinicas).json()
-    
-    if request.method == 'POST':
-        nome = request.POST.get('nome')
-        email = request.POST.get('email')
-        cpf = request.POST.get('cpf')
-        celular = request.POST.get('celular')
-        tipo_conselho_id = request.POST.get('tipo_conselho')
-        especialidade_id = request.POST.get('especialidade')
-        estado_id = request.POST.get('estado')
-        clinica_id = request.POST.get('clinica')
-        
-        try:
-            response = requests.post(url, json={
-                'nome': nome,
-                'email': email,
-                'cpf': cpf,
-                'celular': celular,
-                'tipo_conselho': tipo_conselho_id,
-                'especialidade': especialidade_id,
-                'estado': estado_id,
-                'clinica': clinica_id
-            })
-            if response.status_code == 200:
-                return redirect('painel:listar_medicos')
-        except Exception as e:
-            error_message = f"Erro ao cadastrar médico: {str(e)}"
-            # Tratar erro de email duplicado
-            if "UNIQUE constraint failed: painel_medico.email" in str(e):
-                error_message = "Este e-mail já está cadastrado. Por favor, use outro e-mail."
-            elif "UNIQUE constraint failed: painel_medico.cpf" in str(e):
-                error_message = "Este CPF já está cadastrado. Por favor, verifique os dados."
-            elif "UNIQUE constraint failed: painel_medico.celular" in str(e):
-                error_message = "Este celular já está cadastrado. Por favor, use outro número."
-            else:
-                error_message = f"Erro ao cadastrar médico: {str(e)}"
-            
-            return render(request, 'painel/cadastrar_medico.html', {
-                'tipo_conselho': tipo_conselho,
-                'especialidades': especialidades,
-                'estados': estados,
-                'clinicas': clinicas,
-                'error': error_message
-            })
-    
-    return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
+    return render(request, 'painel/editar_especialidade.html', {'especialidade': especialidade, 'error': 'Campo nome é obrigatório'})
 
 
 def excluir_especialidade(request, id):
     url = f'{base_url}/especialidades/{id}/'
-    
     try:
         response = requests.delete(url)
         if response.status_code == 200:

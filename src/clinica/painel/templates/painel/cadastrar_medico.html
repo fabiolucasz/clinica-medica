@@ -155,13 +155,13 @@
                     <h2>Dados profissionais</h2>
                     <div class="form-floating">
                         <input type="text" class="form-control" id="floatingInput" name="foto_perfil"
-                            placeholder="foto_perfil" required>
-                        <label for="floatingInput">Foto de perfil</label>
+                            placeholder="foto_perfil">
+                        <label for="floatingInput">Foto de perfil (opcional)</label>
                     </div>
 
                     <div class="form-floating">
                         <select type="text" class="form-control" aria-label="Default select example"
-                            aria-placeholder="especialidade" name="especialidade_id" id="floatingInput" required>
+                            aria-placeholder="especialidade" name="especialidade_id" id="floatingInput">
                             {% if especialidades %}
                             <option value="">Selecione</option>
                             {% for especialidade in especialidades %}
@@ -171,12 +171,12 @@
                             <option value="">Nenhuma especialidade encontrada</option>
                             {% endif %}
                         </select>
-                        <label for="floatingInput">Especialidade</label>
+                        <label for="floatingInput">Especialidade (opcional)</label>
                     </div>
 
                     <div class="form-floating">
                         <select type="text" class="form-control" aria-label="Default select example"
-                            placeholder="tipo_conselho" name="tipo_conselho_id" id="floatingInput" required>
+                            placeholder="tipo_conselho" name="tipo_conselho_id" id="floatingInput">
                             {% if tipo_conselho %}
                             <option value="">Selecione</option>
                             {% for tipo in tipo_conselho %}
@@ -186,12 +186,12 @@
                             <option value="">Nenhum tipo de conselho encontrado</option>
                             {% endif %}
                         </select>
-                        <label for="floatingInput">Conselho Regional</label>
+                        <label for="floatingInput">Conselho Regional (opcional)</label>
                     </div>
 
                     <div class="form-floating">
                         <select type="text" class="form-control" aria-label="Default select example"
-                            placeholder="uf_conselho" name="uf_conselho_id" id="floatingInput" required>
+                            placeholder="uf_conselho" name="uf_conselho_id" id="floatingInput">
                             {% if tipo_conselho %}
                             <option value="">Selecione</option>
                             {% for estado in estados %}
@@ -201,38 +201,33 @@
                             <option value="">Nenhum estado encontrado</option>
                             {% endif %}
                         </select>
-                        <label for="floatingInput">UF do Conselho</label>
+                        <label for="floatingInput">UF do Conselho (opcional)</label>
                     </div>
 
                     <div class="form-floating">
                         <input type="text" class="form-control" id="floatingInput" name="numero_conselho"
-                            placeholder="numero_conselho" required>
-                        <label for="floatingInput">Número do conselho</label>
+                            placeholder="numero_conselho">
+                        <label for="floatingInput">Número do conselho (opcional)</label>
                     </div>
 
                     <div class="form-floating">
-                        <input type="text" class="form-control" id="floatingInput" name="rqe" placeholder="rqe"
-                            required>
-                        <label for="floatingInput">RQE</label>
+                        <input type="text" class="form-control" id="floatingInput" name="rqe" placeholder="rqe">
+                        <label for="floatingInput">RQE (opcional)</label>
                     </div>
-
-
 
                     <div class="form-floating">
                         <input type="text" class="form-control" id="floatingInput" name="valor_consulta"
-                            placeholder="valor_consulta" required>
-                        <label for="floatingInput">Valor da consulta</label>
+                            placeholder="valor_consulta">
+                        <label for="floatingInput">Valor da consulta (opcional)</label>
                     </div>
 
                     <div class="form-floating">
-
-                        <input type="file" class="form-control" id="floatingInput" name="upload_documento"
-                            placeholder="upload_documento" required>
-                        <label for="floatingInput">Upload do documento profissional</label>
+                        <input type="text" class="form-control" id="floatingInput" name="upload_documento"
+                            placeholder="upload_documento">
+                        <label for="floatingInput">Upload do documento profissional (opcional)</label>
                     </div>
 
                     <div class="form-floating">
-
                         <input type="password" class="form-control" id="floatingInput" name="senha"
                             placeholder="senha" required>
                         <label for="floatingInput">Senha</label>
