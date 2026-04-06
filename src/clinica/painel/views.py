@@ -2,10 +2,15 @@ from datetime import datetime
 import json
 from struct import pack
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.core.serializers import serialize
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.contrib.auth import logout
+import requests
+import json
+from datetime import datetime
+from django.db.models import Q
 from .models import Paciente, Medico, Tipo_conselho, Estados, Clinicas, Especialidades, Salas, Vagas, Agendamentos
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -198,13 +203,20 @@ def excluir_paciente(request, id):
 
 
 #Views dos Médicos
-
-
+@token_required
 def cadastrar_medico(request):
-    tipo_conselho = Tipo_conselho.objects.all()
-    clinicas = Clinicas.objects.all()
-    estados = Estados.objects.all()
-    especialidades = Especialidades.objects.all()
+
+    url_conselho = f'{base_url}/tipo-conselho/'
+    url_clinicas = f'{base_url}/clinicas/'
+    url_estados = f'{base_url}/estados/'
+    url_especialidades = f'{base_url}/especialidades/'
+    url_medico = f'{base_url}/medicos/'
+    
+    tipo_conselho = requests.get(url_conselho).json()
+    clinicas = requests.get(url_clinicas).json()
+    estados = requests.get(url_estados).json()
+    especialidades = requests.get(url_especialidades).json()
+    
     if request.method == 'POST':
         # Processar o formulário
         nome = request.POST.get('nome')
@@ -228,45 +240,56 @@ def cadastrar_medico(request):
         rqe = request.POST.get('rqe')
         valor_consulta = request.POST.get('valor_consulta')
         upload_documento = request.FILES.get('upload_documento')
+        senha = request.POST.get('senha')
 
-        data_cadastro = datetime.now()
-        
-        # Buscar instâncias dos objetos relacionados
-        estado_obj = get_object_or_404(Estados, id=estado)
-        especialidade_obj = get_object_or_404(Especialidades, id=especialidade)
-        tipo_conselho_obj = get_object_or_404(Tipo_conselho, id=tipo_conselho)
-        uf_conselho_obj = get_object_or_404(Estados, id=uf_conselho)
-        
         try:
             # Criar o medico
-            medico = Medico.objects.create(
-                nome=nome,
-                email=email,
-                celular=celular,
-                cpf=cpf,
-                data_nascimento=data_nascimento,
-                sexo=sexo,
-                cep=cep,
-                rua=rua,
-                numero=numero,
-                bairro=bairro,
-                cidade=cidade,
-                estado=estado_obj,
-
-                foto_perfil=foto_perfil,
-                especialidade=especialidade_obj,
-                tipo_conselho=tipo_conselho_obj,
-                uf_conselho=uf_conselho_obj,
-                numero_conselho=numero_conselho,
-                rqe=rqe,
-                valor_consulta=valor_consulta,
-                upload_arquivo=upload_documento,
-            )
+            response = requests.post(
+                f'{url_medico}',  # URL corrigida: plural
+                json={
+                "nome": nome,
+                "email": email,
+                "celular": celular,
+                "cpf": cpf,
+                "data_nascimento": data_nascimento,
+                "sexo": sexo,
+                "cep": cep,
+                "rua": rua,
+                "numero": numero,
+                "bairro": bairro,
+                "cidade": cidade,
+                "estado": int(estado) if estado else 0,
+                "role": "medico",
+                "foto_perfil": foto_perfil,
+                "especialidade": int(especialidade) if especialidade else 0,
+                "rqe": rqe,
+                "valor_consulta": valor_consulta,
+                "tipo_conselho": int(tipo_conselho) if tipo_conselho else 0,
+                "uf_conselho": int(uf_conselho) if uf_conselho else 0,
+                "numero_conselho": numero_conselho,
+                "upload_arquivo": upload_documento,
+                "password": senha,
+            })
             
-            # Redirecionar para a página de seleção de vagas com o ID do médico
-            return redirect('painel:cadastrar_medico_sala', medico_id=medico.id)
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
             
+            if response.status_code == 200:
+                medico = response.json()
+                print(f"Médico retornado pela API: {medico}")
+                print(f"ID do médico: {medico.get('id')}")
+                # Redirecionar para a página de seleção de vagas com o ID do médico
+                return redirect('painel:cadastrar_medico_sala', medico_id=medico.get('id'))
+            else:
+                # Erro da API - mostrar mensagem detalhada
+                error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+                if 'detail' in error_data:
+                    error_message = f"Erro da API: {error_data['detail']}"
+                else:
+                    error_message = f"Erro ao cadastrar médico: Status {response.status_code} - {response.text}"
+                
         except Exception as e:
+            error_message = f"Erro ao cadastrar médico: {str(e)}"
             # Tratar erro de email duplicado
             if "UNIQUE constraint failed: painel_medico.email" in str(e):
                 error_message = "Este e-mail já está cadastrado. Por favor, use outro e-mail."
@@ -277,105 +300,144 @@ def cadastrar_medico(request):
             else:
                 error_message = f"Erro ao cadastrar médico: {str(e)}"
             
-            return render(request, 'painel/cadastrar_medico.html', {
-                'tipo_conselho': tipo_conselho,
-                'especialidades': especialidades,
-                'estados': estados,
-                'clinicas': clinicas,
-                'error': error_message
-            })
-    
-    return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
+            return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
+
+
+def listar_medicos(request):
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    headers = {'Authorization': f'Bearer {token}'}
+    try:
+        url_medicos = f'{base_url}/medicos/'
+        response = requests.get(url_medicos, headers=headers)
+        
+        if response.status_code == 200:
+            medicos = response.json()
+        else:
+            medicos = []
+    except Exception as e:
+        medicos = []
+        print(f"Erro ao listar médicos: {e}")
+    return render(request, 'painel/medicos.html', {'medicos': medicos})
 
 
 def cadastrar_medico_sala(request, medico_id):
-    # Buscar o médico cadastrado
-    medico = get_object_or_404(Medico, id=medico_id)
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
     
-    clinicas = Clinicas.objects.all()
-    salas = Salas.objects.all()
-    vagas = Vagas.objects.select_related('segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
+    # Headers com autenticação
+    headers = {'Authorization': f'Bearer {token}'}
     
-    # Serializar vagas para JSON
-    vagas_data = []
-    for vaga in vagas:
-        vaga_dict = {
-            'id': vaga.id,
-            'sala_id': vaga.sala_id,
-            'turno': vaga.turno,
-            'segunda': vaga.segunda.nome if vaga.segunda else None,
-            'terca': vaga.terca.nome if vaga.terca else None,
-            'quarta': vaga.quarta.nome if vaga.quarta else None,
-            'quinta': vaga.quinta.nome if vaga.quinta else None,
-            'sexta': vaga.sexta.nome if vaga.sexta else None,
-        }
-        vagas_data.append(vaga_dict)
+    # URLs da API local (rodando na mesma máquina)
+    api_base_url = 'http://localhost:8001'
+    
+    medico_request = f'{api_base_url}/medicos/{medico_id}'
+    clinicas_request = f'{api_base_url}/clinicas'
+    salas_request = f'{api_base_url}/salas'
+    vagas_request = f'{api_base_url}/vagas'
+    
+    try:
+        medico_response = requests.get(medico_request, headers=headers)
+        clinicas_response = requests.get(clinicas_request, headers=headers)
+        salas_response = requests.get(salas_request, headers=headers)
+        vagas_response = requests.get(vagas_request, headers=headers)
+        
+        medico_response.raise_for_status()
+        clinicas_response.raise_for_status()
+        salas_response.raise_for_status()
+        vagas_response.raise_for_status()
+        
+        if medico_response.status_code == 200:
+            medico = medico_response.json()
+        if clinicas_response.status_code == 200:
+            clinicas = clinicas_response.json()
+        if salas_response.status_code == 200:
+            salas = salas_response.json()
+        if vagas_response.status_code == 200:
+            vagas = vagas_response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Erro na requisição: {e}")
+        return redirect('/login/')
     
     if request.method == 'POST':
         # Processar as vagas selecionadas
         clinica_id = request.POST.get('clinica')
         sala_id = request.POST.get('sala')
         
-        # Buscar instâncias dos objetos relacionados
-        clinica_obj = get_object_or_404(Clinicas, id=clinica_id)
-        sala_obj = get_object_or_404(Salas, id=sala_id)
+        # Buscar vagas da clínica selecionada para exibição
+        if clinica_id:
+            vagas_clinica_request = f'{api_base_url}/vagas/clinica/{clinica_id}'
+            try:
+                vagas_clinica_response = requests.get(vagas_clinica_request, headers=headers)
+                vagas_clinica_response.raise_for_status()
+                if vagas_clinica_response.status_code == 200:
+                    vagas_clinica = vagas_clinica_response.json()
+                else:
+                    vagas_clinica = []
+            except requests.exceptions.RequestException as e:
+                print(f"Erro ao buscar vagas da clínica: {e}")
+                vagas_clinica = []
+        else:
+            vagas_clinica = vagas  # Usar todas as vagas se nenhuma clínica selecionada
         
-        # Processar checkboxes selecionados
+        # Processar todos os selectboxes - agrupar por vaga_id
+        vagas_atualizadas = {}
+        
+        # Primeiro, agrupar todos os dados por vaga_id
         for key, value in request.POST.items():
-            if key.startswith('vaga_') and value:
-                # Extrair informações do checkbox
+            if key.startswith('vaga_'):
                 parts = key.split('_')
                 vaga_id = parts[1]
                 dia = parts[2]
                 
-                # Buscar a vaga
-                vaga = get_object_or_404(Vagas, id=vaga_id)
+                if vaga_id not in vagas_atualizadas:
+                    vagas_atualizadas[vaga_id] = {}
                 
-                # Atualizar o campo do dia com o médico
-                if dia == 'segunda':
-                    vaga.segunda = medico
-                elif dia == 'terca':
-                    vaga.terca = medico
-                elif dia == 'quarta':
-                    vaga.quarta = medico
-                elif dia == 'quinta':
-                    vaga.quinta = medico
-                elif dia == 'sexta':
-                    vaga.sexta = medico
-                
-                vaga.save()
+                # Atribuir médico ou None conforme seleção
+                vagas_atualizadas[vaga_id][dia] = medico_id if value and value.strip() else None
         
+        # Agora, para cada vaga, buscar dados atuais e criar JSON completo
+        for vaga_id, dias_selecionados in vagas_atualizadas.items():
+            try:
+                # Buscar dados atuais da vaga
+                vaga_response = requests.get(f'{api_base_url}/vagas/{vaga_id}', headers=headers)
+                vaga_response.raise_for_status()
+                vaga_atual = vaga_response.json()
+                
+                # Criar JSON completo para atualização
+                update_data = {
+                    "status": vaga_atual.get("status", ""),
+                    "segunda": dias_selecionados.get("segunda", vaga_atual.get("segunda")),
+                    "terca": dias_selecionados.get("terca", vaga_atual.get("terca")),
+                    "quarta": dias_selecionados.get("quarta", vaga_atual.get("quarta")),
+                    "quinta": dias_selecionados.get("quinta", vaga_atual.get("quinta")),
+                    "sexta": dias_selecionados.get("sexta", vaga_atual.get("sexta")),
+                    "max_pacientes": vaga_atual.get("max_pacientes", 0),
+                    "pacientes_atuais": vaga_atual.get("pacientes_atuais", 0)
+                }
+                
+                # Atualizar a vaga via API com JSON completo
+                vaga_update_request = f'{api_base_url}/vagas/{vaga_id}/'
+                update_response = requests.put(vaga_update_request, json=update_data, headers=headers)
+                update_response.raise_for_status()
+                
+                print(f"✅ Vaga {vaga_id} atualizada com JSON completo: {update_data}")
+                
+            except requests.exceptions.RequestException as e:
+                print(f"❌ Erro ao atualizar vaga {vaga_id}: {e}")
+        
+        # Redirecionar sempre após processar o formulário
         return redirect('painel:listar_medicos')
     
     return render(request, 'painel/cadastrar_medico_sala.html', {
         'clinicas': clinicas, 
         'salas': salas, 
-        'vagas': json.dumps(vagas_data),
+        'vagas': json.dumps(vagas),
         'medico': medico
     })
-
-
-
-def listar_medicos(request):
-    medicos = Medico.objects.all()
-    return render(request, 'painel/medicos.html', {'medicos': medicos})
-
-
-def medico_detalhes(request, id):
-    medico = get_object_or_404(Medico, pk=id)
-    
-    # Buscar clínicas onde o médico tem vagas alocadas
-    from django.db.models import Q
-    clinicas_query = Vagas.objects.filter(
-        Q(segunda=medico) | Q(terca=medico) | Q(quarta=medico) | 
-        Q(quinta=medico) | Q(sexta=medico)
-    ).values_list('clinica_id', flat=True).distinct()
-    
-    clinicas = Clinicas.objects.filter(id__in=clinicas_query)
-    
-    vagas = Vagas.objects.select_related('segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
-    
-    return render(request, 'painel/medico_detalhes.html', {'medico': medico, 'clinicas': clinicas, 'vagas': vagas})
 
 
 # Consultas e Agendamentos
@@ -759,18 +821,35 @@ def listar_salas(request):
 
 
 def cadastrar_sala(request):
-    url = f'{base_url}/salas/'
+    url_salas = f'{base_url}/salas/'
+    url_vagas = f'{base_url}/vagas/'
+    
     if request.method == 'POST':
         nome = request.POST.get('nome')
         clinica_id = request.POST.get('clinica')
 
-        if nome and clinica_id:
-            response = requests.post(url, json={
-                'nome': nome,
-                'clinica': clinica_id
+    if nome and clinica_id:
+        response_salas = requests.post(url_salas, json={
+            'nome': nome,
+            'clinica': clinica_id
+        })
+        for i in range(1, 4):
+            response_vagas = requests.post(url_vagas, json={
+                'sala': response_salas.json()['id'],
+                'clinica': clinica_id,
+                "status": "disponivel",
+                "turno": i,
+                "segunda": None,
+                "terca": None,
+                "quarta": None,
+                "quinta": None,
+                "sexta": None,
+                "max_pacientes": 25,
+                "pacientes_atuais": 0
+
             })
-            if response.status_code == 200:
-                return redirect(f'/painel/salas/?clinica={clinica_id}')
+        if response_salas.status_code == 200 and response_vagas.status_code == 200:
+            return redirect(f'/painel/salas/?clinica={clinica_id}')
 
     return render(request, 'painel/cadastrar_sala.html')
 
@@ -872,6 +951,64 @@ def editar_especialidade(request, id):
                 })
     
     return render(request, 'painel/editar_especialidade.html', {'especialidade': especialidade})
+
+
+def cadastrar_medico(request):
+    url = f'{base_url}/medicos/'
+    url_tipo_conselho = f'{base_url}/tipo-conselho/'
+    url_especialidades = f'{base_url}/especialidades/'
+    url_estados = f'{base_url}/estados/'
+    url_clinicas = f'{base_url}/clinicas/'
+    
+    tipo_conselho = requests.get(url_tipo_conselho).json()
+    especialidades = requests.get(url_especialidades).json()
+    estados = requests.get(url_estados).json()
+    clinicas = requests.get(url_clinicas).json()
+    
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        email = request.POST.get('email')
+        cpf = request.POST.get('cpf')
+        celular = request.POST.get('celular')
+        tipo_conselho_id = request.POST.get('tipo_conselho')
+        especialidade_id = request.POST.get('especialidade')
+        estado_id = request.POST.get('estado')
+        clinica_id = request.POST.get('clinica')
+        
+        try:
+            response = requests.post(url, json={
+                'nome': nome,
+                'email': email,
+                'cpf': cpf,
+                'celular': celular,
+                'tipo_conselho': tipo_conselho_id,
+                'especialidade': especialidade_id,
+                'estado': estado_id,
+                'clinica': clinica_id
+            })
+            if response.status_code == 200:
+                return redirect('painel:listar_medicos')
+        except Exception as e:
+            error_message = f"Erro ao cadastrar médico: {str(e)}"
+            # Tratar erro de email duplicado
+            if "UNIQUE constraint failed: painel_medico.email" in str(e):
+                error_message = "Este e-mail já está cadastrado. Por favor, use outro e-mail."
+            elif "UNIQUE constraint failed: painel_medico.cpf" in str(e):
+                error_message = "Este CPF já está cadastrado. Por favor, verifique os dados."
+            elif "UNIQUE constraint failed: painel_medico.celular" in str(e):
+                error_message = "Este celular já está cadastrado. Por favor, use outro número."
+            else:
+                error_message = f"Erro ao cadastrar médico: {str(e)}"
+            
+            return render(request, 'painel/cadastrar_medico.html', {
+                'tipo_conselho': tipo_conselho,
+                'especialidades': especialidades,
+                'estados': estados,
+                'clinicas': clinicas,
+                'error': error_message
+            })
+    
+    return render(request, 'painel/cadastrar_medico.html', {'tipo_conselho': tipo_conselho,'especialidades': especialidades, 'estados': estados, 'clinicas': clinicas})
 
 
 def excluir_especialidade(request, id):
