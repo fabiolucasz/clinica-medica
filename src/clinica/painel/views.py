@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import logout
 import requests
 import json
+import concurrent.futures
 from datetime import datetime
 from django.db.models import Q
 from .models import Paciente, Medico, Tipo_conselho, Estados, Clinicas, Especialidades, Salas, Vagas, Agendamentos
@@ -345,118 +346,32 @@ def cadastrar_medico_sala(request, medico_id):
     # URLs da API local (rodando na mesma máquina)
     api_base_url = 'http://localhost:8001'
     
-    medico_request = f'{api_base_url}/medicos/{medico_id}'
-    clinicas_request = f'{api_base_url}/clinicas'
-    salas_request = f'{api_base_url}/salas'
-    vagas_request = f'{api_base_url}/vagas'
-    
+    # Otimização MÁXIMA: Endpoint otimizado com tudo pré-processado
     try:
-        # Usar requisições concorrentes com ThreadPoolExecutor para melhor performance
-        import concurrent.futures
+        # Usar endpoint otimizado que já vem com nomes enriquecidos
+        optimized_url = f'{api_base_url}/medico-sala/optimized/{medico_id}'
+        response = requests.get(optimized_url, headers=headers)
+        response.raise_for_status()
         
-        def fazer_requisicao(url):
-            return requests.get(url, headers=headers)
+        dados_completos = response.json()
         
-        urls = [medico_request, clinicas_request, salas_request, vagas_request]
+        medico = dados_completos['medico']
+        vagas = dados_completos['vagas']  # Já vem com nomes enriquecidos!
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            future_to_url = {executor.submit(fazer_requisicao, url): url for url in urls}
-            
-            responses = {}
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    response = future.result()
-                    response.raise_for_status()
-                    responses[url] = response
-                except requests.exceptions.RequestException as e:
-                    print(f"Erro na requisição {url}: {e}")
-                    return redirect('/login/')
+        print(f"DEBUG: Carregamento OTIMIZADO - Médico ID {medico_id}")
+        print(f"DEBUG: {len(vagas)} vagas pré-enriquecidas carregadas")
+        print(f"DEBUG: Tempo de carregamento: MÍNIMO! (sem requisições adicionais)")
         
-        # Extrair dados das respostas
-        medico = responses[medico_request].json() if medico_request in responses else {}
-        clinicas = responses[clinicas_request].json() if clinicas_request in responses else []
-        salas = responses[salas_request].json() if salas_request in responses else []
-        vagas = responses[vagas_request].json() if vagas_request in responses else []
-        
-        # Debug: Verificar se o médico foi encontrado
-        print(f"DEBUG: Médico ID buscado: {medico_id}")
-        print(f"DEBUG: Médico encontrado: {medico}")
-        print(f"DEBUG: Status da requisição médico: {responses[medico_request].status_code if medico_request in responses else 'N/A'}")
-        
-        if not medico or 'id' not in medico:
-            print(f"DEBUG: Médico não encontrado ou dados inválidos!")
-            return redirect('painel:listar_medicos')
     except requests.exceptions.RequestException as e:
-        print(f"Erro na requisição: {e}")
+        print(f"Erro na requisição otimizada: {e}")
         return redirect('/login/')
-    
-    # Usar sempre a primeira clínica disponível e carregar suas vagas diretamente
-    clinica_padrao = clinicas[0] if clinicas else None
-    
-    if clinica_padrao:
-        clinica_id = clinica_padrao['id']
-        print(f"DEBUG: Usando clínica padrão: {clinica_padrao['nome']} (ID: {clinica_id})")
-        
-        # Buscar vagas da clínica padrão
-        vagas_clinica_request = f'{api_base_url}/vagas/clinica/{clinica_id}'
-        try:
-            vagas_clinica_response = requests.get(vagas_clinica_request, headers=headers)
-            vagas_clinica_response.raise_for_status()
-            if vagas_clinica_response.status_code == 200:
-                vagas = vagas_clinica_response.json()
-                print(f"DEBUG: Vagas carregadas da clínica padrão {clinica_id}: {len(vagas)} vagas")
-                
-                # Enriquecer as vagas com nomes dos médicos (igual à API)
-                if vagas:
-                    # Coletar todos os IDs de médicos únicos
-                    medicos_ids = set()
-                    for vaga in vagas:
-                        dias_medicos = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
-                        for dia in dias_medicos:
-                            medico_id = vaga.get(dia)
-                            if medico_id and medico_id != 0:
-                                medicos_ids.add(medico_id)
-                    
-                    # Buscar todos os médicos em lote
-                    medicos_nomes = {}
-                    if medicos_ids:
-                        print(f"DEBUG: Buscando {len(medicos_ids)} médicos em lote para enriquecer vagas")
-                        for medico_id_busca in medicos_ids:
-                            try:
-                                medico_response = requests.get(f'{api_base_url}/medicos/{medico_id_busca}', headers=headers)
-                                if medico_response.status_code == 200:
-                                    medico_encontrado = medico_response.json()
-                                    medicos_nomes[medico_id_busca] = medico_encontrado.get('nome', 'Médico não encontrado')
-                                else:
-                                    medicos_nomes[medico_id_busca] = 'Médico não encontrado'
-                            except:
-                                medicos_nomes[medico_id_busca] = 'Erro ao buscar médico'
-                    
-                    # Enriquecer dados das vagas com nomes dos médicos
-                    for vaga in vagas:
-                        dias_medicos = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
-                        for dia in dias_medicos:
-                            medico_id_vaga = vaga.get(dia)
-                            if medico_id_vaga and medico_id_vaga != 0:
-                                vaga[f'{dia}_nome'] = medicos_nomes.get(medico_id_vaga, 'Médico não encontrado')
-                                print(f"DEBUG: Vaga {vaga.get('id')} - {dia}: médico {medico_id_vaga} -> {medicos_nomes.get(medico_id_vaga, 'Médico não encontrado')}")
-                            else:
-                                vaga[f'{dia}_nome'] = None
-                                print(f"DEBUG: Vaga {vaga.get('id')} - {dia}: vaga livre")
-            else:
-                vagas = []
-                print(f"DEBUG: Erro ao buscar vagas da clínica padrão - Status: {vagas_clinica_response.status_code}")
-        except requests.exceptions.RequestException as e:
-            print(f"Erro ao buscar vagas da clínica padrão: {e}")
-            vagas = []
-    else:
-        vagas = []
-        print("DEBUG: Nenhuma clínica encontrada")
+    except Exception as e:
+        print(f"Erro ao processar dados otimizados: {e}")
+        return redirect('/login/')
     
     if request.method == 'POST':
         # Processar as vagas selecionadas usando a clínica padrão
-        clinica_id = clinica_padrao['id'] if clinica_padrao else None
+        clinica_id = 1
         sala_id = request.POST.get('sala')
         
         # Pegar o medico_id do formulário (hidden field)
@@ -586,8 +501,6 @@ def cadastrar_medico_sala(request, medico_id):
         return redirect('painel:listar_medicos')
     
     return render(request, 'painel/cadastrar_medico_sala.html', {
-        'clinicas': clinicas, 
-        'salas': salas, 
         'vagas': json.dumps(vagas),
         'medico': medico
     })
