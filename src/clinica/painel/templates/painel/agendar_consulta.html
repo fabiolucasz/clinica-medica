@@ -89,31 +89,37 @@
     }
 
     .time-slot {
-        padding: 20px;
-        border: 2px solid #dee2e6;
+        border: 2px solid #ddd;
         border-radius: 8px;
+        padding: 15px;
+        margin: 10px 0;
+        text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
-        background: #f8f9fa;
-        margin-bottom: 10px;
-        text-align: center;
+        background: white;
     }
 
-    .time-slot:hover {
-        border-color: #007bff;
-        background: #e3f2fd;
+    .time-slot.available {
+        border-color: #28a745;
+        background: #f8fff9;
+    }
+
+    .time-slot.occupied {
+        border-color: #dc3545;
+        background: #f8d7da;
+        cursor: not-allowed;
+        opacity: 0.7;
     }
 
     .time-slot.selected {
-        border-color: #28a745;
-        background: #d4edda;
+        border-color: #007bff;
+        background: #e3f2fd;
+        transform: scale(1.02);
     }
 
-    .time-slot.disabled {
-        background: #f8d7da;
-        border-color: #dc3545;
-        cursor: not-allowed;
-        opacity: 0.6;
+    .time-slot:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     .turno-titulo {
@@ -239,7 +245,7 @@
                             <option value="">Selecione um médico</option>
                             {% for medico in medicos %}
                             <option value="{{ medico.id }}" {% if request.GET.medico == medico.id|stringformat:"s" %}selected{% endif %}>
-                                {{ medico.nome }} - {{ medico.especialidade }}
+                                {{ medico.nome }} - {{ medico.especialidade_nome|default:medico.especialidade }}
                             </option>
                             {% endfor %}
                         </select>
@@ -248,7 +254,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input type="text" class="form-control" id="clinica-info" readonly placeholder="Clínica">
+                        <input type="text" class="form-control" id="clinica-info" readonly value="Clínica Padrão" placeholder="Clínica">
                         <label for="clinica-info">Clínica</label>
                     </div>
                 </div>
@@ -283,10 +289,30 @@
     </form>
 </div>
 
+<!-- Elementos para passar dados para JavaScript -->
+<div id="vagas-data" data-vagas='{{ vagas_json|safe }}'></div>
+{{ pacientes|json_script:"pacientes-data" }}
+{{ turnos|json_script:"turnos-data" }}
+
 <script>
     // Obter dados das vagas do data attribute
     const vagasDataElement = document.getElementById('vagas-data');
     const medicosData = JSON.parse(vagasDataElement.getAttribute('data-vagas') || '[]');
+    
+    // Obter dados dos pacientes
+    const pacientesData = JSON.parse(document.getElementById('pacientes-data').textContent || '[]');
+    
+    // Obter dados dos turnos
+    const turnosData = JSON.parse(document.getElementById('turnos-data').textContent || '[]');
+    
+    // Variáveis globais
+    let pacienteSelecionado = null;
+    let medicoSelecionado = null;
+    let dataSelecionada = null;
+    let horarioSelecionado = null;
+    let vagaSelecionada = null;
+    let horarioEspecifico = null;
+    let turnoInfoSelecionado = null;
     
     let medicosVagas = {};
     medicosData.forEach(vaga => {
@@ -308,12 +334,6 @@
             }
         });
     });
-
-    let dataSelecionada = null;
-    let horarioSelecionado = null;
-    let medicoSelecionado = null;
-    let pacienteSelecionado = null;
-    let vagaSelecionada = null;
 
     // Busca de pacientes
     const pacienteSearch = document.getElementById('paciente-search');
@@ -346,26 +366,25 @@
     });
 
     function buscarPacientes(query) {
-        fetch(`/painel/buscar-pacientes/?q=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                mostrarResultados(data.pacientes);
-            })
-            .catch(error => {
-                console.error('Erro ao buscar pacientes:', error);
-            });
+        // Filtrar pacientes locais
+        const pacientesFiltrados = pacientesData.filter(paciente => 
+            paciente.nome.toLowerCase().includes(query.toLowerCase()) ||
+            paciente.cpf.includes(query)
+        ).slice(0, 10);  // Limitar a 10 resultados
+        
+        exibirResultadosPacientes(pacientesFiltrados);
     }
-
-    function mostrarResultados(pacientes) {
+    
+    function exibirResultadosPacientes(pacientes) {
         if (pacientes.length === 0) {
             pacienteResults.innerHTML = '<div class="paciente-item">Nenhum paciente encontrado</div>';
         } else {
             pacienteResults.innerHTML = pacientes.map(paciente => `
                 <div class="paciente-item" onclick="selecionarPaciente(${paciente.id}, '${paciente.nome}', '${paciente.cpf}', '${paciente.celular}')">
                     <div class="paciente-info">
-                        <div class="paciente-nome">${paciente.nome}</div>
-                        <div class="paciente-cpf">CPF: ${paciente.cpf}</div>
-                        <div class="paciente-celular">📱 ${paciente.celular}</div>
+                        <strong>${paciente.nome}</strong><br>
+                        <small>CPF: ${paciente.cpf}</small><br>
+                        <small>Celular: ${paciente.celular}</small>
                     </div>
                 </div>
             `).join('');
@@ -375,14 +394,14 @@
     }
 
     function selecionarPaciente(id, nome, cpf, celular) {
-        pacienteSelecionado = id;
+        pacienteSelecionado = { id, nome, cpf, celular };
         
-        // Atualizar interface
-        document.getElementById('paciente-nome').textContent = nome;
-        document.getElementById('paciente-cpf').textContent = cpf;
+        // Preencher campo hidden
         document.getElementById('paciente-id').value = id;
         
-        // Mostrar paciente selecionado
+        // Exibir paciente selecionado
+        document.getElementById('paciente-nome').textContent = nome;
+        document.getElementById('paciente-cpf').textContent = cpf;
         pacienteSelecionadoDiv.style.display = 'block';
         
         // Limpar busca
@@ -513,54 +532,86 @@
             return;
         }
         
+        // Mostrar todos os horários dos turnos do médico
         vagasDoDia.forEach(vaga => {
-            // Verificar se a vaga já está lotada
-            if (vaga.pacientes_atuais >= vaga.max_pacientes) {
-                return; // Pular para próxima vaga
-            }
+            const turnoInfo = turnosData.find(t => t.id == vaga.turno);
             
-            // Criar slot para o turno
-            const slot = document.createElement('div');
-            slot.className = 'time-slot';
+            if (!turnoInfo || !turnoInfo.horarios || turnoInfo.horarios.length === 0) return;
             
-            // Formatar informações do turno
-            const turnoInfo = `${vaga.turno.toUpperCase()}`;
-            const horarios = `${vaga.hora_inicio} - ${vaga.hora_fim}`;
-            const vagasDisponiveis = vaga.max_pacientes - vaga.pacientes_atuais;
-            
-            slot.innerHTML = `
-                <div class="turno-titulo">${turnoInfo}</div>
-                <div class="turno-horarios">${horarios}</div>
-                <div class="turno-vagas">${vagasDisponiveis} vaga(s) disponível(is)</div>
-            `;
-            
-            // Adicionar evento de clique para selecionar o turno
-            slot.onclick = () => selecionarHorario(vaga.turno, vaga);
-            
-            timeSlots.appendChild(slot);
+            // Gerar todos os horários do turno
+            turnoInfo.horarios.forEach(horario => {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot available';
+                
+                slot.innerHTML = `
+                    <div class="turno-titulo">${turnoInfo.nome}</div>
+                    <div class="turno-horarios">${horario.hora_inicio} - ${horario.hora_fim}</div>
+                    <div class="turno-vagas">Disponível</div>
+                `;
+                
+                slot.onclick = () => selecionarHorario(vaga.turno, vaga, horario, turnoInfo);
+                slot.style.cursor = 'pointer';
+                
+                timeSlots.appendChild(slot);
+            });
         });
-        
-        // Verificar se nenhum horário foi adicionado (todas as vagas lotadas)
-        if (timeSlots.children.length === 0) {
-            timeSlots.innerHTML = '<div class="alert alert-warning">Todos os turnos estão lotados para este dia.</div>';
+    }
+    
+    // Verificar se um horário está ocupado
+    function verificarHorarioOcupado(medicoId, data, horarioId) {
+        // Verificar no mapa de horários ocupados da API
+        if (horariosOcupadosData && 
+            horariosOcupadosData[data] && 
+            horariosOcupadosData[data][medicoId]) {
+            return horariosOcupadosData[data][medicoId].includes(horarioId);
         }
+        
+        // Se não tiver dados da API, retorna false (disponível)
+        return false;
+    }
+    
+    // Gerar horários em intervalos de 1 hora para um turno
+    function gerarHorariosPorTurno(horaInicio, horaFim) {
+        const horarios = [];
+        
+        // Converter para minutos
+        const [inicioHora, inicioMin] = horaInicio.split(':').map(Number);
+        const [fimHora, fimMin] = horaFim.split(':').map(Number);
+        
+        const inicioTotal = inicioHora * 60 + inicioMin;
+        const fimTotal = fimHora * 60 + fimMin;
+        
+        // Gerar horários de 1 em 1 hora
+        for (let tempo = inicioTotal; tempo < fimTotal; tempo += 60) {
+            const hora = Math.floor(tempo / 60);
+            const minuto = tempo % 60;
+            const horarioFormatado = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
+            horarios.push(horarioFormatado);
+        }
+        
+        return horarios;
     }
 
     // Selecionar horário (turno)
-    function selecionarHorario(turno, vaga) {
+    function selecionarHorario(turno, vaga, horario, turnoInfo) {
         // Remover seleção anterior
         document.querySelectorAll('.time-slot.selected').forEach(el => {
             el.classList.remove('selected');
         });
         
-        // Adicionar seleção ao turno clicado
+        // Adicionar seleção ao horário clicado
         event.target.closest('.time-slot').classList.add('selected');
         
         horarioSelecionado = turno;
         vagaSelecionada = vaga;
+        horarioEspecifico = horario; // Armazenar o horário específico
+        turnoInfoSelecionado = turnoInfo; // Armazenar informações completas do turno
         
-        // Salvar informações no formulário - usar o primeiro horário do turno
+        // Salvar informações no formulário
         document.getElementById('turno-selecionado').value = vaga.turno;
+        
+        console.log('Turno selecionado:', turnoInfo.nome);
+        console.log('Horário específico:', horario.hora_inicio, '-', horario.hora_fim);
     }
 
     // Event listeners

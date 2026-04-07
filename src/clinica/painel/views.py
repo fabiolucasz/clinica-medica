@@ -582,246 +582,250 @@ def buscar_pacientes(request):
     if len(query) < 2:
         return JsonResponse({'pacientes': []})
     
-    pacientes = Paciente.objects.filter(
-        nome__icontains=query
-    ).values('id', 'nome', 'cpf', 'celular')[:10]
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return JsonResponse({'pacientes': []})
     
-    return JsonResponse({'pacientes': list(pacientes)})
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    try:
+        # Buscar pacientes da API com filtro
+        response = requests.get(
+            f'{base_url}/dados-agendamento',
+            headers=headers,
+            params={'search': query}
+        )
+        response.raise_for_status()
+        
+        dados = response.json()
+        pacientes_api = dados.get('pacientes', [])
+        
+        # Filtrar pacientes que correspondem à query
+        pacientes_filtrados = [
+            {
+                'id': p['id'],
+                'nome': p['nome'],
+                'cpf': p['cpf'],
+                'celular': p['celular']
+            }
+            for p in pacientes_api
+            if query.lower() in p['nome'].lower()
+        ][:10]  # Limitar a 10 resultados
+        
+        return JsonResponse({'pacientes': pacientes_filtrados})
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao buscar pacientes: {e}")
+        return JsonResponse({'pacientes': []})
 
 
 def agendar_consulta(request):
-    medicos = Medico.objects.all()
-    vagas = Vagas.objects.select_related('sala', 'clinica', 'segunda', 'terca', 'quarta', 'quinta', 'sexta').all()
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
     
-    # Serializar vagas para JSON
-    vagas_data = []
-    for vaga in vagas:
-        vaga_dict = {
-            'clinica': vaga.clinica.nome,
-            'sala': vaga.sala.nome,
-            'turno': vaga.turno,
-            'hora_inicio': str(vaga.hora_inicio),
-            'hora_fim': str(vaga.hora_fim),
-            'max_pacientes': vaga.max_pacientes,
-            'pacientes_atuais': vaga.pacientes_atuais,
-            'segunda': vaga.segunda.id if vaga.segunda else None,
-            'terca': vaga.terca.id if vaga.terca else None,
-            'quarta': vaga.quarta.id if vaga.quarta else None,
-            'quinta': vaga.quinta.id if vaga.quinta else None,
-            'sexta': vaga.sexta.id if vaga.sexta else None,
-        }
-        vagas_data.append(vaga_dict)
+    headers = {'Authorization': f'Bearer {token}'}
     
-    if request.method == 'POST':
-        # Processar o agendamento
-        paciente_id = request.POST.get('paciente_id')
-        medico_id = request.POST.get('medico')
-        data = request.POST.get('data')
-        turno = request.POST.get('turno')  # Agora é o turno
+    try:
+        # Buscar dados da API para o formulário
+        response = requests.get(f'{base_url}/dados-agendamento', headers=headers)
+        response.raise_for_status()
         
-        # Validar campos obrigatórios
-        if not all([paciente_id, medico_id, data, turno]):
-            error_message = "Por favor, preencha todos os campos obrigatórios."
-            return render(request, 'painel/agendar_consulta.html', {
-                'medicos': medicos,
-                'vagas_json': json.dumps(vagas_data),
-                'error': error_message
-            })
+        dados = response.json()
         
-        # Buscar paciente
-        paciente = get_object_or_404(Paciente, id=paciente_id)
+        medicos = dados.get('medicos', [])
+        vagas = dados.get('vagas', [])
+        pacientes = dados.get('pacientes', [])
+        turnos = dados.get('turnos', [])
         
-        # Buscar médico
-        medico = get_object_or_404(Medico, id=medico_id)
+        # Serializar vagas para JSON (compatibilidade com frontend)
+        vagas_data = []
+        for vaga in vagas:
+            vaga_dict = {
+                'clinica': 'Clínica Padrão',  # Fixo conforme solicitado
+                'sala': vaga.get('sala_nome'),
+                'turno': vaga.get('turno_id'),
+                'hora_inicio': vaga.get('turno_hora_inicio'),
+                'hora_fim': vaga.get('turno_hora_fim'),
+                'max_pacientes': vaga.get('max_pacientes'),
+                'pacientes_atuais': vaga.get('pacientes_atuais'),
+                'segunda': vaga.get('dias_medicos', {}).get('segunda'),
+                'terca': vaga.get('dias_medicos', {}).get('terca'),
+                'quarta': vaga.get('dias_medicos', {}).get('quarta'),
+                'quinta': vaga.get('dias_medicos', {}).get('quinta'),
+                'sexta': vaga.get('dias_medicos', {}).get('sexta'),
+            }
+            vagas_data.append(vaga_dict)
         
-        # Encontrar a vaga correspondente
-        data_obj = datetime.strptime(data, '%Y-%m-%d').date()
-        dia_semana = data_obj.weekday()  # 0=Segunda, 6=Domingo
-        nomes_dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo']
-        nome_dia = nomes_dias[dia_semana]
-        
-        # Buscar vaga do médico no dia com base no turno
-        vaga = None
-        if nome_dia == 'segunda':
-            vaga = Vagas.objects.filter(segunda=medico, turno=turno).first()
-        elif nome_dia == 'terca':
-            vaga = Vagas.objects.filter(terca=medico, turno=turno).first()
-        elif nome_dia == 'quarta':
-            vaga = Vagas.objects.filter(quarta=medico, turno=turno).first()
-        elif nome_dia == 'quinta':
-            vaga = Vagas.objects.filter(quinta=medico, turno=turno).first()
-        elif nome_dia == 'sexta':
-            vaga = Vagas.objects.filter(sexta=medico, turno=turno).first()
-        
-        if vaga and vaga.pacientes_atuais < vaga.max_pacientes:
-            # Criar agendamento
-            agendamento = Agendamentos.objects.create(
-                clinica=vaga.clinica,
-                sala=vaga.sala,
-                paciente=paciente,
-                medico=medico,
-                data_consulta=data_obj,  # Adicionar data da consulta
-                turno=vaga.turno,
-                hora_inicio=vaga.hora_inicio,  # Adicionar hora de início
-                hora_fim=vaga.hora_fim,      # Adicionar hora de fim
-                status='agendado'
-            )
+        if request.method == 'POST':
+            # Processar o agendamento
+            paciente_id = request.POST.get('paciente_id')
+            medico_id = request.POST.get('medico')
+            data = request.POST.get('data')
+            turno_id = request.POST.get('turno')
             
-            # Incrementar contador de pacientes
-            vaga.pacientes_atuais += 1
-            vaga.save()
+            # Validar campos obrigatórios
+            if not all([paciente_id, medico_id, data, turno_id]):
+                error_message = "Por favor, preencha todos os campos obrigatórios."
+                return render(request, 'painel/agendar_consulta.html', {
+                    'medicos': medicos,
+                    'vagas_json': json.dumps(vagas_data),
+                    'pacientes': pacientes,
+                    'turnos': turnos,
+                    'error': error_message
+                })
             
-            # Enviar mensagem de confirmação
-            mensagem = f"Olá {paciente.nome}! Sua consulta com Dr(a). {medico.nome} foi agendada para {data} ({vaga.turno}) na clínica {vaga.clinica.nome}."
-            url = f'http://web.whatsapp.com/send?phone={paciente.celular}&text={mensagem}'
+            # Enviar agendamento para API
+            agendamento_data = {
+                'paciente_id': int(paciente_id),
+                'medico_id': int(medico_id),
+                'data_consulta': data,
+                'turno_id': int(turno_id)
+            }
             
             try:
-                import webbrowser
-                webbrowser.open(url, new=2)
-            except Exception as e:
-                print(f"Erro ao abrir navegador: {e}")
-            
-            return redirect('painel:listar_consultas')
-        else:
-            # Vaga não disponível
-            error_message = "Desculpe, não há vagas disponíveis para este turno."
-            return render(request, 'painel/agendar_consulta.html', {
-                'medicos': medicos,
-                'vagas_json': json.dumps(vagas_data),
-                'error': error_message
-            })
-    
-    return render(request, 'painel/agendar_consulta.html', {
-        'medicos': medicos,
-        'vagas_json': json.dumps(vagas_data)
-    })
+                response = requests.post(
+                    f'{base_url}/agendar-consulta',
+                    json=agendamento_data,
+                    headers=headers
+                )
+                response.raise_for_status()
+                
+                resultado = response.json()
+                
+                if resultado.get('success'):
+                    # Enviar mensagem de confirmação via WhatsApp
+                    mensagem = f"Olá {resultado.get('paciente_nome')}! Sua consulta com Dr(a). {resultado.get('medico_nome')} foi agendada para {resultado.get('data_consulta')} ({resultado.get('turno_nome')}) na {resultado.get('sala_nome')}."
+                    url = f'http://web.whatsapp.com/send?phone={next((p.get('celular') for p in pacientes if p.get('id') == int(paciente_id)), '')}&text={mensagem}'
+                    
+                    try:
+                        import webbrowser
+                        webbrowser.open(url, new=2)
+                    except Exception as e:
+                        print(f"Erro ao abrir navegador: {e}")
+                    
+                    return redirect('painel:listar_consultas')
+                else:
+                    error_message = resultado.get('message', 'Erro ao agendar consulta.')
+                    return render(request, 'painel/agendar_consulta.html', {
+                        'medicos': medicos,
+                        'vagas_json': json.dumps(vagas_data),
+                        'pacientes': pacientes,
+                        'turnos': turnos,
+                        'error': error_message
+                    })
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"Erro na requisição de agendamento: {e}")
+                error_message = "Erro ao comunicar com o servidor. Tente novamente."
+                return render(request, 'painel/agendar_consulta.html', {
+                    'medicos': medicos,
+                    'vagas_json': json.dumps(vagas_data),
+                    'pacientes': pacientes,
+                    'turnos': turnos,
+                    'error': error_message
+                })
+        
+        return render(request, 'painel/agendar_consulta.html', {
+            'medicos': medicos,
+            'vagas_json': json.dumps(vagas_data),
+            'pacientes': pacientes,
+            'turnos': turnos
+        })
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao buscar dados de agendamento: {e}")
+        error_message = "Não foi possível carregar os dados. Tente novamente."
+        return render(request, 'painel/agendar_consulta.html', {
+            'medicos': [],
+            'vagas_json': json.dumps([]),
+            'pacientes': [],
+            'turnos': [],
+            'error': error_message
+        })
 
 
 def listar_consultas(request):
     from datetime import date, timedelta, datetime
-    clinicas = Clinicas.objects.all()
-    clinica_selecionada = request.GET.get('clinica')
-    medico_selecionado = request.GET.get('medico')
     
-    # Obter parâmetros de data ou usar semana atual
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # Parâmetros da requisição
+    medico_selecionado = request.GET.get('medico')
     data_inicio_param = request.GET.get('data_inicio')
     data_fim_param = request.GET.get('data_fim')
     
-    if data_inicio_param and data_fim_param:
-        # Converter parâmetros para data
-        try:
-            data_inicio = datetime.strptime(data_inicio_param, '%d/%m').date()
-            # Ajustar para o ano atual
-            data_inicio = data_inicio.replace(year=date.today().year)
-            data_fim = datetime.strptime(data_fim_param, '%d/%m').date()
-            data_fim = data_fim.replace(year=date.today().year)
-        except ValueError:
-            # Se falhar, usar semana atual
-            data_inicio = date.today()
-            while data_inicio.weekday() != 0:  # Encontrar segunda-feira
-                data_inicio -= timedelta(days=1)
-            data_fim = data_inicio + timedelta(days=4)
-    else:
-        # Usar semana atual
-        data_inicio = date.today()
-        while data_inicio.weekday() != 0:  # Encontrar segunda-feira
-            data_inicio -= timedelta(days=1)
-        data_fim = data_inicio + timedelta(days=4)
+    # Construir URL da API
+    api_url = f'{base_url}/agenda-completa'
+    params = {}
     
-    if clinica_selecionada:
-        print(f"DEBUG: Clinica selecionada: {clinica_selecionada}")
-        print(f"DEBUG: Data início: {data_inicio}, Data fim: {data_fim}")
-        salas_da_clinica = Salas.objects.filter(clinica_id=clinica_selecionada)
-        print(f"DEBUG: Salas encontradas: {salas_da_clinica.count()}")
+    if medico_selecionado:
+        params['medico_id'] = medico_selecionado
+    
+    if data_inicio_param and data_fim_param:
+        params['data_inicio'] = data_inicio_param
+        params['data_fim'] = data_fim_param
+    
+    try:
+        # Buscar dados da API
+        response = requests.get(api_url, headers=headers, params=params)
+        response.raise_for_status()
         
-        # Obter médicos que trabalham na clínica selecionada através das vagas
-        from django.db.models import Q
-        medicos_da_clinica = Medico.objects.filter(
-            Q(segunda__sala__clinica_id=clinica_selecionada) |
-            Q(terca__sala__clinica_id=clinica_selecionada) |
-            Q(quarta__sala__clinica_id=clinica_selecionada) |
-            Q(quinta__sala__clinica_id=clinica_selecionada) |
-            Q(sexta__sala__clinica_id=clinica_selecionada)
-        ).distinct()
-        print(f"DEBUG: Médicos encontrados: {medicos_da_clinica.count()}")
+        dados = response.json()
         
-        salas_data = []
+        print(f"DEBUG: Agenda carregada da API")
+        print(f"DEBUG: {len(dados.get('medicos', []))} médicos")
+        print(f"DEBUG: {len(dados.get('agendamentos', []))} agendamentos")
+        print(f"DEBUG: {len(dados.get('vagas', []))} vagas")
         
-        for sala in salas_da_clinica:
-            agendamentos_sala = []
-            
-            for dia_offset in range(5):  # Segunda a Sexta
-                data_dia = data_inicio + timedelta(days=dia_offset)
-                data_str = data_dia.strftime('%Y-%m-%d')
-                
-                # Filtrar por médico se selecionado
-                agendamentos_query = Agendamentos.objects.filter(
-                    sala=sala,
-                    data_consulta=data_dia
-                )
-                
-                if medico_selecionado:
-                    agendamentos_query = agendamentos_query.filter(medico_id=medico_selecionado)
-                
-                agendamentos_dia = agendamentos_query.select_related('paciente', 'medico').order_by('data_consulta')
-                
-                if agendamentos_dia:
-                    print(f"DEBUG: Encontrados {agendamentos_dia.count()} agendamentos para sala {sala.nome} em {data_str}")
-                
-                for agendamento in agendamentos_dia:
-                    especialidade = getattr(agendamento.medico, 'especialidade', None)
-                    especialidade_nome = especialidade.nome if especialidade else 'Geral'
-                    
-                    agendamentos_sala.append({
-                        'paciente': agendamento.paciente.nome,
-                        'medico': agendamento.medico.nome,
-                        'especialidade': especialidade_nome,
-                        'hora_inicio': agendamento.hora_inicio.strftime('%H:%M') if agendamento.hora_inicio else '08:00',
-                        'hora_fim': agendamento.hora_fim.strftime('%H:%M') if agendamento.hora_fim else '12:00',
-                        'data_consulta': data_str,
-                        'turno': agendamento.turno,
-                        'total_pacientes': Agendamentos.objects.filter(
-                            sala=sala, medico=agendamento.medico,
-                            data_consulta=data_dia, turno=agendamento.turno
-                        ).count()
-                    })
-            
-            salas_data.append({
-                'nome': sala.nome,
-                'agendamentos_dia': agendamentos_sala
-            })
-        
+        # Preparar contexto para o template
         context = {
-            'clinicas': clinicas,
-            'clinica_selecionada': clinica_selecionada,
-            'medicos': medicos_da_clinica,
+            'medicos': dados.get('medicos', []),
             'medico_selecionado': medico_selecionado,
-            'salas': salas_data,
-            'datas_semana': {
-                'segunda': (data_inicio).strftime('%Y-%m-%d'),
-                'terca': (data_inicio + timedelta(days=1)).strftime('%Y-%m-%d'),
-                'quarta': (data_inicio + timedelta(days=2)).strftime('%Y-%m-%d'),
-                'quinta': (data_inicio + timedelta(days=3)).strftime('%Y-%m-%d'),
-                'sexta': (data_inicio + timedelta(days=4)).strftime('%Y-%m-%d'),
-            }
+            'agendamentos': dados.get('agendamentos', []),
+            'vagas': dados.get('vagas', []),
+            'datas_semana': dados.get('datas_semana', {}),
+            'periodo': dados.get('periodo', {}),
+            'clinica_selecionada': '1',  # Clínica padrão fixa
         }
-    else:
+        
+        return render(request, 'painel/listar_consultas.html', context)
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Erro na requisição à API: {e}")
+        # Retornar contexto vazio em caso de erro
         context = {
-            'clinicas': clinicas,
-            'clinica_selecionada': clinica_selecionada,
             'medicos': [],
             'medico_selecionado': medico_selecionado,
-            'salas': [],
-            'datas_semana': {
-                'segunda': (data_inicio).strftime('%Y-%m-%d'),
-                'terca': (data_inicio + timedelta(days=1)).strftime('%Y-%m-%d'),
-                'quarta': (data_inicio + timedelta(days=2)).strftime('%Y-%m-%d'),
-                'quinta': (data_inicio + timedelta(days=3)).strftime('%Y-%m-%d'),
-                'sexta': (data_inicio + timedelta(days=4)).strftime('%Y-%m-%d'),
-            }
+            'agendamentos': [],
+            'vagas': [],
+            'datas_semana': {},
+            'periodo': {},
+            'clinica_selecionada': '1',
+            'erro': 'Não foi possível carregar os dados da agenda.'
         }
+        return render(request, 'painel/listar_consultas.html', context)
     
-    return render(request, 'painel/listar_consultas.html', context)
+    except Exception as e:
+        print(f"Erro ao processar dados da agenda: {e}")
+        context = {
+            'medicos': [],
+            'medico_selecionado': medico_selecionado,
+            'agendamentos': [],
+            'vagas': [],
+            'datas_semana': {},
+            'periodo': {},
+            'clinica_selecionada': '1',
+            'erro': 'Erro ao processar os dados da agenda.'
+        }
+        return render(request, 'painel/listar_consultas.html', context)
 
 
 def editar_consulta(request, id):

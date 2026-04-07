@@ -23,37 +23,36 @@
 <div class="container-fluid">
   <header class="text-center">
     <div class="" style="display: flex;justify-content: center;gap: 1rem;">
-    <!-- Seletor de Clínica -->
-    <div class="clinic-selector " style="margin-top: 1rem;">
-      <div class="form-floating d-inline-block">
-        <select class="form-select" id="clinica-select" name="clinica" onchange="atualizarSchedule()">
-          <option value="">Selecione uma clínica</option>
-          {% for clinica in clinicas %}
-          <option value="{{ clinica.id }}" {% if clinica_selecionada == clinica.id|stringformat:"s" %}selected{% endif %}>
-              {{ clinica.nome }}
-          </option>
-          {% endfor %}
-        </select>
-        <label for="clinica-select">Clínica</label>
-      </div>
-    </div>
     
     <!-- Seletor de Médico -->
-    {% if clinica_selecionada %}
-    <div class="medico-selector " style="margin-top: 1rem;">
+    <div class="medico-selector" style="margin-top: 1rem;">
       <div class="form-floating d-inline-block">
         <select class="form-select" id="medico-select" name="medico" onchange="atualizarSchedule()">
           <option value="">Todos os médicos</option>
           {% for medico in medicos %}
           <option value="{{ medico.id }}" {% if medico_selecionado == medico.id|stringformat:"s" %}selected{% endif %}>
-              {{ medico.nome }}
+              {{ medico.nome }} - {{ medico.especialidade_nome|default:medico.especialidade }}
           </option>
           {% endfor %}
         </select>
         <label for="medico-select">Médico</label>
       </div>
     </div>
-    {% endif %}
+    
+    <!-- Seletor de Período -->
+    <div class="periodo-selector" style="margin-top: 1rem;">
+      <div class="form-floating d-inline-block">
+        <input type="date" id="data-inicio" name="data_inicio" class="form-control" 
+               value="{{ periodo.data_inicio|default:'' }}" onchange="atualizarSchedule()">
+        <label for="data-inicio">Data Início</label>
+      </div>
+      <div class="form-floating d-inline-block">
+        <input type="date" id="data-fim" name="data_fim" class="form-control" 
+               value="{{ periodo.data_fim|default:'' }}" onchange="atualizarSchedule()">
+        <label for="data-fim">Data Fim</label>
+      </div>
+    </div>
+    
     </div>
   </header>
 
@@ -352,13 +351,8 @@
         urlParams.set('data_inicio', mondayStr);
         urlParams.set('data_fim', fridayStr);
         
-        // Preservar parâmetros existentes de clínica e médico
-        const clinicaSelect = document.getElementById('clinica-select');
+        // Preservar parâmetros existentes de médico
         const medicoSelect = document.getElementById('medico-select');
-        
-        if (clinicaSelect && clinicaSelect.value) {
-          urlParams.set('clinica', clinicaSelect.value);
-        }
         
         if (medicoSelect && medicoSelect.value) {
           urlParams.set('medico', medicoSelect.value);
@@ -418,18 +412,32 @@
     }
     
     function atualizarSchedule() {
-      const clinicaId = document.getElementById('clinica-select').value;
       const medicoId = document.getElementById('medico-select')?.value || '';
+      const dataInicio = document.getElementById('data-inicio')?.value || '';
+      const dataFim = document.getElementById('data-fim')?.value || '';
       
-      if (clinicaId) {
-        let url = `?clinica=${clinicaId}`;
-        if (medicoId) {
-          url += `&medico=${medicoId}`;
-        }
-        window.location.href = url;
-      } else {
-        window.location.href = '?';
+      let url = '?';
+      const params = [];
+      
+      if (medicoId) {
+        params.push(`medico=${medicoId}`);
       }
+      
+      if (dataInicio) {
+        params.push(`data_inicio=${dataInicio}`);
+      }
+      
+      if (dataFim) {
+        params.push(`data_fim=${dataFim}`);
+      }
+      
+      if (params.length > 0) {
+        url += params.join('&');
+      } else {
+        url = window.location.pathname; // Limpar parâmetros
+      }
+      
+      window.location.href = url;
     }
     
     document.addEventListener('DOMContentLoaded', function() {
@@ -484,8 +492,6 @@
       if(scheduleElement) {
         new ScheduleTemplate(scheduleElement);
       }
-      
-      document.getElementById('clinica-select').addEventListener('change', atualizarSchedule);
       
       // Adicionar event listener para o seletor de médicos
       const medicoSelect = document.getElementById('medico-select');
