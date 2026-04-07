@@ -321,7 +321,7 @@ def listar_medicos(request):
         return redirect('/login/')
     headers = {'Authorization': f'Bearer {token}'}
     try:
-        url_medicos = f'{base_url}/medicos'
+        url_medicos = f'{base_url}/medicos/completo'  # Usando endpoint completo
         response = requests.get(url_medicos, headers=headers)
         
         if response.status_code == 200:

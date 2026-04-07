@@ -66,10 +66,10 @@
             <h5 class="card-title text-center">{{ medico.nome }}</h5>
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <p class="card-text">Especialidade: {{ medico.especialidade }}</p>
+                    <p class="card-text">Especialidade: {{ medico.especialidade_nome|default:medico.especialidade }}</p>
                 </li>
                 <li class="nav-item">
-                    <p class="card-text">{{ medico.tipo_conselho}}-{{ medico.uf_conselho }} {{ medico.numero_conselho }}</p>
+                    <p class="card-text">{{ medico.tipo_conselho_nome|default:medico.tipo_conselho }}-{{ medico.uf_conselho_nome|default:medico.uf_conselho }} {{ medico.numero_conselho }}</p>
                 </li>
                 <li class="nav-item">
                     <p class="card-text">Telefone: {{ medico.celular }}</p>
