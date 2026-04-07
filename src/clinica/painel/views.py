@@ -332,7 +332,70 @@ def listar_medicos(request):
         medicos = []
         print(f"Erro ao listar médicos: {e}")
     return render(request, 'painel/medicos.html', {'medicos': medicos})
-
+def medico_detalhes(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    # Headers com autenticação
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # URL da API otimizada
+    api_url = f'http://localhost:8001/medico-sala/optimized/{id}'
+    
+    try:
+        # Buscar dados do médico e vagas na API
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        
+        dados = response.json()
+        medico = dados['medico']
+        vagas = dados['vagas']
+        
+        print(f"DEBUG: Médico ID {id} carregado: {medico['nome']}")
+        print(f"DEBUG: {len(vagas)} vagas encontradas")
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Erro na requisição: {e}")
+        return redirect('/login/')
+    except Exception as e:
+        print(f"Erro ao processar dados: {e}")
+        return redirect('/login/')
+    
+    # Montar tabela de horários do médico
+    # Estrutura: {dia: {turno: nome_turno}}
+    horarios_medico = {
+        'segunda': {},
+        'terca': {},
+        'quarta': {},
+        'quinta': {},
+        'sexta': {}
+    }
+    
+    # Mapeamento de turnos
+    nomes_turnos = {
+        1: 'Manhã',
+        2: 'Tarde', 
+        3: 'Noite'
+    }
+    
+    # Processar cada vaga para extrair horários do médico
+    for vaga in vagas:
+        for dia in ['segunda', 'terca', 'quarta', 'quinta', 'sexta']:
+            medico_id_vaga = vaga.get(dia)
+            if medico_id_vaga == int(id):  # Se o médico está nesta vaga neste dia
+                turno_id = vaga.get('turno')
+                nome_turno = nomes_turnos.get(turno_id, f'Turno {turno_id}')
+                
+                horarios_medico[dia][turno_id] = nome_turno
+                print(f"DEBUG: Médico {medico['nome']} encontrado - {dia} - {nome_turno}")
+    
+    return render(request, 'painel/medico_detalhes.html', {
+        'medico': medico,
+        'horarios': horarios_medico,
+        'nomes_turnos': nomes_turnos
+    })
 
 def cadastrar_medico_sala(request, medico_id):
     # Obter token da sessão

@@ -139,6 +139,53 @@
         padding: 0.1rem 0.3rem;
         border-radius: 3px;
     }
+
+    .horarios-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .horarios-table th {
+        background-color: #007bff;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        font-weight: bold;
+        border: 1px solid #0056b3;
+    }
+
+    .horarios-table td {
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+
+    .horarios-table td:not(:empty) {
+        background-color: #e3f2fd;
+        font-weight: bold;
+        color: #1976d2;
+    }
+
+    .turno-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        background-color: #007bff;
+        color: white;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    .empty-cell {
+        color: #999;
+        font-style: italic;
+    }
 </style>
 
 <div class="container">
@@ -182,59 +229,86 @@
                 <p class="convenio">Convenio 3</p>
                 <p class="convenio">Particular</p>
             </div>
-
-
         </div>
-    </div>
-    <div class="agendamento">
-        <div class="calendario">
+
+        <div class="section">
+                    <div class="local-atendimento">
+            <h3>Horários de Atendimento</h3>
+            <div>
+                <table class="horarios-table">
+                    <thead>
+                        <tr>
+                            <th>Segunda</th>
+                            <th>Terça</th>
+                            <th>Quarta</th>
+                            <th>Quinta</th>
+                            <th>Sexta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                {% if horarios.segunda %}
+                                    {% for turno_id, nome_turno in horarios.segunda.items %}
+                                        <span class="turno-badge">{{ nome_turno }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-cell">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if horarios.terca %}
+                                    {% for turno_id, nome_turno in horarios.terca.items %}
+                                        <span class="turno-badge">{{ nome_turno }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-cell">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if horarios.quarta %}
+                                    {% for turno_id, nome_turno in horarios.quarta.items %}
+                                        <span class="turno-badge">{{ nome_turno }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-cell">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if horarios.quinta %}
+                                    {% for turno_id, nome_turno in horarios.quinta.items %}
+                                        <span class="turno-badge">{{ nome_turno }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-cell">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if horarios.sexta %}
+                                    {% for turno_id, nome_turno in horarios.sexta.items %}
+                                        <span class="turno-badge">{{ nome_turno }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="empty-cell">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
+
+        <div class="section">
+            <div class="calendario">
             <h3>Agendar consultas</h3>
             <div>
                 
             </div>
         </div>
-
-        <div class="local-atendimento">
-            <h3>Locais de atendimento</h3>
-            <div>
-                {% if clinicas %}
-                    {% for clinica in clinicas %}
-                        <h4>{{ forloop.counter }} - {{ clinica.nome }}</h4>
-                        <p>Endereço: {{ clinica.rua }}, {{ clinica.bairro }} - {{ clinica.cidade }} - {{ clinica.estado_id }}</p>
-                        <p>Celular: {{ clinica.celular }}</p>
-                        
-                        <!-- Mostrar vagas do médico nesta clínica -->
-                        <div class="vagas-medico">
-                            <strong>Turnos de atendimento:</strong>
-                            {% for vaga in vagas %}
-                                {% if vaga.clinica.id == clinica.id %}
-                                    {% if vaga.segunda.id == medico.id or vaga.terca.id == medico.id or vaga.quarta.id == medico.id or vaga.quinta.id == medico.id or vaga.sexta.id == medico.id %}
-                                        <div class="turno-info">
-                                            <span class="turno-nome">{{ vaga.turno|title }}:</span>
-                                            <span class="dias-atendimento">
-                                                
-                                                {% if vaga.segunda.id == medico.id %}Seg{% endif %}
-                                                {% if vaga.terca.id == medico.id %}Ter{% endif %}
-                                                {% if vaga.quarta.id == medico.id %}Qua{% endif %}
-                                                {% if vaga.quinta.id == medico.id %}Qui{% endif %}
-                                                {% if vaga.sexta.id == medico.id %}Sex{% endif %}
-                                                
-                                            </span>
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-
-                        <hr style="border-bottom: 1px solid #000000;">
-                    {% endfor %}
-                {% else %}
-                    <p>Nenhum local de atendimento cadastrado.</p>
-                {% endif %}
-            </div>
         </div>
-
     </div>
+
 
 </div>
 {% endblock %}

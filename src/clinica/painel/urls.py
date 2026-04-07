@@ -13,6 +13,7 @@ urlpatterns = [
 
     #Medicos
     path("medicos/", views.listar_medicos, name="listar_medicos"),
+    path("medico/detalhes/<int:id>/", views.medico_detalhes, name="medico_detalhes"),
     path("medico/cadastrar/", views.cadastrar_medico, name="cadastrar_medico"),
     path("cadastrar-medico-sala/<int:medico_id>/", views.cadastrar_medico_sala, name="cadastrar_medico_sala"),
 
