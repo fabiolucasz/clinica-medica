@@ -1,5 +1,18 @@
 (function() {
 	// Schedule Template - by CodyHouse.co
+	
+	function getScheduleTimestamp(time) {
+		//accepts hh:mm format - convert hh:mm to timestamp
+		if (!time) return 0; // Proteção contra null/undefined
+		
+		time = time.replace(/ /g,'');
+		var timeArray = time.split(':');
+		if (timeArray.length < 2) return 0; // Proteção contra formato inválido
+		
+		var timeStamp = parseInt(timeArray[0])*60 + parseInt(timeArray[1]);
+		return timeStamp;
+	};
+	
 	function ScheduleTemplate( element ) {
 		this.element = element;
 		this.timelineItems = this.element.getElementsByClassName('cd-schedule__timeline')[0].getElementsByTagName('li');
@@ -69,8 +82,17 @@
 			slotHeight = this.topInfoElement.offsetHeight;
 		for(var i = 0; i < this.singleEvents.length; i++) {
 			var anchor = this.singleEvents[i].getElementsByTagName('a')[0];
-			var start = getScheduleTimestamp(anchor.getAttribute('data-start')),
-				duration = getScheduleTimestamp(anchor.getAttribute('data-end')) - start;
+			if (!anchor) continue; // Proteção contra anchor nulo
+			
+			var startTime = anchor.getAttribute('data-start');
+			var endTime = anchor.getAttribute('data-end');
+			
+			if (!startTime || !endTime) continue; // Proteção contra atributos nulos
+			
+			var start = getScheduleTimestamp(startTime),
+				duration = getScheduleTimestamp(endTime) - start;
+			
+			if (start === 0 || duration <= 0) continue; // Proteção contra timestamps inválidos
 
 			var eventTop = slotHeight*(start - self.timelineStart)/self.timelineUnitDuration,
 				eventHeight = slotHeight*duration/self.timelineUnitDuration;
@@ -326,14 +348,6 @@
 		return window.getComputedStyle(this.element, '::before').getPropertyValue('content').replace(/'|"/g, "");
 	};
 
-	function getScheduleTimestamp(time) {
-		//accepts hh:mm format - convert hh:mm to timestamp
-		time = time.replace(/ /g,'');
-		var timeArray = time.split(':');
-		var timeStamp = parseInt(timeArray[0])*60 + parseInt(timeArray[1]);
-		return timeStamp;
-	};
-
 	var scheduleTemplate = document.getElementsByClassName('js-cd-schedule'),	
 		scheduleTemplateArray = [],
 		resizing = false;
@@ -368,4 +382,8 @@
 			resizing = false;
 		};
 	}
-}());
+	
+	// Expor ScheduleTemplate globalmente para uso no template
+	window.ScheduleTemplate = ScheduleTemplate;
+	window.getScheduleTimestamp = getScheduleTimestamp;
+})();

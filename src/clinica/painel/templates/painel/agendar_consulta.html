@@ -280,6 +280,8 @@
                 <!-- Horários serão gerados por JavaScript -->
             </div>
             <input type="hidden" id="turno-selecionado" name="turno" required>
+            <input type="hidden" id="hora-inicio-especifico" name="hora_inicio">
+            <input type="hidden" id="hora-fim-especifico" name="hora_fim">
         </div>
 
         <!-- Botão de Envio -->
@@ -609,6 +611,8 @@
         
         // Salvar informações no formulário
         document.getElementById('turno-selecionado').value = vaga.turno;
+        document.getElementById('hora-inicio-especifico').value = horario.hora_inicio;
+        document.getElementById('hora-fim-especifico').value = horario.hora_fim;
         
         console.log('Turno selecionado:', turnoInfo.nome);
         console.log('Horário específico:', horario.hora_inicio, '-', horario.hora_fim);

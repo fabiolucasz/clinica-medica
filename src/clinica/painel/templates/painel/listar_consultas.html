@@ -18,8 +18,6 @@
 
 {% block content %}
 
-
-
 <div class="container-fluid">
   <header class="text-center">
     <div class="" style="display: flex;justify-content: center;gap: 1rem;">
@@ -39,17 +37,12 @@
       </div>
     </div>
     
-    <!-- Seletor de Período -->
+    <!-- Seletor de Data Única -->
     <div class="periodo-selector" style="margin-top: 1rem;">
       <div class="form-floating d-inline-block">
-        <input type="date" id="data-inicio" name="data_inicio" class="form-control" 
-               value="{{ periodo.data_inicio|default:'' }}" onchange="atualizarSchedule()">
-        <label for="data-inicio">Data Início</label>
-      </div>
-      <div class="form-floating d-inline-block">
-        <input type="date" id="data-fim" name="data_fim" class="form-control" 
-               value="{{ periodo.data_fim|default:'' }}" onchange="atualizarSchedule()">
-        <label for="data-fim">Data Fim</label>
+        <input type="date" id="data-semana" name="data_semana" class="form-control" 
+               value="{{ periodo.data_referencia|default:'' }}" onchange="atualizarSemanaPorData()">
+        <label for="data-semana">Selecione uma data</label>
       </div>
     </div>
     
@@ -106,152 +99,201 @@
       <ul>
         <!-- Segunda-feira -->
         <li class="cd-schedule__group">
-          <div class="cd-schedule__top-info" data-day="monday"><span>--</span><br><small>Seg</small></div>
+          <div class="cd-schedule__top-info" data-day="monday">
+            <span>{{ datas_semana.segunda.data_br|default:"--" }}</span><br><small>Seg</small>
+          </div>
           <ul>
-            {% if clinica_selecionada and salas %}
-              {% for sala in salas %}
-                {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data_consulta == datas_semana.segunda %}
-                    <li class="cd-schedule__event">
-                      <a 
-                        data-start="{{ agendamento.hora_inicio }}" 
-                        data-end="{{ agendamento.hora_fim }}" 
-                        data-content="event-consulta-{{ agendamento.turno|lower }}" 
-                        data-event="event-1" 
-                        href="#0">
-                        <em class="cd-schedule__name">
-                          {% if medico_selecionado %}
-                            {{ agendamento.paciente }}
-                          {% else %}
-                            {{ agendamento.turno|title|lower }}
-                          {% endif %}
-                        </em>
-                      </a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
-            {% else %}
-              <li class="cd-schedule__event placeholder">
-                <a href="#0">
-                  <div class="cd-schedule__name">
-                    <span>Selecione uma clínica</span>
-                  </div>
-                </a>
-              </li>
-            {% endif %}
+            {% for agendamento in agendamentos %}
+              {% if agendamento.data_consulta == datas_semana.segunda.data %}
+                <li class="cd-schedule__event">
+                  <a 
+                    data-start="{{ agendamento.hora_inicio }}" 
+                    data-end="{{ agendamento.hora_fim }}" 
+                    data-content="event-consulta-{{ agendamento.id }}" 
+                    data-event="event-1" 
+                    href="#0">
+                    <em class="cd-schedule__name">
+                      {{ agendamento.paciente_nome }} - Dr(a). {{ agendamento.medico_nome }}
+                    </em>
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            {% regroup agendamentos by data_consulta as agendamentos_por_data %}
+            {% for data_grupo in agendamentos_por_data %}
+              {% if data_grupo.grouper == datas_semana.segunda.data %}
+                {% if data_grupo.list|length == 0 %}
+                  <li class="cd-schedule__event placeholder">
+                    <a href="#0" data-start="" data-end="" data-content="placeholder" data-event="placeholder">
+                      <em class="cd-schedule__name">
+                        <span>Nenhum agendamento</span>
+                      </em>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
           </ul>
         </li>
-  
+
         <!-- Terça-feira -->
         <li class="cd-schedule__group">
-          <div class="cd-schedule__top-info" data-day="tuesday"><span>--</span><br><small>Ter</small></div>
+          <div class="cd-schedule__top-info" data-day="tuesday">
+            <span>{{ datas_semana.terca.data_br|default:"--" }}</span><br><small>Ter</small>
+          </div>
           <ul>
-            {% if clinica_selecionada and salas %}
-              {% for sala in salas %}
-                {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data_consulta == datas_semana.terca %}
-                    <li class="cd-schedule__event">
-                      <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
-                         data-content="event-consulta-{{ agendamento.turno|lower }}" 
-                         data-event="event-1" href="#0">
-                        <em class="cd-schedule__name">
-                          {% if medico_selecionado %}
-                            {{ agendamento.paciente }}
-                          {% else %}
-                            {{ agendamento.turno|title|lower }}
-                          {% endif %}
-                        </em>
-                      </a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
-            {% endif %}
+            {% for agendamento in agendamentos %}
+              {% if agendamento.data_consulta == datas_semana.terca.data %}
+                <li class="cd-schedule__event">
+                  <a 
+                    data-start="{{ agendamento.hora_inicio }}" 
+                    data-end="{{ agendamento.hora_fim }}" 
+                    data-content="event-consulta-{{ agendamento.id }}" 
+                    data-event="event-1" 
+                    href="#0">
+                    <em class="cd-schedule__name">
+                      {{ agendamento.paciente_nome }} - Dr(a). {{ agendamento.medico_nome }}
+                    </em>
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            {% regroup agendamentos by data_consulta as agendamentos_por_data %}
+            {% for data_grupo in agendamentos_por_data %}
+              {% if data_grupo.grouper == datas_semana.terca.data %}
+                {% if data_grupo.list|length == 0 %}
+                  <li class="cd-schedule__event placeholder">
+                    <a href="#0" data-start="" data-end="" data-content="placeholder" data-event="placeholder">
+                      <em class="cd-schedule__name">
+                        <span>Nenhum agendamento</span>
+                      </em>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
           </ul>
         </li>
 
         <!-- Quarta-feira -->
         <li class="cd-schedule__group">
-          <div class="cd-schedule__top-info" data-day="wednesday"><span>--</span><br><small>Qua</small></div>
+          <div class="cd-schedule__top-info" data-day="wednesday">
+            <span>{{ datas_semana.quarta.data_br|default:"--" }}</span><br><small>Qua</small>
+          </div>
           <ul>
-            {% if clinica_selecionada and salas %}
-              {% for sala in salas %}
-                {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data_consulta == datas_semana.quarta %}
-                    <li class="cd-schedule__event">
-                      <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
-                         data-content="event-consulta-{{ agendamento.turno|lower }}" 
-                         data-event="event-1" href="#0">
-                        <em class="cd-schedule__name">
-                          {% if medico_selecionado %}
-                            {{ agendamento.paciente }}
-                          {% else %}
-                            {{ agendamento.turno|title|lower }}
-                          {% endif %}
-                        </em>
-                      </a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
-            {% endif %}
+            {% for agendamento in agendamentos %}
+              {% if agendamento.data_consulta == datas_semana.quarta.data %}
+                <li class="cd-schedule__event">
+                  <a 
+                    data-start="{{ agendamento.hora_inicio }}" 
+                    data-end="{{ agendamento.hora_fim }}" 
+                    data-content="event-consulta-{{ agendamento.id }}" 
+                    data-event="event-1" 
+                    href="#0">
+                    <em class="cd-schedule__name">
+                      {{ agendamento.paciente_nome }} - Dr(a). {{ agendamento.medico_nome }}
+                    </em>
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            {% regroup agendamentos by data_consulta as agendamentos_por_data %}
+            {% for data_grupo in agendamentos_por_data %}
+              {% if data_grupo.grouper == datas_semana.quarta.data %}
+                {% if data_grupo.list|length == 0 %}
+                  <li class="cd-schedule__event placeholder">
+                    <a href="#0" data-start="" data-end="" data-content="placeholder" data-event="placeholder">
+                      <em class="cd-schedule__name">
+                        <span>Nenhum agendamento</span>
+                      </em>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
           </ul>
         </li>
 
         <!-- Quinta-feira -->
         <li class="cd-schedule__group">
-          <div class="cd-schedule__top-info" data-day="thursday"><span>--</span><br><small>Qui</small></div>
+          <div class="cd-schedule__top-info" data-day="thursday">
+            <span>{{ datas_semana.quinta.data_br|default:"--" }}</span><br><small>Qui</small>
+          </div>
           <ul>
-            {% if clinica_selecionada and salas %}
-              {% for sala in salas %}
-                {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data_consulta == datas_semana.quinta %}
-                    <li class="cd-schedule__event">
-                      <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
-                         data-content="event-consulta-{{ agendamento.turno|lower }}" 
-                         data-event="event-1" href="#0">
-                        <em class="cd-schedule__name">
-                          {% if medico_selecionado %}
-                            {{ agendamento.paciente }}
-                          {% else %}
-                            {{ agendamento.turno|title|lower }}
-                          {% endif %}
-                        </em>
-                      </a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
-            {% endif %}
+            {% for agendamento in agendamentos %}
+              {% if agendamento.data_consulta == datas_semana.quinta.data %}
+                <li class="cd-schedule__event">
+                  <a 
+                    data-start="{{ agendamento.hora_inicio }}" 
+                    data-end="{{ agendamento.hora_fim }}" 
+                    data-content="event-consulta-{{ agendamento.id }}" 
+                    data-event="event-1" 
+                    href="#0">
+                    <em class="cd-schedule__name">
+                      {{ agendamento.paciente_nome }} - Dr(a). {{ agendamento.medico_nome }}
+                    </em>
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            {% regroup agendamentos by data_consulta as agendamentos_por_data %}
+            {% for data_grupo in agendamentos_por_data %}
+              {% if data_grupo.grouper == datas_semana.quinta.data %}
+                {% if data_grupo.list|length == 0 %}
+                  <li class="cd-schedule__event placeholder">
+                    <a href="#0" data-start="" data-end="" data-content="placeholder" data-event="placeholder">
+                      <em class="cd-schedule__name">
+                        <span>Nenhum agendamento</span>
+                      </em>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
           </ul>
         </li>
 
         <!-- Sexta-feira -->
         <li class="cd-schedule__group">
-          <div class="cd-schedule__top-info" data-day="friday"><span>--</span><br><small>Sex</small></div>
+          <div class="cd-schedule__top-info" data-day="friday">
+            <span>{{ datas_semana.sexta.data_br|default:"--" }}</span><br><small>Sex</small>
+          </div>
           <ul>
-            {% if clinica_selecionada and salas %}
-              {% for sala in salas %}
-                {% for agendamento in sala.agendamentos_dia %}
-                  {% if agendamento.data_consulta == datas_semana.sexta %}
-                    <li class="cd-schedule__event">
-                      <a data-start="{{ agendamento.hora_inicio }}" data-end="{{ agendamento.hora_fim }}" 
-                         data-content="event-consulta-{{ agendamento.turno|lower }}" 
-                         data-event="event-1" href="#0">
-                        <em class="cd-schedule__name">
-                          {% if medico_selecionado %}
-                            {{ agendamento.paciente }}
-                          {% else %}
-                            {{ agendamento.turno|title|lower }}
-                          {% endif %}
-                        </em>
-                      </a>
-                    </li>
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
-            {% endif %}
+            {% for agendamento in agendamentos %}
+              {% if agendamento.data_consulta == datas_semana.sexta.data %}
+                <li class="cd-schedule__event">
+                  <a 
+                    data-start="{{ agendamento.hora_inicio }}" 
+                    data-end="{{ agendamento.hora_fim }}" 
+                    data-content="event-consulta-{{ agendamento.id }}" 
+                    data-event="event-1" 
+                    href="#0">
+                    <em class="cd-schedule__name">
+                      {{ agendamento.paciente_nome }} - Dr(a). {{ agendamento.medico_nome }}
+                    </em>
+                  </a>
+                </li>
+              {% endif %}
+            {% endfor %}
+            
+            {% regroup agendamentos by data_consulta as agendamentos_por_data %}
+            {% for data_grupo in agendamentos_por_data %}
+              {% if data_grupo.grouper == datas_semana.sexta.data %}
+                {% if data_grupo.list|length == 0 %}
+                  <li class="cd-schedule__event placeholder">
+                    <a href="#0" data-start="" data-end="" data-content="placeholder" data-event="placeholder">
+                      <em class="cd-schedule__name">
+                        <span>Nenhum agendamento</span>
+                      </em>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
           </ul>
         </li>
       </ul>
@@ -407,15 +449,22 @@
       formatDate(date) {
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        return `${day}/${month}`;
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
       }
     }
     
     function atualizarSchedule() {
       const medicoId = document.getElementById('medico-select')?.value || '';
-      const dataInicio = document.getElementById('data-inicio')?.value || '';
-      const dataFim = document.getElementById('data-fim')?.value || '';
+      const dataSemana = document.getElementById('data-semana')?.value || '';
       
+      if (dataSemana) {
+        // Se há uma data selecionada, calcular a semana correspondente
+        atualizarSemanaPorData();
+        return;
+      }
+      
+      // Caso contrário, apenas atualizar o médico selecionado
       let url = '?';
       const params = [];
       
@@ -423,21 +472,66 @@
         params.push(`medico=${medicoId}`);
       }
       
-      if (dataInicio) {
-        params.push(`data_inicio=${dataInicio}`);
-      }
-      
-      if (dataFim) {
-        params.push(`data_fim=${dataFim}`);
-      }
-      
       if (params.length > 0) {
         url += params.join('&');
       } else {
-        url = window.location.pathname; // Limpar parâmetros
+        url = window.location.pathname;
       }
       
       window.location.href = url;
+    }
+    
+    function atualizarSemanaPorData() {
+      const dataSelecionada = document.getElementById('data-semana')?.value;
+      const medicoId = document.getElementById('medico-select')?.value || '';
+      
+      if (!dataSelecionada) {
+        console.log('DEBUG: Nenhuma data selecionada');
+        return;
+      }
+      
+      console.log('DEBUG: Data selecionada:', dataSelecionada);
+      
+      // Converter a data selecionada para objeto Date
+      const dataObj = new Date(dataSelecionada + 'T00:00:00');
+      const diaSemana = dataObj.getDay(); // 0=Domingo, 1=Segunda, ..., 6=Sábado
+      
+      // Calcular a segunda-feira da semana (offset para trás)
+      // Se for domingo (0), voltar 6 dias. Se for segunda (1), não voltar nada. Se for terça (2), voltar 1 dia, etc.
+      const offsetParaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+      
+      const segunda = new Date(dataObj);
+      segunda.setDate(segunda.getDate() + offsetParaSegunda);
+      
+      const sexta = new Date(segunda);
+      sexta.setDate(sexta.getDate() + 4);
+      
+      // Formatar as datas para DD/MM/YYYY
+      const formatarData = (date) => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+      
+      const segundaStr = formatarData(segunda);
+      const sextaStr = formatarData(sexta);
+      
+      console.log('DEBUG: Semana calculada:', segundaStr, 'a', sextaStr);
+      
+      // Construir URL com os parâmetros
+      const params = new URLSearchParams();
+      params.set('data_inicio', segundaStr);
+      params.set('data_fim', sextaStr);
+      
+      if (medicoId) {
+        params.set('medico', medicoId);
+      }
+      
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      console.log('DEBUG: Nova URL:', newUrl);
+      
+      window.location.href = newUrl;
     }
     
     document.addEventListener('DOMContentLoaded', function() {
@@ -490,7 +584,33 @@
       
       const scheduleElement = document.getElementsByClassName('js-cd-schedule')[0];
       if(scheduleElement) {
-        new ScheduleTemplate(scheduleElement);
+        // Verificar se há eventos com atributos válidos antes de inicializar
+        const events = scheduleElement.querySelectorAll('.cd-schedule__event a');
+        let hasValidEvents = false;
+        
+        console.log('DEBUG: Total de eventos encontrados:', events.length);
+        
+        events.forEach(event => {
+          const start = event.getAttribute('data-start');
+          const end = event.getAttribute('data-end');
+          const content = event.getAttribute('data-content');
+          
+          console.log('DEBUG: Evento - start:', start, 'end:', end, 'content:', content);
+          
+          // Ignorar placeholders e considerar apenas eventos reais
+          if (start && end && start !== '' && end !== '' && content && content !== 'placeholder') {
+            hasValidEvents = true;
+            console.log('DEBUG: Evento válido encontrado!');
+          }
+        });
+        
+        console.log('DEBUG: hasValidEvents:', hasValidEvents);
+        
+        if (hasValidEvents) {
+          new ScheduleTemplate(scheduleElement);
+        } else {
+          console.log('Nenhum evento válido encontrado para inicializar o ScheduleTemplate');
+        }
       }
       
       // Adicionar event listener para o seletor de médicos

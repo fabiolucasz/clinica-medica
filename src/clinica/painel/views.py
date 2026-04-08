@@ -677,14 +677,67 @@ def agendar_consulta(request):
                     'error': error_message
                 })
             
-            # Enviar agendamento para API
-            agendamento_data = {
-                'paciente_id': int(paciente_id),
-                'medico_id': int(medico_id),
-                'data_consulta': data,
-                'turno_id': int(turno_id)
-            }
+            from datetime import datetime
             
+            # Converter data para datetime
+            data_datetime = datetime.strptime(data, '%Y-%m-%d')
+            
+            # Obter informações do horário selecionado (do frontend)
+            # Por enquanto, vamos usar valores padrão baseados no turno
+            turno_info = next((t for t in turnos if t['id'] == int(turno_id)), None)
+            if not turno_info:
+                error_message = "Turno não encontrado."
+                return render(request, 'painel/agendar_consulta.html', {
+                    'medicos': medicos,
+                    'vagas_json': json.dumps(vagas_data),
+                    'pacientes': pacientes,
+                    'turnos': turnos,
+                    'error': error_message
+                })
+            
+            # Encontrar primeira vaga disponível para este médico e turno
+            vaga_disponivel = None
+            for vaga in vagas_data:
+                if (vaga.get('turno') == int(turno_id) and 
+                    ((vaga.get('segunda') == int(medico_id)) or 
+                     (vaga.get('terca') == int(medico_id)) or
+                     (vaga.get('quarta') == int(medico_id)) or
+                     (vaga.get('quinta') == int(medico_id)) or
+                     (vaga.get('sexta') == int(medico_id)))):
+                    vaga_disponivel = vaga
+                    break
+            
+            if not vaga_disponivel:
+                error_message = "Vaga não encontrada para este médico e turno."
+                return render(request, 'painel/agendar_consulta.html', {
+                    'medicos': medicos,
+                    'vagas_json': json.dumps(vagas_data),
+                    'pacientes': pacientes,
+                    'turnos': turnos,
+                    'error': error_message
+                })
+
+            # Obter horários específicos selecionados no frontend
+            hora_inicio_especifico = request.POST.get('hora_inicio')
+            hora_fim_especifico = request.POST.get('hora_fim')
+
+            # Se não tiver os horários específicos, usa os do turno como fallback
+            if not hora_inicio_especifico or not hora_fim_especifico:
+                hora_inicio_especifico = turno_info.get('hora_inicio', '08:00')
+                hora_fim_especifico = turno_info.get('hora_fim', '09:00')
+
+            agendamento_data = {
+                'clinica': 1,  # Clínica padrão
+                'sala': 1,  # Sala padrão (depois podemos melhorar isso)
+                'paciente': int(paciente_id),
+                'medico': int(medico_id),
+                'data_consulta': data_datetime.isoformat(),
+                'turno': int(turno_id),
+                'hora_inicio': hora_inicio_especifico,
+                'hora_fim': hora_fim_especifico,
+                'status': 'agendado'
+            }
+
             try:
                 response = requests.post(
                     f'{base_url}/agendar-consulta',
@@ -761,6 +814,37 @@ def listar_consultas(request):
     medico_selecionado = request.GET.get('medico')
     data_inicio_param = request.GET.get('data_inicio')
     data_fim_param = request.GET.get('data_fim')
+    data_semana_param = request.GET.get('data_semana')
+    
+    # Se recebeu uma data única, calcular a semana (segunda a sexta)
+    if data_semana_param and not (data_inicio_param and data_fim_param):
+        try:
+            # Converter data do formato YYYY-MM-DD (input type="date")
+            data_obj = datetime.strptime(data_semana_param, '%Y-%m-%d')
+            
+            # Calcular segunda-feira (offset para trás)
+            dia_semana = data_obj.weekday()  # 0=Segunda, 6=Domingo
+            offset_para_segunda = -dia_semana  # Voltar para segunda
+            
+            segunda = data_obj + timedelta(days=offset_para_segunda)
+            sexta = segunda + timedelta(days=4)
+            
+            # Formato completo com ano: DD/MM/YYYY
+            data_inicio_param = segunda.strftime('%d/%m/%Y')
+            data_fim_param = sexta.strftime('%d/%m/%Y')
+            
+            print(f"DEBUG: Data selecionada {data_semana_param} -> Semana {data_inicio_param} a {data_fim_param}")
+        except Exception as e:
+            print(f"DEBUG: Erro ao processar data_semana: {e}")
+    
+    # Verificar se as datas têm ano completo, se não, adicionar ano atual
+    if data_inicio_param and data_fim_param:
+        # Se as datas vierem sem ano (ex: 20/04), adicionar ano atual
+        if len(data_inicio_param.split('/')) == 2:
+            ano_atual = datetime.now().year
+            data_inicio_param = f"{data_inicio_param}/{ano_atual}"
+            data_fim_param = f"{data_fim_param}/{ano_atual}"
+            print(f"DEBUG: Adicionado ano às datas: {data_inicio_param} a {data_fim_param}")
     
     # Construir URL da API
     api_url = f'{base_url}/agenda-completa'
@@ -785,6 +869,16 @@ def listar_consultas(request):
         print(f"DEBUG: {len(dados.get('agendamentos', []))} agendamentos")
         print(f"DEBUG: {len(dados.get('vagas', []))} vagas")
         
+        # Preparar período com data de referência para o seletor
+        periodo = dados.get('periodo', {})
+        if periodo.get('data_inicio'):
+            # Converter DD/MM/YYYY para YYYY-MM-DD para o input type="date"
+            try:
+                data_inicio_obj = datetime.strptime(periodo['data_inicio'], '%d/%m/%Y')
+                periodo['data_referencia'] = data_inicio_obj.strftime('%Y-%m-%d')
+            except:
+                periodo['data_referencia'] = ''
+        
         # Preparar contexto para o template
         context = {
             'medicos': dados.get('medicos', []),
@@ -792,7 +886,7 @@ def listar_consultas(request):
             'agendamentos': dados.get('agendamentos', []),
             'vagas': dados.get('vagas', []),
             'datas_semana': dados.get('datas_semana', {}),
-            'periodo': dados.get('periodo', {}),
+            'periodo': periodo,
             'clinica_selecionada': '1',  # Clínica padrão fixa
         }
         
