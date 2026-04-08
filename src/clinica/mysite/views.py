@@ -47,6 +47,7 @@ def login_view(request):
             validated = validate_token(token)
             if validated and validated.get('user'):
                 request.session['user_data'] = validated['user']
+                request.session['user_role'] = validated['user'].get('role')
                 
                 if validated['user']['role'] == 'administrador':
                     return redirect('painel:listar_pacientes')

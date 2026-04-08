@@ -2,12 +2,6 @@
 
 {% block navbar-left %}
 <h1 class="m-auto h3 mb-3 fw-normal">Selecionar Vagas - Dr(a). {{ medico.nome }}</h1>
-<!-- Debug: Verificar dados do médico -->
-<script>
-console.log('DEBUG TEMPLATE - Médico ID: {{ medico.id }}');
-console.log('DEBUG TEMPLATE - Médico Nome: {{ medico.nome }}');
-console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
-</script>
 {% endblock %}
 
 {% block navbar-right %}
@@ -76,26 +70,6 @@ console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
             <div class="order-form">
                 <div class="order-form-child">
                     <div class="column">
-                        <!-- <div class="form-floating">
-
-                                <select type="text" class="form-control" id="clinica-select" name="clinica" placeholder="clinica"
-                                required>
-                                    <option value="">Selecione a clínica</option>
-                                    {% if clinicas %}
-                                    {% for clinica in clinicas %}
-                                    <option value="{{ clinica.id }}">{{ clinica.id }} - {{ clinica.nome }}</option>
-                                    {% endfor %}
-                                    {% else %}
-                                    <option value="">Nenhuma clínica encontrada - Cadastre uma clínica primeiro</option>
-                                    {% endif %}
-                                </select>
-                            <label for="clinica-select">Selecione a clínica</label>
-                        </div> -->
-
-                    </div>                
-                <div class="order-form">
-                <div class="order-form-child">
-                    <div class="column">
                         <!-- Tabela de Turnos e Dias -->
                         <div id="tabela-turnos" style="display: none; margin-top: 2rem;">
                             <h5>Disponibilidade de Vagas</h5>
@@ -147,22 +121,20 @@ console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
             const tabelaTurnos = document.getElementById('tabela-turnos');
             const tabelaBody = document.getElementById('tabela-turnos-body');
             
+            // Flag de admin vinda do Django (como string para evitar erros de lint)
+            const isAdminStr = '{{ is_admin|yesno:"true,false" }}';
+            const isAdmin = isAdminStr === 'true';
+            
             // Obter dados das vagas do data attribute
             let vagasData = [];
             
             try {
                 const vagasJson = vagasDataElement.getAttribute('data-vagas') || '[]';
-                console.log('DEBUG: JSON bruto das vagas:', vagasJson);
                 if (vagasJson && vagasJson !== '[]' && vagasJson.trim() !== '') {
                     vagasData = JSON.parse(vagasJson);
-                    console.log('DEBUG: Vagas parseadas:', vagasData);
-                    console.log('DEBUG: Número de vagas:', vagasData.length);
-                } else {
-                    console.log('DEBUG: Nenhuma vaga encontrada ou JSON vazio');
                 }
             } catch (e) {
                 console.error('Erro ao fazer parse das vagas:', e);
-                console.log('Dados brutos:', vagasDataElement.getAttribute('data-vagas'));
                 vagasData = [];
             }
             
@@ -172,8 +144,6 @@ console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
                     tabelaTurnos.style.display = 'none';
                     return;
                 }
-                
-                console.log('DEBUG: Renderizando tabela com', vagasData.length, 'vagas');
                 
                 // Limpar tabela de forma eficiente
                 tabelaBody.innerHTML = '';
@@ -205,8 +175,8 @@ console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
                         const medicoId = vaga[dia];
                         const medicoNome = vaga[`${dia}_nome`];
                         
-                        if (medicoId && medicoId != 0 && medicoNome) {
-                            // Vaga ocupada - mostrar nome do médico e bloquear
+                        if (medicoId && medicoId != 0 && medicoNome && !isAdmin) {
+                            // Vaga ocupada por outro médico e usuário NÃO é admin - mostrar bloqueado
                             const divOcupado = document.createElement('div');
                             divOcupado.className = 'd-flex align-items-center';
                             
@@ -227,6 +197,41 @@ console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
                             divOcupado.appendChild(hiddenInput);
                             
                             diaCell.appendChild(divOcupado);
+                        } else if (medicoId && medicoId != 0 && medicoNome && isAdmin) {
+                            // Vaga ocupada mas usuário É admin - permitir edição
+                            const select = document.createElement('select');
+                            select.className = 'form-select form-select-sm';
+                            select.name = `vaga_${vaga.id}_${dia}`;
+                            
+                            // Opção vazia (para remover médico)
+                            const emptyOption = document.createElement('option');
+                            emptyOption.value = '';
+                            emptyOption.textContent = '- Vazio -';
+                            select.appendChild(emptyOption);
+                            
+                            // Opção do médico atual (selecionado por padrão)
+                            const medicoAtualOption = document.createElement('option');
+                            medicoAtualOption.value = medicoId;
+                            medicoAtualOption.textContent = medicoNome;
+                            medicoAtualOption.selected = true;
+                            select.appendChild(medicoAtualOption);
+                            
+                            // Opção do médico sendo editado
+                            const medicoEditOption = document.createElement('option');
+                            medicoEditOption.value = '{{ medico.id }}';
+                            medicoEditOption.textContent = '{{ medico.nome }}';
+                            select.appendChild(medicoEditOption);
+                            
+                            // Destacar visualmente que é uma vaga ocupada
+                            select.className += ' border-warning';
+                            
+                            // Badge informativo
+                            const badgeInfo = document.createElement('div');
+                            badgeInfo.className = 'small text-muted mb-1';
+                            badgeInfo.textContent = '⚠️ Ocupada';
+                            diaCell.appendChild(badgeInfo);
+                            
+                            diaCell.appendChild(select);
                         } else {
                             // Vaga livre - permitir seleção
                             const select = document.createElement('select');
@@ -255,7 +260,6 @@ console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
                 
                 tabelaBody.appendChild(fragment);
                 tabelaTurnos.style.display = 'block';
-                console.log('DEBUG: Tabela exibida com sucesso');
             }
             
             // Renderizar tabela na carga da página
@@ -295,8 +299,6 @@ console.log('DEBUG TEMPLATE - Médico completo: {{ medico }}');
                 btnText.style.display = 'none';
                 btnLoading.style.display = 'inline-block';
                 btnCadastrar.disabled = true;
-                
-                console.log('DEBUG: Formulário enviado, mostrando loading');
             });
         });
     </script>

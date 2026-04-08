@@ -556,22 +556,18 @@ def cadastrar_medico_sala(request, medico_id):
                             falhas += 1
                     except Exception as e:
                         print(f"❌ Erro ao processar atualização da vaga {vaga_id}: {e}")
-                        falhas += 1
-                
-                print(f"DEBUG: Processamento concluído - {sucessos} sucessos, {falhas} falhas")
-        
-        # Redirecionar sempre após processar o formulário
         return redirect('painel:listar_medicos')
+    
+    # Verificar se usuário é administrador (roles do banco: administrador, paciente, medico)
+    user_role = request.session.get('user_role')
+    is_staff = request.user.is_staff if hasattr(request, 'user') and hasattr(request.user, 'is_staff') else False
+    is_admin = user_role == 'administrador' or is_staff
     
     return render(request, 'painel/cadastrar_medico_sala.html', {
         'vagas': json.dumps(vagas),
-        'medico': medico
+        'medico': medico,
+        'is_admin': is_admin
     })
-    
-    # Debug final para garantir que o médico correto foi passado
-    print(f"DEBUG FINAL - Médico passado para template: {medico}")
-    print(f"DEBUG FINAL - Médico ID: {medico.get('id') if medico else 'N/A'}")
-    print(f"DEBUG FINAL - Médico Nome: {medico.get('nome') if medico else 'N/A'}")
 
 
 # Consultas e Agendamentos
