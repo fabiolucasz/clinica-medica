@@ -9,6 +9,20 @@
 {% endblock %}
 
 {% block content %}
+{% if erro_api %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Erro de conexão:</strong> {{ erro_api }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-x-circle-fill me-2"></i>{{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
 <style>
     .form {
         padding-top: 1rem;

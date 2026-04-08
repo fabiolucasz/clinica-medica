@@ -1,0 +1,15 @@
+{# Componente reutilizável para estado vazio #}
+{% if not items or items|length == 0 %}
+<div class="text-center py-5">
+    <svg class="bi text-muted mb-3" width="64" height="64" fill="currentColor">
+        <use xlink:href="#{{ icon|default:'inbox' }}"/>
+    </svg>
+    <h5 class="text-muted">{{ mensagem|default:'Nenhum item encontrado' }}</h5>
+    {% if submensagem %}
+    <p class="text-muted small">{{ submensagem }}</p>
+    {% endif %}
+    {% if url_acao and texto_acao %}
+    <a href="{{ url_acao }}" class="btn btn-primary mt-3">{{ texto_acao }}</a>
+    {% endif %}
+</div>
+{% endif %}

@@ -12,86 +12,321 @@
 
 {% block content %}
 <style>
-    .container {
+    /* Container Moderno */
+    .medicos-container {
         width: 90%;
-        margin: auto;
-        padding-top: 2rem;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
+        margin: 2rem auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        padding: 1rem;
     }
 
-    .card {
-        margin: auto;
-        width: 18rem;
-        margin-bottom: 2rem;
-        cursor: pointer;
+    @media (max-width: 768px) {
+        .medicos-container {
+            grid-template-columns: 1fr;
+            width: 95%;
+        }
     }
 
-    .moldura {
-        width: 200px;
-        height: 200px;
-        border-radius: 100%;
+    /* Card de Médico Moderno */
+    .medico-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
         overflow: hidden;
-        margin: auto;
-        background-color: #464b52;
+        transition: all var(--transition-normal);
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        position: relative;
     }
 
+    .medico-card:hover {
+        box-shadow: var(--shadow-xl);
+        transform: translateY(-8px);
+        border-color: var(--primary-light);
+    }
 
-    .card-body::before {
-        content: " ";
+    /* Header com gradiente */
+    .medico-card-header {
+        height: 100px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        position: relative;
+    }
+
+    /* Foto de perfil */
+    .medico-foto-container {
+        position: relative;
+        margin-top: -60px;
+        padding: 0 1.5rem;
+    }
+
+    .medico-foto {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--radius-full);
+        object-fit: cover;
+        border: 4px solid var(--bg-card);
+        box-shadow: var(--shadow-lg);
+        background: var(--bg-tertiary);
+        transition: transform var(--transition-normal);
+    }
+
+    .medico-card:hover .medico-foto {
+        transform: scale(1.05);
+    }
+
+    /* Corpo do card */
+    .medico-card-body {
+        padding: 1.5rem;
+        padding-top: 1rem;
+    }
+
+    .medico-nome {
+        font-size: var(--font-size-lg);
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    .medico-especialidade {
+        display: inline-block;
+        background: var(--primary-bg, rgba(79, 70, 229, 0.1));
+        color: var(--primary-color);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+        text-align: center;
         display: block;
-        width: 100%;
-        height: 1px;
-        background-color: #464b52;
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Info grid */
+    .medico-info-grid {
+        display: grid;
+        gap: 0.75rem;
         margin-top: 1rem;
     }
 
-    .card-title {
-        margin-top: 1rem;
+    .medico-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
     }
+
+    .medico-info-item i {
+        color: var(--primary-color);
+        font-size: 1rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Badge do conselho */
+    .medico-conselho {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--bg-tertiary);
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-xs);
+        color: var(--text-secondary);
+        margin-top: 1rem;
+        justify-content: center;
+    }
+
+    .medico-conselho i {
+        color: var(--success-color);
+    }
+
+    /* Preço destacado */
+    .medico-valor {
+        text-align: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .medico-valor-label {
+        font-size: var(--font-size-xs);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .medico-valor-amount {
+        font-size: var(--font-size-xl);
+        font-weight: 700;
+        color: var(--success-color);
+    }
+
+    /* Estado vazio moderno */
+    .empty-state-modern {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--bg-card);
+        border-radius: var(--radius-xl);
+        border: 2px dashed var(--border-color);
+        max-width: 500px;
+        margin: 3rem auto;
+    }
+
+    .empty-state-modern .icon {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1.5rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state-modern h5 {
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        font-size: var(--font-size-xl);
+    }
+
+    .empty-state-modern p {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Animação de entrada */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .medico-card {
+        animation: slideUp 0.4s ease-out;
+    }
+
+    .medico-card:nth-child(1) { animation-delay: 0.05s; }
+    .medico-card:nth-child(2) { animation-delay: 0.1s; }
+    .medico-card:nth-child(3) { animation-delay: 0.15s; }
+    .medico-card:nth-child(4) { animation-delay: 0.2s; }
+    .medico-card:nth-child(5) { animation-delay: 0.25s; }
+    .medico-card:nth-child(6) { animation-delay: 0.3s; }
 </style>
 
-<div class="container">
+{% if erro_api %}
+<div class="alert alert-danger alert-dismissible fade show mx-auto mt-5" style="width: 90%;" role="alert">
+    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Erro de conexão:</strong> {{ erro_api }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="medicos-container">
     {% if medicos %}
     {% for medico in medicos %}
-    <div class="card" data-medico-id="{{ medico.id }}" onclick="verDetalhesMedico(this)">
-        <div class="moldura">
-            <img src="{{ medico.foto_perfil }}" class="card-img-top" alt="Foto de perfil do médico">
-
+    <div class="medico-card" data-medico-id="{{ medico.id }}" onclick="verDetalhesMedico(this)">
+        <!-- Header com gradiente -->
+        <div class="medico-card-header"></div>
+        
+        <!-- Foto de perfil -->
+        <div class="medico-foto-container">
+            <img src="{{ medico.foto_perfil|default:'/static/img/default-avatar.png' }}" 
+                 class="medico-foto" 
+                 alt="Foto de {{ medico.nome }}"
+                 onerror="this.src='/static/img/default-avatar.png'">
         </div>
-
-        <div class="card-body">
-            <h5 class="card-title text-center">{{ medico.nome }}</h5>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <p class="card-text">Especialidade: {{ medico.especialidade_nome|default:medico.especialidade }}</p>
-                </li>
-                <li class="nav-item">
-                    <p class="card-text">{{ medico.tipo_conselho_nome|default:medico.tipo_conselho }}-{{ medico.uf_conselho_nome|default:medico.uf_conselho }} {{ medico.numero_conselho }}</p>
-                </li>
-                <li class="nav-item">
-                    <p class="card-text">Telefone: {{ medico.celular }}</p>
-                </li>
-                <li class="nav-item">
-                    <p class="card-text">Valor: R$ {{ medico.valor_consulta }}</p>
-                </li>
-            </ul>
-
+        
+        <!-- Corpo do card -->
+        <div class="medico-card-body">
+            <h5 class="medico-nome">{{ medico.nome }}</h5>
             
+            {% if medico.especialidade_nome or medico.especialidade %}
+            <span class="medico-especialidade">
+                <i class="bi bi-stars me-1"></i>{{ medico.especialidade_nome|default:medico.especialidade }}
+            </span>
+            {% endif %}
+            
+            <!-- Info Grid -->
+            <div class="medico-info-grid">
+                {% if medico.celular %}
+                <div class="medico-info-item">
+                    <i class="bi bi-telephone-fill"></i>
+                    <span>{{ medico.celular }}</span>
+                </div>
+                {% endif %}
+                
+                {% if medico.email %}
+                <div class="medico-info-item">
+                    <i class="bi bi-envelope-fill"></i>
+                    <span>{{ medico.email }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Conselho -->
+            {% if medico.numero_conselho %}
+            <div class="medico-conselho">
+                <i class="bi bi-shield-check"></i>
+                <span>{{ medico.tipo_conselho_nome|default:medico.tipo_conselho }}-{{ medico.uf_conselho_nome|default:medico.uf_conselho }} {{ medico.numero_conselho }}</span>
+            </div>
+            {% endif %}
+            
+            <!-- Valor -->
+            {% if medico.valor_consulta %}
+            <div class="medico-valor">
+                <div class="medico-valor-label">Valor da Consulta</div>
+                <div class="medico-valor-amount">R$ {{ medico.valor_consulta }}</div>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% endfor %}
     {% else %}
-    <p>Nenhum médico encontrado.</p>
+    <div class="empty-state-modern">
+        <div class="icon">
+            <i class="bi bi-people"></i>
+        </div>
+        <h5>Nenhum médico encontrado</h5>
+        <p>Cadastre um novo médico para começar a gerenciar sua clínica.</p>
+        <a href="{% url 'painel:cadastrar_medico' %}" class="btn btn-primary-modern btn-lg-modern">
+            <i class="bi bi-plus-circle me-2"></i>Cadastrar Médico
+        </a>
+    </div>
     {% endif %}
 </div>
 
 <script>
     function verDetalhesMedico(element) {
         let medicoId = element.getAttribute('data-medico-id');
-        window.location.href = '/painel/medico/detalhes/' + medicoId + '/';
+        // Adiciona efeito de ripple ao clicar
+        element.style.transform = 'translateY(-4px) scale(0.98)';
+        setTimeout(() => {
+            window.location.href = '/painel/medico/detalhes/' + medicoId + '/';
+        }, 150);
     }
+    
+    // Adicionar efeito hover suave
+    document.querySelectorAll('.medico-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = '10';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '1';
+        });
+    });
 </script>
 {% endblock %}

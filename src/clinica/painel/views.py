@@ -31,7 +31,19 @@ def cadastrar_paciente(request):
     Cadastra um novo paciente
     """
     url_estados = f'{base_url}/estados/'
-    estados = requests.get(url_estados).json()
+    estados = []
+    erro_api = None
+    
+    try:
+        response = requests.get(url_estados, timeout=10)
+        if response.status_code == 200:
+            estados = response.json()
+        else:
+            erro_api = f"Erro ao carregar estados (Status {response.status_code})"
+    except requests.exceptions.RequestException:
+        erro_api = "Não foi possível conectar ao servidor. Verifique se a API está rodando."
+    except Exception as e:
+        erro_api = f"Erro inesperado: {str(e)}"
 
     # TODO: Implementar a verificação de CPF válido e preenchimento automático do campo de CEP, Mensagem de erro caso o CPF seja inválido ou já cadastrado.
 
@@ -94,7 +106,7 @@ def cadastrar_paciente(request):
         # Redirecionar para a lista de pacientes
         return redirect('/painel/listar_pacientes/')
         
-    return render(request, 'painel/cadastrar_paciente.html', {'estados': estados})
+    return render(request, 'painel/cadastrar_paciente.html', {'estados': estados, 'erro_api': erro_api})
 
 
 def listar_pacientes(request):
@@ -106,30 +118,44 @@ def listar_pacientes(request):
     # Headers com autenticação
     headers = {'Authorization': f'Bearer {token}'}
     
+    pacientes = []
+    estados = []
+    erro_api = None
+    
     try:
         url_pacientes = f'{base_url}/pacientes/'
         url_estados = f'{base_url}/estados/'
         
         # Requisições com autenticação
-        pacientes_response = requests.get(url_pacientes, headers=headers)
-        estados_response = requests.get(url_estados, headers=headers)
+        pacientes_response = requests.get(url_pacientes, headers=headers, timeout=10)
+        estados_response = requests.get(url_estados, headers=headers, timeout=10)
         
         if pacientes_response.status_code == 200:
             pacientes = pacientes_response.json()
+        elif pacientes_response.status_code == 401:
+            request.session.flush()
+            return redirect('/login/')
         else:
-            pacientes = []
+            erro_api = f"Erro ao carregar pacientes (Status {pacientes_response.status_code})"
             
         if estados_response.status_code == 200:
             estados = estados_response.json()
-        else:
-            estados = []
             
+    except requests.exceptions.ConnectionError:
+        erro_api = "Não foi possível conectar ao servidor. Verifique se a API está rodando."
+    except requests.exceptions.Timeout:
+        erro_api = "O servidor demorou muito para responder. Tente novamente."
+    except requests.exceptions.RequestException as e:
+        erro_api = f"Erro na comunicação com o servidor: {str(e)}"
     except Exception as e:
-        pacientes = []
-        estados = []
-        print(f"Erro ao buscar dados da API: {e}")
+        erro_api = f"Erro inesperado: {str(e)}"
     
-    return render(request, 'painel/listar_pacientes.html', {'pacientes': pacientes, 'estados': estados})
+    return render(request, 'painel/listar_pacientes.html', {
+        'pacientes': pacientes, 
+        'estados': estados,
+        'erro_api': erro_api
+    })
+
 
 @token_required
 def editar_paciente(request, id):
@@ -320,18 +346,31 @@ def listar_medicos(request):
     if not token:
         return redirect('/login/')
     headers = {'Authorization': f'Bearer {token}'}
+    
+    medicos = []
+    erro_api = None
+    
     try:
-        url_medicos = f'{base_url}/medicos/completo'  # Usando endpoint completo
-        response = requests.get(url_medicos, headers=headers)
+        url_medicos = f'{base_url}/medicos/completo'
+        response = requests.get(url_medicos, headers=headers, timeout=10)
         
         if response.status_code == 200:
             medicos = response.json()
+        elif response.status_code == 401:
+            request.session.flush()
+            return redirect('/login/')
         else:
-            medicos = []
+            erro_api = f"Erro ao carregar médicos (Status {response.status_code})"
+    except requests.exceptions.ConnectionError:
+        erro_api = "Não foi possível conectar ao servidor. Verifique se a API está rodando."
+    except requests.exceptions.Timeout:
+        erro_api = "O servidor demorou muito para responder. Tente novamente."
+    except requests.exceptions.RequestException as e:
+        erro_api = f"Erro na comunicação com o servidor: {str(e)}"
     except Exception as e:
-        medicos = []
-        print(f"Erro ao listar médicos: {e}")
-    return render(request, 'painel/medicos.html', {'medicos': medicos})
+        erro_api = f"Erro inesperado: {str(e)}"
+    
+    return render(request, 'painel/medicos.html', {'medicos': medicos, 'erro_api': erro_api})
 def medico_detalhes(request, id):
     # Obter token da sessão
     token = request.session.get('fastapi_token')
@@ -784,15 +823,30 @@ def agendar_consulta(request):
             'turnos': turnos
         })
         
-    except requests.exceptions.RequestException as e:
-        print(f"Erro ao buscar dados de agendamento: {e}")
-        error_message = "Não foi possível carregar os dados. Tente novamente."
+    except requests.exceptions.ConnectionError:
         return render(request, 'painel/agendar_consulta.html', {
             'medicos': [],
             'vagas_json': json.dumps([]),
             'pacientes': [],
             'turnos': [],
-            'error': error_message
+            'erro_api': "Não foi possível conectar ao servidor. Verifique se a API está rodando."
+        })
+    except requests.exceptions.Timeout:
+        return render(request, 'painel/agendar_consulta.html', {
+            'medicos': [],
+            'vagas_json': json.dumps([]),
+            'pacientes': [],
+            'turnos': [],
+            'erro_api': "O servidor demorou muito para responder. Tente novamente."
+        })
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao buscar dados de agendamento: {e}")
+        return render(request, 'painel/agendar_consulta.html', {
+            'medicos': [],
+            'vagas_json': json.dumps([]),
+            'pacientes': [],
+            'turnos': [],
+            'erro_api': "Não foi possível carregar os dados. Tente novamente."
         })
 
 
