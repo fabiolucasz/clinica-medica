@@ -26,18 +26,20 @@ def index(request):
     return render(request, 'index.html')
 
 def login_view(request):
-    login_url = f'{base_url}/auth/login-json/'
+    login_url = f'{base_url}/login/access-token'
     
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         
-        payload = {
-            "email": username,
-            "password": password
-        }
-
-        response = requests.post(login_url, json=payload)
+        # OAuth2 password flow - form data
+        response = requests.post(
+            login_url,
+            data={
+                "username": username,
+                "password": password
+            }
+        )
         if response.status_code == 200:
             token = response.json()['access_token']
             # Criar sessão no Django com o token
