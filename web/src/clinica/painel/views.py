@@ -24,6 +24,34 @@ from mysite.views import token_required
 
 base_url = 'http://127.0.0.1:8001'
 
+# Dashboard
+
+def dashboard_view(request):
+    """
+    View do Dashboard - exibe resumo consolidado da clínica
+    """
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    url_dashboard = f'{base_url}/dashboard/resumo'
+    
+    try:
+        response = requests.get(url_dashboard, headers=headers, timeout=10)
+        if response.status_code == 200:
+            dashboard_data = response.json()
+        else:
+            dashboard_data = {}
+    except requests.exceptions.RequestException:
+        dashboard_data = {}
+    
+    return render(request, 'painel/dashboard.html', {
+        'dashboard': dashboard_data
+    })
+
 # Views dos Pacientes
 
 def cadastrar_paciente(request):

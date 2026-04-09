@@ -101,8 +101,8 @@
             <ul class="sidebar-nav">
                 <!-- Menu Principal -->
                 <li class="sidebar-item">
-                    <a href="{% url 'painel:listar_pacientes' %}"
-                        class="sidebar-link {% if request.path == '/' or request.path == '/painel/' %}active{% endif %}">
+                    <a href="{% url 'painel:dashboard' %}"
+                        class="sidebar-link {% if request.path == '/painel/' or request.path == '/painel/dashboard/' %}active{% endif %}">
                         <i class="bi bi-house-door"></i>
                         <span>Dashboard</span>
                     </a>

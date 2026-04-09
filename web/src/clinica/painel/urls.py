@@ -5,6 +5,10 @@ from django.conf.urls.static import static
 
 app_name = 'painel'
 urlpatterns = [
+    # Dashboard
+    path("", views.dashboard_view, name="dashboard"),
+    path("dashboard/", views.dashboard_view, name="dashboard"),
+
     #Pacientes
     path("paciente/cadastrar/", views.cadastrar_paciente, name="cadastrar_paciente"),
     path("pacientes/", views.listar_pacientes, name="listar_pacientes"),

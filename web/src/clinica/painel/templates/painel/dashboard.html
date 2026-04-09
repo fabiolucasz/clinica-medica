@@ -1,0 +1,512 @@
+{% extends 'painel/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Clínica Mirna{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+    .dashboard-container {
+        padding: 1.5rem;
+    }
+    
+    .kpi-card {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-icon.primary { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .kpi-icon.success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .kpi-icon.warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .kpi-icon.info { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+    .kpi-icon.danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .kpi-icon.secondary { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .kpi-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .section-card {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .section-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .section-body {
+        padding: 1.5rem;
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .quick-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .quick-action-btn:hover {
+        background: var(--accent-color);
+        color: white;
+        border-color: var(--accent-color);
+        text-decoration: none;
+    }
+    
+    .consulta-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s ease;
+    }
+    
+    .consulta-item:last-child {
+        border-bottom: none;
+    }
+    
+    .consulta-item:hover {
+        background: var(--bg-primary);
+    }
+    
+    .consulta-info h6 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+    
+    .consulta-info small {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .status-agendada { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .status-confirmada { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .status-cancelada { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .status-realizada { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .status-aguardando { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    
+    .paciente-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .paciente-item:last-child {
+        border-bottom: none;
+    }
+    
+    .paciente-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--bg-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--text-secondary);
+    }
+    
+    .paciente-info h6 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+    }
+    
+    .paciente-info small {
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+    }
+    
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0">Dashboard</h2>
+        <div class="text-muted small">
+            <i class="bi bi-clock"></i> Atualizado: {{ dashboard.atualizado_em|default:"--" }}
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="section-card mb-4">
+        <div class="section-header">
+            <h5 class="section-title"><i class="bi bi-lightning-charge"></i> Ações Rápidas</h5>
+        </div>
+        <div class="section-body">
+            <div class="quick-actions">
+                <a href="{% url 'painel:agendar_consulta' %}" class="quick-action-btn">
+                    <i class="bi bi-calendar-plus"></i> Agendar Consulta
+                </a>
+                <a href="{% url 'painel:cadastrar_paciente' %}" class="quick-action-btn">
+                    <i class="bi bi-person-plus"></i> Novo Paciente
+                </a>
+                <a href="{% url 'painel:cadastrar_medico' %}" class="quick-action-btn">
+                    <i class="bi bi-person-badge"></i> Novo Médico
+                </a>
+                <a href="{% url 'painel:listar_consultas' %}" class="quick-action-btn">
+                    <i class="bi bi-calendar-check"></i> Ver Consultas
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="kpi-icon primary">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="kpi-value">{{ dashboard.total_pacientes|default:"0" }}</div>
+                <div class="kpi-label">Total de Pacientes</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="kpi-icon success">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <div class="kpi-value">{{ dashboard.total_medicos|default:"0" }}</div>
+                <div class="kpi-label">Médicos Ativos</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="kpi-icon warning">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                <div class="kpi-value">{{ dashboard.consultas_hoje|default:"0" }}</div>
+                <div class="kpi-label">Consultas Hoje</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="kpi-icon danger">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="kpi-value">{{ dashboard.consultas_pendentes|default:"0" }}</div>
+                <div class="kpi-label">Pendentes</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="kpi-icon info">
+                    <i class="bi bi-hospital"></i>
+                </div>
+                <div class="kpi-value">{{ dashboard.total_clinicas|default:"0" }}</div>
+                <div class="kpi-label">Clínicas</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card">
+                <div class="kpi-icon secondary">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="kpi-value">{{ dashboard.consultas_mes|default:"0" }}</div>
+                <div class="kpi-label">Consultas no Mês</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Chart Section -->
+        <div class="col-lg-8">
+            <div class="section-card h-100">
+                <div class="section-header">
+                    <h5 class="section-title"><i class="bi bi-bar-chart"></i> Consultas nos Últimos 6 Meses</h5>
+                </div>
+                <div class="section-body">
+                    <canvas id="consultasChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Statistics -->
+        <div class="col-lg-4">
+            <div class="section-card h-100">
+                <div class="section-header">
+                    <h5 class="section-title"><i class="bi bi-pie-chart"></i> Status das Consultas</h5>
+                </div>
+                <div class="section-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Agendada</span>
+                            <span class="small fw-bold">{{ dashboard.estatisticas_status.agendada|default:"0" }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-primary" style="width: 25%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Confirmada</span>
+                            <span class="small fw-bold">{{ dashboard.estatisticas_status.confirmada|default:"0" }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 35%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Aguardando</span>
+                            <span class="small fw-bold">{{ dashboard.estatisticas_status.aguardando|default:"0" }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Cancelada</span>
+                            <span class="small fw-bold">{{ dashboard.estatisticas_status.cancelada|default:"0" }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-danger" style="width: 10%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Realizada</span>
+                            <span class="small fw-bold">{{ dashboard.estatisticas_status.realizada|default:"0" }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: 10%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mt-2">
+        <!-- Consultas de Hoje -->
+        <div class="col-lg-6">
+            <div class="section-card h-100">
+                <div class="section-header">
+                    <h5 class="section-title"><i class="bi bi-calendar-day"></i> Próximas Consultas</h5>
+                    <a href="{% url 'painel:listar_consultas' %}" class="small text-decoration-none">Ver todas</a>
+                </div>
+                <div class="p-0">
+                    {% if dashboard.ultimas_consultas %}
+                        {% for consulta in dashboard.ultimas_consultas %}
+                        <div class="consulta-item">
+                            <div class="consulta-info">
+                                <h6>{{ consulta.paciente }}</h6>
+                                <small>
+                                    <i class="bi bi-person-badge"></i> {{ consulta.medico }} 
+                                    <span class="mx-1">|</span> 
+                                    <i class="bi bi-hospital"></i> {{ consulta.clinica }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-badge status-{{ consulta.status }}">{{ consulta.status|title }}</span>
+                                <div class="small text-muted mt-1">
+                                    {% if consulta.data_hora %}
+                                        {{ consulta.data_hora|slice:":10" }} {{ consulta.data_hora|slice:"11:16" }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-calendar-x"></i>
+                            <p>Nenhuma consulta agendada</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Últimos Pacientes -->
+        <div class="col-lg-6">
+            <div class="section-card h-100">
+                <div class="section-header">
+                    <h5 class="section-title"><i class="bi bi-person-lines-fill"></i> Últimos Pacientes Cadastrados</h5>
+                    <a href="{% url 'painel:listar_pacientes' %}" class="small text-decoration-none">Ver todos</a>
+                </div>
+                <div class="p-0">
+                    {% if dashboard.ultimos_pacientes %}
+                        {% for paciente in dashboard.ultimos_pacientes %}
+                        <div class="paciente-item">
+                            <div class="paciente-avatar">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="paciente-info">
+                                    <h6>{{ paciente.nome }}</h6>
+                                    <small>
+                                        <i class="bi bi-telephone"></i> {{ paciente.celular }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="small text-muted">
+                                {% if paciente.data_cadastro %}
+                                    {{ paciente.data_cadastro|slice:":10" }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-people"></i>
+                            <p>Nenhum paciente cadastrado</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Gráfico de Consultas Mensais
+    const ctx = document.getElementById('consultasChart').getContext('2d');
+    
+    {% if dashboard.grafico_mensal %}
+    const meses = {{ dashboard.grafico_mensal|safe }}.map(item => item.mes);
+    const quantidades = {{ dashboard.grafico_mensal|safe }}.map(item => item.quantidade);
+    {% else %}
+    const meses = [];
+    const quantidades = [];
+    {% endif %}
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: meses,
+            datasets: [{
+                label: 'Consultas',
+                data: quantidades,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13 }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)',
+                        font: { size: 11 }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)',
+                        font: { size: 11 }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
