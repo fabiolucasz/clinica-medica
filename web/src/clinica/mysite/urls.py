@@ -10,5 +10,4 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('painel/', include('painel.urls')),
     path('area-paciente/', include('area_paciente.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),
 ]

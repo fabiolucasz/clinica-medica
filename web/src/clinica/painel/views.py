@@ -30,12 +30,19 @@ def cadastrar_paciente(request):
     """
     Cadastra um novo paciente
     """
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_estados = f'{base_url}/estados/'
     estados = []
     erro_api = None
     
     try:
-        response = requests.get(url_estados, timeout=10)
+        response = requests.get(url_estados, headers=headers, timeout=10)
         if response.status_code == 200:
             estados = response.json()
         else:
@@ -66,6 +73,7 @@ def cadastrar_paciente(request):
         try:
             response = requests.post(
                 f'{base_url}/pacientes/',
+                headers=headers,
                 json={
                     'nome': nome,
                     'password': senha,
@@ -222,8 +230,15 @@ def editar_paciente(request, id):
 
 
 def excluir_paciente(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_paciente_id = f'{base_url}/pacientes/{id}/'
-    response = requests.delete(url_paciente_id)
+    response = requests.delete(url_paciente_id, headers=headers)
     if response.status_code == 200:
         return redirect('painel:listar_pacientes')
     return redirect('painel:listar_pacientes')
@@ -233,16 +248,29 @@ def excluir_paciente(request, id):
 @token_required
 def cadastrar_medico(request):
 
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_conselho = f'{base_url}/tipo-conselho/'
     url_clinicas = f'{base_url}/clinicas/'
     url_estados = f'{base_url}/estados/'
     url_especialidades = f'{base_url}/especialidades/'
     url_medico = f'{base_url}/medicos'
     
-    tipo_conselho = requests.get(url_conselho).json()
-    clinicas = requests.get(url_clinicas).json()
-    estados = requests.get(url_estados).json()
-    especialidades = requests.get(url_especialidades).json()
+    try:
+        tipo_conselho = requests.get(url_conselho, headers=headers).json()
+        clinicas = requests.get(url_clinicas, headers=headers).json()
+        estados = requests.get(url_estados, headers=headers).json()
+        especialidades = requests.get(url_especialidades, headers=headers).json()
+    except requests.exceptions.RequestException:
+        return render(request, 'painel/cadastrar_medico.html', {
+            'error': 'Erro ao carregar dados da API. Tente novamente.',
+            'tipo_conselho': [], 'especialidades': [], 'estados': [], 'clinicas': []
+        })
     
     if request.method == 'POST':
         # Processar o formulário
@@ -305,6 +333,7 @@ def cadastrar_medico(request):
             # Criar o medico
             response = requests.post(
                 f'{base_url}/medicos',  
+                headers=headers,
                 json=data_payload)
             
             print(f"Status Code: {response.status_code}")
@@ -985,10 +1014,20 @@ def excluir_consulta(request, id):
 ## CRUD Clinica
 
 def cadastrar_clinica(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_clinicas = f'{base_url}/clinicas/'
     url_estados = f'{base_url}/estados/'
     
-    estados = requests.get(url_estados).json()
+    try:
+        estados = requests.get(url_estados, headers=headers).json()
+    except requests.exceptions.RequestException:
+        estados = []
     
     if request.method == 'POST':
         # Processar o formulário
@@ -1005,7 +1044,7 @@ def cadastrar_clinica(request):
         estado = request.POST.get('estado')
 
         try:
-            response = requests.post(url_clinicas, json={
+            response = requests.post(url_clinicas, headers=headers, json={
                 'nome': nome,
                 'celular': celular,
                 'celular2': celular2,
@@ -1026,16 +1065,40 @@ def cadastrar_clinica(request):
 
 
 def listar_clinicas(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_clinicas = f'{base_url}/clinicas/'
     url_estados = f'{base_url}/estados/'
-    clinicas = requests.get(url_clinicas).json()
-    estados = requests.get(url_estados).json()
+    
+    try:
+        clinicas = requests.get(url_clinicas, headers=headers).json()
+        estados = requests.get(url_estados, headers=headers).json()
+    except requests.exceptions.RequestException:
+        clinicas = []
+        estados = []
+    
     return render(request, 'painel/listar_clinicas.html', {'clinicas': clinicas, 'estados': estados})
 
 
 def editar_clinica(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_clinica_id = f'{base_url}/clinicas/{id}/'
-    clinica_id = requests.get(url_clinica_id).json()
+    
+    try:
+        clinica_id = requests.get(url_clinica_id, headers=headers).json()
+    except requests.exceptions.RequestException:
+        return redirect('painel:listar_clinicas')
     
     if request.method == 'POST':
         # Processar o formulário
@@ -1051,7 +1114,7 @@ def editar_clinica(request, id):
         cnpj = request.POST.get('cnpj')
         email = request.POST.get('email')
         try:
-            response = requests.put(url_clinica_id, json={
+            response = requests.put(url_clinica_id, headers=headers, json={
                 'nome': nome,
                 'cep': cep,
                 'rua': rua,
@@ -1073,8 +1136,15 @@ def editar_clinica(request, id):
 
 
 def excluir_clinica(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_clinica_id = f'{base_url}/clinicas/{id}/'
-    response = requests.delete(url_clinica_id)
+    response = requests.delete(url_clinica_id, headers=headers)
     if response.status_code == 200:
         return redirect('painel:listar_clinicas')
     return redirect('painel:listar_clinicas')
@@ -1083,16 +1153,28 @@ def excluir_clinica(request, id):
 
 
 def listar_salas(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_clinicas = f'{base_url}/clinicas/'
     
-    clinicas = requests.get(url_clinicas).json()
+    try:
+        clinicas = requests.get(url_clinicas, headers=headers).json()
+    except requests.exceptions.RequestException:
+        clinicas = []
+    
     clinica_selecionada = request.GET.get('clinica')
-
     url_salas_by_clinica_id = f'{base_url}/salas/clinica/{clinica_selecionada}'
     
-    
     if clinica_selecionada:
-        salas = requests.get(url_salas_by_clinica_id).json()
+        try:
+            salas = requests.get(url_salas_by_clinica_id, headers=headers).json()
+        except requests.exceptions.RequestException:
+            salas = []
     else: 
         salas = None
     return render(request, 'painel/listar_salas.html', {
@@ -1103,6 +1185,13 @@ def listar_salas(request):
 
 
 def cadastrar_sala(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url_salas = f'{base_url}/salas/'
     url_vagas = f'{base_url}/vagas/'
     
@@ -1110,66 +1199,105 @@ def cadastrar_sala(request):
         nome = request.POST.get('nome')
         clinica_id = request.POST.get('clinica')
 
-    if nome and clinica_id:
-        response_salas = requests.post(url_salas, json={
-            'nome': nome,
-            'clinica': clinica_id
-        })
-        for i in range(1, 4):
-            response_vagas = requests.post(url_vagas, json={
-                'sala': response_salas.json()['id'],
-                'clinica': clinica_id,
-                "status": "disponivel",
-                "turno": i,
-                "segunda": None,
-                "terca": None,
-                "quarta": None,
-                "quinta": None,
-                "sexta": None,
-                "max_pacientes": 25,
-                "pacientes_atuais": 0
-
-            })
-        if response_salas.status_code == 200 and response_vagas.status_code == 200:
-            return redirect(f'/painel/salas/?clinica={clinica_id}')
+        if nome and clinica_id:
+            try:
+                response_salas = requests.post(url_salas, headers=headers, json={
+                    'nome': nome,
+                    'clinica': clinica_id
+                })
+                if response_salas.status_code == 200:
+                    sala_id = response_salas.json()['id']
+                    for i in range(1, 4):
+                        requests.post(url_vagas, headers=headers, json={
+                            'sala': sala_id,
+                            'clinica': clinica_id,
+                            "status": "disponivel",
+                            "turno": i,
+                            "segunda": None,
+                            "terca": None,
+                            "quarta": None,
+                            "quinta": None,
+                            "sexta": None,
+                            "max_pacientes": 25,
+                            "pacientes_atuais": 0
+                        })
+                    return redirect(f'/painel/salas/?clinica={clinica_id}')
+            except requests.exceptions.RequestException as e:
+                print(f"Erro ao cadastrar sala: {e}")
 
     return render(request, 'painel/cadastrar_sala.html')
 
 
 def editar_sala(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/salas/{id}/'
-    sala = requests.get(url).json()
+    
+    try:
+        sala = requests.get(url, headers=headers).json()
+    except requests.exceptions.RequestException:
+        return redirect('/painel/salas/')
 
     if request.method == 'POST':
         nome = request.POST.get('nome')
 
-        response = requests.put(url, json={
-            'nome': nome
-        })
-        
-        if response.status_code == 200:
-            # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
-            return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
+        try:
+            response = requests.put(url, headers=headers, json={
+                'nome': nome
+            })
+            
+            if response.status_code == 200:
+                # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+                return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao editar sala: {e}")
     
     return render(request, 'painel/editar_sala.html', {'sala': sala})
 
 
 def excluir_sala(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/salas/{id}/'
-    sala = requests.get(url).json()
-    response = requests.delete(url)
-    if response.status_code == 200:
-        # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+    
+    try:
+        sala = requests.get(url, headers=headers).json()
+        response = requests.delete(url, headers=headers)
+        if response.status_code == 200:
+            # Redirecionar de volta para a página de listagem mantendo o filtro da clínica
+            return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
         return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
-    return redirect(f'/painel/salas/?clinica={sala["clinica"]}')
+    except requests.exceptions.RequestException:
+        return redirect('/painel/salas/')
+
 
 ## CRUD Especialidades
 
 
 def listar_especialidades(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/especialidades/'
-    response = requests.get(url)
-    especialidades = response.json()
+    try:
+        response = requests.get(url, headers=headers)
+        especialidades = response.json()
+    except requests.exceptions.RequestException:
+        especialidades = []
 
     #especialidades = Especialidades.objects.all()
   
@@ -1179,29 +1307,45 @@ def listar_especialidades(request):
 
 
 def cadastrar_especialidade(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/especialidades/'
     
     if request.method == 'POST':
         nome = request.POST.get('nome')
 
         if nome:
-            response = requests.post(url, json={
-                'nome': nome
-            })
-            if response.status_code == 200:
-                return redirect(f'/painel/especialidades')
-            else:
-                return render(request, 'painel/cadastrar_especialidade.html', {'error': 'Erro ao cadastrar especialidade'})
-
+            try:
+                response = requests.post(url, headers=headers, json={
+                    'nome': nome
+                })
+                if response.status_code == 200:
+                    return redirect(f'/painel/especialidades')
+                else:
+                    return render(request, 'painel/cadastrar_especialidade.html', {'error': 'Erro ao cadastrar especialidade'})
+            except requests.exceptions.RequestException:
+                return render(request, 'painel/cadastrar_especialidade.html', {'error': 'Erro de conexão com a API'})
     return render(request, 'painel/cadastrar_especialidade.html')
 
 
 def editar_especialidade(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/especialidades/{id}/'
     
     # Buscar dados atuais da especialidade na API
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             especialidade_data = response.json()
             especialidade = {
@@ -1218,7 +1362,7 @@ def editar_especialidade(request, id):
         
         if nome:
             try:
-                response = requests.put(url, json={'nome': nome})
+                response = requests.put(url, headers=headers, json={'nome': nome})
                 if response.status_code == 200:
                     return redirect('painel:listar_especialidades')
                 else:
@@ -1236,9 +1380,16 @@ def editar_especialidade(request, id):
 
 
 def excluir_especialidade(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/especialidades/{id}/'
     try:
-        response = requests.delete(url)
+        response = requests.delete(url, headers=headers)
         if response.status_code == 200:
             return redirect('painel:listar_especialidades')
         else:
@@ -1253,9 +1404,19 @@ def excluir_especialidade(request, id):
 ## CRUD Conselhos
 
 def listar_conselhos(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/tipo-conselho/'
-    response = requests.get(url)
-    conselhos = response.json()
+    try:
+        response = requests.get(url, headers=headers)
+        conselhos = response.json()
+    except requests.exceptions.RequestException:
+        conselhos = []
 
     return render(request, 'painel/listar_conselhos.html', {
         'conselhos': conselhos
@@ -1263,61 +1424,98 @@ def listar_conselhos(request):
 
 
 def cadastrar_conselho(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/tipo-conselho/'
     if request.method == 'POST':
         nome = request.POST.get('nome')
 
         if nome:
-            response = requests.post(url, json={
+            try:
+                response = requests.post(url, headers=headers, json={
+                    'nome': nome
+                })
+                if response.status_code == 200:
+                    return redirect('/painel/conselhos')
+                else:
+                    return render(request, 'painel/cadastrar_conselho.html', {'error': 'Erro ao cadastrar conselho'})
+            except requests.exceptions.RequestException:
+                return render(request, 'painel/cadastrar_conselho.html', {'error': 'Erro de conexão com a API'})
+    return render(request, 'painel/cadastrar_conselho.html')
+
+
+def editar_conselho(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    url = f'{base_url}/tipo-conselho/{id}/'
+    
+    try:
+        response = requests.get(url, headers=headers)
+        conselho = response.json()
+    except requests.exceptions.RequestException:
+        return redirect('painel:listar_conselhos')
+
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        try:
+            response = requests.put(url, headers=headers, json={
                 'nome': nome
             })
             if response.status_code == 200:
                 return redirect('/painel/conselhos')
             else:
-                return render(request, 'painel/cadastrar_conselho.html', {'error': 'Erro ao cadastrar conselho'})
-
-    return render(request, 'painel/cadastrar_conselho.html')
-
-
-def editar_conselho(request, id):
-    url = f'{base_url}/tipo-conselho/{id}/'
-    response = requests.get(url)
-    conselho = response.json()
-
-    if request.method == 'POST':
-        nome = request.POST.get('nome')
-        response = requests.put(url, json={
-            'nome': nome
-        })
-        if response.status_code == 200:
-            return redirect('/painel/conselhos')
-        else:
-            return render(request, 'painel/editar_conselho.html', {'conselho': conselho, 'error': 'Erro ao editar conselho'})
+                return render(request, 'painel/editar_conselho.html', {'conselho': conselho, 'error': 'Erro ao editar conselho'})
+        except requests.exceptions.RequestException:
+            return render(request, 'painel/editar_conselho.html', {'conselho': conselho, 'error': 'Erro de conexão com a API'})
     
     return render(request, 'painel/editar_conselho.html', {'conselho': conselho})
 
 
 def excluir_conselho(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/tipo-conselho/{id}/'
     try:
-        
-        response = requests.delete(url)
+        response = requests.delete(url, headers=headers)
         if response.status_code == 200:
             return redirect('painel:listar_conselhos')
         else:
-            return render(request, 'painel/listar_conselhos.html', {
-                'error': f'Erro ao excluir conselho: Status {response.status_code}'})
+            return render(request, 'painel/listar_conselhos.html', {'error': f'Erro ao excluir conselho: Status {response.status_code}'})
     except requests.exceptions.RequestException as e:
-        return render(request, 'painel/listar_conselhos.html', {
-            'error': f'Erro de conexão com API: {str(e)}'
-            })
+        return render(request, 'painel/listar_conselhos.html', {'error': f'Erro de conexão com API: {str(e)}'})
+
 
 ## Estados
 
 def listar_estados(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/estados/'
-    response = requests.get(url)
-    estados = response.json()
+    try:
+        response = requests.get(url, headers=headers)
+        estados = response.json()
+    except requests.exceptions.RequestException:
+        estados = []
 
     return render(request, 'painel/listar_estados.html', {
         'estados': estados
@@ -1325,53 +1523,88 @@ def listar_estados(request):
 
 
 def cadastrar_estado(request):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/estados/'
     if request.method == 'POST':
         nome = request.POST.get('nome')
         uf = request.POST.get('uf')
 
         if nome and uf:
-            response = requests.post(url, json={
-                'nome': nome,
-                'uf': uf
-            })
-            if response.status_code == 200:
-                return redirect('/painel/estados')
-            else:
-                return render(request, 'painel/cadastrar_estado.html', {'error': 'Erro ao cadastrar estado'})
-
+            try:
+                response = requests.post(url, headers=headers, json={
+                    'nome': nome,
+                    'uf': uf
+                })
+                if response.status_code == 200:
+                    return redirect('/painel/estados')
+                else:
+                    return render(request, 'painel/cadastrar_estado.html', {'error': 'Erro ao cadastrar estado'})
+            except requests.exceptions.RequestException:
+                return render(request, 'painel/cadastrar_estado.html', {'error': 'Erro de conexão com a API'})
     return render(request, 'painel/cadastrar_estado.html')
 
 
 def editar_estado(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/estados/{id}/'
-    estado = requests.get(url).json()
+    
+    try:
+        estado = requests.get(url, headers=headers).json()
+    except requests.exceptions.RequestException:
+        return redirect('/painel/estados')
+    
     if request.method == 'POST':
         nome = request.POST.get('nome')
         uf = request.POST.get('uf')
         
         if nome and uf:
-            response = requests.put(url, json={
-                'nome': nome,
-                'uf': uf
-            })
-            if response.status_code == 200:
-                return redirect('/painel/estados')
-            else:
-                return render(request, 'painel/editar_estado.html', {'estado': estado, 'error': 'Erro ao editar estado'})
+            try:
+                response = requests.put(url, headers=headers, json={
+                    'nome': nome,
+                    'uf': uf
+                })
+                if response.status_code == 200:
+                    return redirect('/painel/estados')
+                else:
+                    return render(request, 'painel/editar_estado.html', {'estado': estado, 'error': 'Erro ao editar estado'})
+            except requests.exceptions.RequestException:
+                return render(request, 'painel/editar_estado.html', {'estado': estado, 'error': 'Erro de conexão com a API'})
     
     return render(request, 'painel/editar_estado.html', {'estado': estado})
 
 
 def excluir_estado(request, id):
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
     url = f'{base_url}/estados/{id}/'
-    response = requests.delete(url)
-    if response.status_code == 200:
+    try:
+        response = requests.delete(url, headers=headers)
+        if response.status_code == 200:
+            return redirect('/painel/estados')
+        else:
+            return render(request, 'painel/listar_estados.html', {'error': 'Erro ao excluir estado'})
+    except requests.exceptions.RequestException:
         return redirect('/painel/estados')
-    else:
-        return render(request, 'painel/listar_estados.html', {'error': 'Erro ao excluir estado'})
 
 
 def logout_view(request):
-    logout(request)
-    return redirect('login')
+    # Limpar a sessão
+    request.session.flush()
+    return redirect('/login/')
