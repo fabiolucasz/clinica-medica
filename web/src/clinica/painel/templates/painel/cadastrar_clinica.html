@@ -3,43 +3,6 @@
 
 {% block title %}Cadastrar Clínica{% endblock %}
 
-{% block sidebar-items %}
-<li>
-    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link active">
-        <i class="bi bi-hospital me-2"></i>Cadastrar Clínica
-    </a>
-</li>
-<li>
-    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link">
-        <i class="bi bi-list-ul me-2"></i>Clínicas
-    </a>
-</li>
-<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
-<li>
-    <a href="{% url 'painel:listar_salas' %}" class="nav-link">
-        <i class="bi bi-door-open me-2"></i>Salas
-    </a>
-</li>
-<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
-<li>
-    <a href="{% url 'painel:listar_especialidades' %}" class="nav-link">
-        <i class="bi bi-stars me-2"></i>Especialidades
-    </a>
-</li>
-<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
-<li>
-    <a href="{% url 'painel:listar_conselhos' %}" class="nav-link">
-        <i class="bi bi-shield-check me-2"></i>Conselhos
-    </a>
-</li>
-<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
-<li>
-    <a href="{% url 'painel:listar_estados' %}" class="nav-link">
-        <i class="bi bi-map me-2"></i>Estados
-    </a>
-</li>
-{% endblock %}
-
 {% block content %}
 {% if error %}
 <div class="modern-alert modern-alert-danger mx-auto mt-4" style="max-width: 900px;">

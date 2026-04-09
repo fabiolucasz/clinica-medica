@@ -1,12 +1,6 @@
 {% extends 'painel/base.html' %}
 {% load static %}
 
-{% block navbar-right %}
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'painel:listar_pacientes' %}">Voltar</a>
-</li>
-{% endblock %}
-
 {% block content %}
 {% if erro_api %}
 <div class="modern-alert modern-alert-danger mx-auto mt-4" style="max-width: 900px;">

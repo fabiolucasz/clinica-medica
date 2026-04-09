@@ -8,14 +8,6 @@
 <title>Agenda da Clínica</title>
 {% endblock %}
 
-{% block sidebar-items %}
-<li>
-    <a href="{% url 'painel:agendar_consulta' %}" class="nav-link">
-        <i class="bi bi-calendar-plus me-2"></i>Agendar Consulta
-    </a>
-</li>
-{% endblock %}
-
 {% block content %}
 
 {% if erro %}

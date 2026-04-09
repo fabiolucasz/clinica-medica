@@ -3,19 +3,6 @@
 
 {% block title %}Agendar Consulta{% endblock %}
 
-{% block sidebar-items %}
-<li>
-    <a href="{% url 'painel:listar_consultas' %}" class="nav-link">
-        <i class="bi bi-calendar-week me-2"></i>Agenda
-    </a>
-</li>
-<li>
-    <a href="{% url 'painel:agendar_consulta' %}" class="nav-link active">
-        <i class="bi bi-calendar-plus me-2"></i>Agendar Consulta
-    </a>
-</li>
-{% endblock %}
-
 {% block content %}
 
 {% if erro_api %}
