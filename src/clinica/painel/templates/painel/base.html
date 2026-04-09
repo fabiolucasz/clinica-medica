@@ -324,9 +324,9 @@
                 {% endblock %}
                 <ul class="navbar-nav ms-auto align-items-center">
                     <!-- Theme Toggle -->
-                    <li class="nav-item theme-toggle-wrapper">
-                        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
-                            <span class="theme-toggle-icon">☀️</span>
+                    <li class="nav-item ms-2">
+                        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                            <i class="bi bi-sun" id="themeIcon"></i>
                         </button>
                     </li>
                     <li class="nav-item ms-3">
@@ -350,9 +350,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <!-- Theme Toggle -->
-                    <li class="nav-item theme-toggle-wrapper me-3">
-                        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
-                            <span class="theme-toggle-icon">☀️</span>
+                    <li class="nav-item ms-2">
+                        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                            <i class="bi bi-sun" id="themeIcon"></i>
                         </button>
                     </li>
                     <li class="nav-item">
@@ -375,9 +375,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <!-- Theme Toggle -->
-                    <li class="nav-item theme-toggle-wrapper me-3">
-                        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
-                            <span class="theme-toggle-icon">☀️</span>
+                    <li class="nav-item ms-2">
+                        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                            <i class="bi bi-sun" id="themeIcon"></i>
                         </button>
                     </li>
                     <li class="nav-item">
@@ -400,14 +400,14 @@
             </div>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <!-- Theme Toggle -->
-                    <li class="nav-item theme-toggle-wrapper me-3">
-                        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">
-                            <span class="theme-toggle-icon">☀️</span>
-                        </button>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link link-dark" href="{% url 'painel:login' %}"><i class="bi bi-box-arrow-in-right me-1"></i>Login</a>
+                    </li>
+                    <!-- Theme Toggle -->
+                    <li class="nav-item ms-2">
+                        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                            <i class="bi bi-sun" id="themeIcon"></i>
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -442,12 +442,8 @@
     <script>
         // Apply saved theme immediately to prevent flash
         (function() {
-            const savedTheme = localStorage.getItem('clinica-theme');
-            if (savedTheme) {
-                document.documentElement.setAttribute('data-theme', savedTheme);
-            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
         })();
     </script>
 

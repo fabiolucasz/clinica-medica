@@ -7,11 +7,11 @@
    Variáveis - Light Mode (Padrão)
    ------------------------------------------ */
 :root {
-  /* Cores Primárias */
-  --primary-color: #4f46e5;
-  --primary-light: #818cf8;
-  --primary-dark: #3730a3;
-  --secondary-color: #06b6d4;
+  /* Cores Primárias - Mesmo padrão do site principal */
+  --primary-color: #2d82b5;
+  --primary-light: #5ba3d0;
+  --primary-dark: #1e5a7a;
+  --secondary-color: #5ba3d0;
   
   /* Cores de Fundo */
   --bg-primary: #ffffff;
@@ -42,12 +42,12 @@
   --info-color: #3b82f6;
   --info-bg: #dbeafe;
   
-  /* Sombras Modernas */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.3);
+  /* Sombras Modernas - Mesmo padrão do site principal */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 20px rgba(45, 130, 181, 0.3);
   
   /* Bordas Arredondadas */
   --radius-sm: 6px;
@@ -81,7 +81,7 @@
 /* ------------------------------------------
    Variáveis - Dark Mode
    ------------------------------------------ */
-[data-theme="dark"] {
+[data-bs-theme="dark"] {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
@@ -123,57 +123,36 @@ body {
    Botão Toggle Tema
    ------------------------------------------ */
 .theme-toggle {
-  position: relative;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 50px;
+  padding: 0.5rem;
   width: 48px;
-  height: 26px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 3px;
-  transition: all var(--transition-normal);
-  box-shadow: var(--shadow-sm);
-}
-
-.theme-toggle:hover {
-  box-shadow: var(--shadow-md);
-  transform: scale(1.05);
-}
-
-.theme-toggle-icon {
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  transition: transform var(--transition-normal);
-  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-secondary);
 }
 
-[data-theme="dark"] .theme-toggle-icon {
-  transform: translateX(22px);
+.theme-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-glow);
 }
 
-.theme-toggle .sun-icon {
-  display: block;
+.theme-toggle i {
+  font-size: 1.25rem;
+  transition: transform 0.3s ease;
 }
 
-.theme-toggle .moon-icon {
-  display: none;
+.theme-toggle:hover i {
+  transform: rotate(20deg);
 }
 
-[data-theme="dark"] .theme-toggle .sun-icon {
-  display: none;
-}
-
-[data-theme="dark"] .theme-toggle .moon-icon {
-  display: block;
-}
 
 /* ------------------------------------------
    Navbar Moderna
@@ -190,7 +169,7 @@ body {
 .navbar-modern .navbar-brand {
   font-weight: 700;
   font-size: var(--font-size-xl);
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(135deg, #2d82b5 0%, #1e5a7a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -233,9 +212,9 @@ body {
 
 .sidebar-modern .nav-link:hover,
 .sidebar-modern .nav-link.active {
-  background: rgba(79, 70, 229, 0.15);
+  background: rgba(45, 130, 181, 0.15);
   color: var(--primary-light) !important;
-  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 0 0 1px rgba(45, 130, 181, 0.2);
 }
 
 .sidebar-modern .nav-link svg {

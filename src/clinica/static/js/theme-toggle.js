@@ -17,7 +17,7 @@
 
         // Load saved theme or detect system preference
         loadTheme() {
-            const savedTheme = localStorage.getItem('clinica-theme');
+            const savedTheme = localStorage.getItem('theme');
             
             if (savedTheme) {
                 this.setTheme(savedTheme);
@@ -30,8 +30,8 @@
 
         // Set theme
         setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('clinica-theme', theme);
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('theme', theme);
             
             // Update toggle button icon
             this.updateToggleIcon(theme);
@@ -42,25 +42,16 @@
 
         // Toggle between light and dark
         toggle() {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             this.setTheme(newTheme);
         },
 
         // Update toggle button icon
         updateToggleIcon(theme) {
-            const toggleBtn = document.querySelector('.theme-toggle');
-            if (toggleBtn) {
-                const icon = toggleBtn.querySelector('.theme-toggle-icon');
-                if (icon) {
-                    if (theme === 'dark') {
-                        icon.innerHTML = '🌙';
-                        icon.style.transform = 'translateX(22px)';
-                    } else {
-                        icon.innerHTML = '☀️';
-                        icon.style.transform = 'translateX(0)';
-                    }
-                }
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'bi bi-moon-stars' : 'bi bi-sun';
             }
         },
 
@@ -89,7 +80,7 @@
             });
 
             // Set initial icon
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'dark';
             this.updateToggleIcon(currentTheme);
         },
 
@@ -114,7 +105,7 @@
             
             mediaQuery.addEventListener('change', (e) => {
                 // Only auto-switch if user hasn't manually set a preference
-                if (!localStorage.getItem('clinica-theme')) {
+                if (!localStorage.getItem('theme')) {
                     this.setTheme(e.matches ? 'dark' : 'light');
                 }
             });
@@ -122,7 +113,7 @@
 
         // Get current theme
         getCurrentTheme() {
-            return document.documentElement.getAttribute('data-theme') || 'light';
+            return document.documentElement.getAttribute('data-bs-theme') || 'dark';
         }
     };
 

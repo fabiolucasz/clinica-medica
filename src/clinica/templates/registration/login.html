@@ -1,55 +1,363 @@
 {% extends 'base.html' %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Login - Clínica Mirna{% endblock %}
 
 {% block content %}
+{% load static %}
 
-<body class="text-center">
+<style>
+  .login-page {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(45, 130, 181, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(45, 130, 181, 0.1) 0%, transparent 50%);
+    animation: gradientMove 20s ease-in-out infinite;
+  }
+
+  @keyframes gradientMove {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-2%, -2%) rotate(180deg); }
+  }
+
+  .login-container {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .login-card {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .login-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .login-logo-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--gradient-primary);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: var(--shadow-glow);
+  }
+
+  .login-logo-icon i {
+    font-size: 2.5rem;
+    color: white;
+  }
+
+  .login-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .login-subtitle {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .form-input-wrapper {
+    position: relative;
+  }
+
+  .form-input-wrapper i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    background: var(--bg-input);
+    border: 2px solid var(--border-color);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 4px rgba(45, 130, 181, 0.15);
+  }
+
+  .form-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .remember-me input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.25rem;
+    background: var(--bg-input);
+    cursor: pointer;
+    accent-color: var(--primary);
+  }
+
+  .forgot-password {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+  }
+
+  .forgot-password:hover {
+    color: var(--primary-light);
+    text-decoration: underline;
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 1rem;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-login:active {
+    transform: translateY(0);
+  }
+
+  .signup-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .signup-link a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .signup-link a:hover {
+    text-decoration: underline;
+  }
+
+  .alert-modern {
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .alert-modern i {
+    font-size: 1.25rem;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+  }
+
+  .divider span {
+    padding: 0 1rem;
+  }
+
+  @media (max-width: 480px) {
+    .login-card {
+      padding: 2rem 1.5rem;
+    }
     
-<main class="form-signin">
-  <form method="post" style="padding-top: 5rem; width: 50%; margin: auto;">
-    {% csrf_token %}
-    {% load static %}
-    {% if error %}
-      <div class="alert alert-danger" role="alert">
-        {{ error }}
-      </div>
-    {% endif %}
-    
-    <!-- Messages framework -->
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    .login-title {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<div class="login-page">
+  <div class="login-container">
+    <div class="login-card animate-fade-in">
+      <div class="login-logo">
+        <div class="login-logo-icon">
+          <i class="bi bi-heart-pulse-fill"></i>
         </div>
-      {% endfor %}
-    {% endif %}
-    <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57">
-    <h1 class="h3 mb-3 fw-normal">Faça seu login</h1>
+        <h1 class="login-title">Bem-vindo de volta</h1>
+        <p class="login-subtitle">Entre com suas credenciais para acessar o sistema</p>
+      </div>
 
-    <div class="form-floating" style="margin-bottom: 1rem;">
-      <input type="text" class="form-control" id="floatingInput" name="username" placeholder="Usuário" required>
-      <label for="floatingInput">Usuário</label>
-    </div>
-    <div class="form-floating" style="margin-bottom: 1rem;">
-      <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="Senha" required>
-      <label for="floatingPassword">Senha</label>
-    </div>
+      {% if error %}
+        <div class="alert alert-danger alert-modern" role="alert">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span>{{ error }}</span>
+        </div>
+      {% endif %}
 
-    <div class="checkbox mb-3">
-      <label>
-        <input type="checkbox" value="remember-me"> Lembrar-me
-      </label>
-    </div>
-    <button class="w-100 btn btn-lg btn-primary" type="submit">Entrar</button>
-    <p class="mt-5 mb-3 text-muted">© 2026</p>
-  </form>
-</main>
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-modern alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>{{ message }}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
 
-    
+      <form method="post" id="loginForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <div class="form-input-wrapper">
+            <i class="bi bi-envelope"></i>
+            <input 
+              type="email" 
+              class="form-input" 
+              id="email" 
+              name="username" 
+              placeholder="seu@email.com"
+              required
+              autocomplete="email"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Senha</label>
+          <div class="form-input-wrapper">
+            <i class="bi bi-lock"></i>
+            <input 
+              type="password" 
+              class="form-input" 
+              id="password" 
+              name="password" 
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+            >
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" name="remember" value="remember-me">
+            <span>Lembrar-me</span>
+          </label>
+          <a href="#" class="forgot-password">Esqueceu a senha?</a>
+        </div>
+
+        <button type="submit" class="btn-login">
+          <i class="bi bi-box-arrow-in-right"></i>
+          <span>Entrar</span>
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>ou</span>
+      </div>
+
+      <div class="signup-link">
+        Não tem uma conta? <a href="#">Cadastre-se</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Focus no campo de email ao carregar
+  document.getElementById('email').focus();
   
+  // Efeito de loading no botão
+  document.getElementById('loginForm').addEventListener('submit', function() {
+    const btn = document.querySelector('.btn-login');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Entrando...';
+    btn.disabled = true;
+  });
+</script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-</body>
 {% endblock %}

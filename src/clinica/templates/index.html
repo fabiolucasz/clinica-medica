@@ -1,6 +1,600 @@
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Clínica Mirna - Sistema de Gestão{% endblock %}
 
 {% block content %}
+{% load static %}
+
+<style>
+  /* Hero Section */
+  .hero-section {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 4rem 2rem;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(ellipse at 20% 30%, rgba(45, 130, 181, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(45, 130, 181, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(45, 130, 181, 0.05) 0%, transparent 70%);
+    animation: heroGradient 15s ease-in-out infinite;
+  }
+
+  @keyframes heroGradient {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+  }
+
+  .hero-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-content {
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--gradient-primary);
+    border-radius: 50px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-hero-primary {
+    padding: 1rem 2rem;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .btn-hero-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(45, 130, 181, 0.4);
+    color: white;
+  }
+
+  .btn-hero-secondary {
+    padding: 1rem 2rem;
+    background: transparent;
+    border: 2px solid var(--border-color);
+    border-radius: 0.75rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+  }
+
+  .btn-hero-secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-3px);
+  }
+
+  /* Hero Image/Visual */
+  .hero-visual {
+    position: relative;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+
+  .hero-card {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .hero-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .hero-avatar {
+    width: 50px;
+    height: 50px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  .hero-card-info h4 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .hero-card-info p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .stat-item {
+    background: var(--bg-input);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Features Section */
+  .features-section {
+    padding: 5rem 2rem;
+    background: var(--bg-body);
+  }
+
+  .features-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .section-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .feature-card {
+    background: var(--gradient-card);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 2rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-light);
+  }
+
+  .feature-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .feature-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--bg-input);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+    color: var(--primary);
+    transition: var(--transition);
+  }
+
+  .feature-card:hover .feature-icon {
+    background: var(--gradient-primary);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  .feature-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .feature-description {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* CTA Section */
+  .cta-section {
+    padding: 5rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-primary);
+    opacity: 0.05;
+  }
+
+  .cta-container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .cta-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+
+  .cta-button {
+    padding: 1rem 3rem;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 0.75rem;
+    color: white;
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: var(--transition);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(45, 130, 181, 0.5);
+    color: white;
+  }
+
+  /* Footer */
+  .footer-section {
+    padding: 2rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+  }
+
+  .footer-text {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 992px) {
+    .hero-container {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      text-align: center;
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+    }
+
+    .hero-buttons {
+      justify-content: center;
+    }
+
+    .hero-visual {
+      order: -1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-section {
+      padding: 3rem 1.5rem;
+    }
+
+    .hero-title {
+      font-size: 2rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+    }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-container">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="bi bi-shield-check"></i>
+        Sistema Seguro & Confiável
+      </div>
+      <h1 class="hero-title">
+        Gestão Inteligente para Sua Clínica
+      </h1>
+      <p class="hero-subtitle">
+        Simplifique a administração da sua clínica com nossa plataforma completa. 
+        Agendamentos, prontuários, gestão de médicos e muito mais em um só lugar.
+      </p>
+      <div class="hero-buttons">
+        <a href="/login/" class="btn-hero-primary">
+          <i class="bi bi-box-arrow-in-right"></i>
+          Acessar Sistema
+        </a>
+        <a href="#features" class="btn-hero-secondary">
+          <i class="bi bi-grid-3x3-gap"></i>
+          Saiba Mais
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-card">
+        <div class="hero-card-header">
+          <div class="hero-avatar">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <div class="hero-card-info">
+            <h4>Dr. Carlos Silva</h4>
+            <p>Cardiologista</p>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-value">128</div>
+            <div class="stat-label">Pacientes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">45</div>
+            <div class="stat-label">Consultas Hoje</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">98%</div>
+            <div class="stat-label">Satisfação</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">15</div>
+            <div class="stat-label">Anos Exp.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="features">
+  <div class="features-container">
+    <div class="section-header">
+      <h2 class="section-title">Funcionalidades Principais</h2>
+      <p class="section-subtitle">
+        Tudo o que você precisa para gerenciar sua clínica de forma eficiente e profissional
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <h3 class="feature-title">Agendamentos</h3>
+        <p class="feature-description">
+          Sistema completo de agendamento com calendário intuitivo, 
+          notificações automáticas e gestão de fila de espera.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="bi bi-people"></i>
+        </div>
+        <h3 class="feature-title">Gestão de Pacientes</h3>
+        <p class="feature-description">
+          Cadastro completo de pacientes com histórico médico, 
+          prontuários digitais e acompanhamento de tratamentos.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="bi bi-heart-pulse"></i>
+        </div>
+        <h3 class="feature-title">Prontuário Eletrônico</h3>
+        <p class="feature-description">
+          Prontuários digitais seguros com histórico completo, 
+          prescrições e evolução do paciente.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+        <h3 class="feature-title">Financeiro</h3>
+        <p class="feature-description">
+          Controle financeiro completo com relatórios detalhados, 
+          gestão de convênios e faturamento.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="bi bi-graph-up"></i>
+        </div>
+        <h3 class="feature-title">Relatórios</h3>
+        <p class="feature-description">
+          Dashboards e relatórios em tempo real para acompanhar 
+          o desempenho da sua clínica.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="bi bi-shield-lock"></i>
+        </div>
+        <h3 class="feature-title">Segurança</h3>
+        <p class="feature-description">
+          Seus dados protegidos com criptografia avançada e 
+          conformidade com a LGPD.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+  <div class="cta-container">
+    <h2 class="cta-title">Pronto para modernizar sua clínica?</h2>
+    <p class="cta-subtitle">
+      Junte-se a centenas de clínicas que já utilizam nossa plataforma 
+      para oferecer um atendimento de excelência.
+    </p>
+    <a href="/login/" class="cta-button">
+      <i class="bi bi-rocket-takeoff"></i>
+      Começar Agora
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer-section">
+  <p class="footer-text">
+    2026 Clínica Mirna. Todos os direitos reservados.
+  </p>
+</footer>
+
 {% endblock %}
