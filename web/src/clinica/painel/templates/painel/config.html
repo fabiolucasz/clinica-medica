@@ -1,23 +1,32 @@
 {% extends "painel/base.html" %}
 
 {% block sidebar-items %}
-<li class="nav-item">
-    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
+<li>
+    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link">
+        <i class="bi bi-hospital me-2"></i>Cadastrar Clínica
+    </a>
 </li>
-
-<li class="nav-item">
-    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link link-dark">Clinicas</a>
+<li>
+    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link">
+        <i class="bi bi-list-ul me-2"></i>Clínicas
+    </a>
 </li>
-
-<hr>
-
-<li class="nav-item">
-    <a href="{% url 'painel:listar_salas' %}" class="nav-link link-dark">Salas</a>
+<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
+<li>
+    <a href="{% url 'painel:listar_salas' %}" class="nav-link">
+        <i class="bi bi-door-open me-2"></i>Salas
+    </a>
 </li>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Configurações</h1>
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+    <h2 style="color: var(--text-primary); text-align: center; margin-bottom: 2rem;">
+        <i class="bi bi-gear me-2"></i>Configurações
+    </h2>
+    <div class="modern-table-container" style="padding: 3rem; text-align: center;">
+        <i class="bi bi-cone-striped fs-1" style="color: var(--warning-color, #ffc107); margin-bottom: 1rem;"></i>
+        <p style="color: var(--text-muted);">Página de configurações em desenvolvimento.</p>
+    </div>
 </div>
 {% endblock %}

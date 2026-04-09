@@ -1,257 +1,206 @@
 {% extends 'painel/base.html' %}
+{% load static %}
 
-{% block navbar-right %}
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'painel:listar_medicos' %}">Voltar</a>
+{% block sidebar-items %}
+<li>
+    <a href="{% url 'painel:cadastrar_medico' %}" class="nav-link active">
+        <i class="bi bi-person-plus me-2"></i>Cadastrar Médico
+    </a>
 </li>
-
+<li>
+    <a href="{% url 'painel:listar_medicos' %}" class="nav-link">
+        <i class="bi bi-people me-2"></i>Listar Médicos
+    </a>
+</li>
 {% endblock %}
 
 {% block content %}
-<style>
-    .form-signin {
-        height: 100%;
-        overflow: visible;
-    }
+{% if error %}
+<div class="modern-alert modern-alert-danger mx-auto mt-4" style="max-width: 1000px;">
+    <i class="bi bi-x-circle-fill"></i>
+    {{ error }}
+</div>
+{% endif %}
 
-    .order-form {
-        display: flex;
-        flex-direction: column;
-    }
+<div style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="color: var(--text-primary); margin-bottom: 0.5rem;">
+            <i class="bi bi-person-plus me-2"></i>Cadastrar Médico
+        </h2>
+        <p style="color: var(--text-muted);">Preencha os dados do novo médico</p>
+    </div>
 
-    .order-form-child {
-        display: flex;
-        gap: 1rem;
-        justify-content: space-around;
-    }
-
-    .form {
-        padding-top: 1rem;
-        margin: auto;
-    }
-
-    .form-floating {
-        margin-bottom: 1rem;
-    }
-
-    #floatingInput {
-        width: 30rem;
-    }
-
-    button.btn {
-        margin-top: 1rem;
-        width: 10rem !important;
-    }
-</style>
-
-
-<body class="text-center">
-
-    <main class="form-signin">
-        <form class="form" method="post">
-            {% csrf_token %}
-            {% load static %}
-            {% if error %}
-            <div class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
-            {% endif %}
-            <!-- <img class="mb-4" src="{% static 'img/logo_psi.svg' %}" alt="" width="72" height="57"> -->
-
-            <div class="order-form">
-                <div class="order-form-child">
-                    <div class="column">
-                        <div class="form-floating" style="margin-bottom: 1rem;">
-                            <input type="text" class="form-control" id="floatingInput" name="nome"
-                                placeholder="nome completa" value="" required>
-                            <label for="floatingInput">Nome Completo</label>
-                        </div>
-                        <div class="form-floating" style="margin-bottom: 1rem;">
-                            <input type="text" class="form-control" id="floatingInput" name="celular"
-                                placeholder="celular" value="" required>
-                            <label for="floatingInput">Celular</label>
-                        </div>
-
-                        <div class="form-floating" style="margin-bottom: 1rem;">
-                            <input type="email" class="form-control" id="floatingInput" name="email" placeholder="email"
-                                required>
-                            <label for="floatingInput">E-mail</label>
-                        </div>
-
-                        <div class="form-floating" style="margin-bottom: 1rem;">
-                            <input type="text" class="form-control" id="floatingInput" name="cpf" placeholder="cpf"
-                                required>
-                            <label for="floatingInput">CPF</label>
-                        </div>
-
-                        <div class="form-floating" style="margin-bottom: 1rem;">
-                            <select class="form-select" aria-label="Default select example" name="sexo"
-                                id="floatingInput" required>
-                                <option value="Masculino">Masculino</option>
-                                <option value="Feminino">Feminino</option>
-                            </select>
-                            <label for="floatingInput">Sexo</label>
-                        </div>
-
-                        <div class="form-floating" style="margin-bottom: 1rem;">
-                            <input type="date" class="form-control" id="floatingInput" name="data_nascimento"
-                                placeholder="data_nascimento" required>
-                            <label for="floatingInput">Data de nascimento</label>
-                        </div>
-                    </div>
-
-                    <!--Endereço-->
-                    <div class="column">
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="floatingInput" name="cep" placeholder="cep"
-                                required>
-                            <label for="floatingInput">CEP</label>
-                        </div>
-
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="floatingInput" name="rua" placeholder="rua"
-                                required>
-                            <label for="floatingInput">Rua</label>
-                        </div>
-
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="floatingInput" name="numero"
-                                placeholder="numero" required>
-                            <label for="floatingInput">Número</label>
-                        </div>
-
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="floatingInput" name="bairro"
-                                placeholder="bairro" required>
-                            <label for="floatingInput">Bairro</label>
-                        </div>
-
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="floatingInput" name="cidade"
-                                placeholder="cidade" required>
-                            <label for="floatingInput">Cidade</label>
-                        </div>
-
-                        <div class="form-floating">
-                            <select class="form-select" aria-label="Default select example" name="estado"
-                                id="floatingInput" required>
-                                <option value="">Selecione</option>
-                                {% if estados %}
-                                {% for estado in estados %}
-                                <option value="{{ estado.id }}">{{ estado.nome }}</option>
-                                {% endfor %}
-                                {% else %}
-                                <option value="">Nenhum estado encontrado</option>
-                                {% endif %}
-                            </select>
-                            <label for="floatingInput">Estado</label>
-                        </div>
-                    </div>
-                </div>
-
-
-                <!--Contrato-->
-                <div class="contrato">
-                    <h2>Dados profissionais</h2>
-                    <div class="form-floating">
-                        <input type="text" class="form-control" id="floatingInput" name="foto_perfil"
-                            placeholder="foto_perfil">
-                        <label for="floatingInput">Foto de perfil (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <select type="text" class="form-control" aria-label="Default select example"
-                            aria-placeholder="especialidade" name="especialidade_id" id="floatingInput">
-                            {% if especialidades %}
-                            <option value="">Selecione</option>
-                            {% for especialidade in especialidades %}
-                            <option value="{{ especialidade.id }}">{{ especialidade.nome }}</option>
-                            {% endfor %}
-                            {% else %}
-                            <option value="">Nenhuma especialidade encontrada</option>
-                            {% endif %}
-                        </select>
-                        <label for="floatingInput">Especialidade (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <select type="text" class="form-control" aria-label="Default select example"
-                            placeholder="tipo_conselho" name="tipo_conselho_id" id="floatingInput">
-                            {% if tipo_conselho %}
-                            <option value="">Selecione</option>
-                            {% for tipo in tipo_conselho %}
-                            <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
-                            {% endfor %}
-                            {% else %}
-                            <option value="">Nenhum tipo de conselho encontrado</option>
-                            {% endif %}
-                        </select>
-                        <label for="floatingInput">Conselho Regional (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <select type="text" class="form-control" aria-label="Default select example"
-                            placeholder="uf_conselho" name="uf_conselho_id" id="floatingInput">
-                            {% if tipo_conselho %}
-                            <option value="">Selecione</option>
-                            {% for estado in estados %}
-                            <option value="{{ estado.id }}">{{ estado.nome }}</option>
-                            {% endfor %}
-                            {% else %}
-                            <option value="">Nenhum estado encontrado</option>
-                            {% endif %}
-                        </select>
-                        <label for="floatingInput">UF do Conselho (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <input type="text" class="form-control" id="floatingInput" name="numero_conselho"
-                            placeholder="numero_conselho">
-                        <label for="floatingInput">Número do conselho (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <input type="text" class="form-control" id="floatingInput" name="rqe" placeholder="rqe">
-                        <label for="floatingInput">RQE (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <input type="text" class="form-control" id="floatingInput" name="valor_consulta"
-                            placeholder="valor_consulta">
-                        <label for="floatingInput">Valor da consulta (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <input type="text" class="form-control" id="floatingInput" name="upload_documento"
-                            placeholder="upload_documento">
-                        <label for="floatingInput">Upload do documento profissional (opcional)</label>
-                    </div>
-
-                    <div class="form-floating">
-                        <input type="password" class="form-control" id="floatingInput" name="senha"
-                            placeholder="senha" required>
-                        <label for="floatingInput">Senha</label>
-                    </div>
-
-                </div>
-
+    <form method="post" class="modern-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <!-- Dados Pessoais -->
+            <div>
+                <h5 style="color: var(--primary-color); margin-bottom: 1.5rem; font-weight: 600;">
+                    <i class="bi bi-person me-2"></i>Dados Pessoais
+                </h5>
                 
-
-                <button class="w-100 btn btn-lg btn-primary" type="submit">Cadastrar</button>
-
-
-
+                <div class="form-group">
+                    <label>Nome Completo *</label>
+                    <input type="text" class="form-control" name="nome" placeholder="Nome completo" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Celular *</label>
+                    <input type="text" class="form-control" name="celular" placeholder="(00) 00000-0000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>E-mail *</label>
+                    <input type="email" class="form-control" name="email" placeholder="email@exemplo.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>CPF *</label>
+                    <input type="text" class="form-control" name="cpf" placeholder="000.000.000-00" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Sexo *</label>
+                    <select class="form-control" name="sexo" required>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Data de Nascimento *</label>
+                    <input type="date" class="form-control" name="data_nascimento" required>
+                </div>
             </div>
 
+            <!-- Endereço -->
+            <div>
+                <h5 style="color: var(--primary-color); margin-bottom: 1.5rem; font-weight: 600;">
+                    <i class="bi bi-geo-alt me-2"></i>Endereço
+                </h5>
+                
+                <div class="form-group">
+                    <label>CEP *</label>
+                    <input type="text" class="form-control" name="cep" placeholder="00000-000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Rua *</label>
+                    <input type="text" class="form-control" name="rua" placeholder="Nome da rua" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Número *</label>
+                    <input type="text" class="form-control" name="numero" placeholder="Número" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Bairro *</label>
+                    <input type="text" class="form-control" name="bairro" placeholder="Bairro" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Cidade *</label>
+                    <input type="text" class="form-control" name="cidade" placeholder="Cidade" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Estado *</label>
+                    <select class="form-control" name="estado" required>
+                        <option value="">Selecione</option>
+                        {% if estados %}
+                        {% for estado in estados %}
+                        <option value="{{ estado.id }}">{{ estado.nome }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
 
-        </form>
-    </main>
+            <!-- Dados Profissionais -->
+            <div>
+                <h5 style="color: var(--primary-color); margin-bottom: 1.5rem; font-weight: 600;">
+                    <i class="bi bi-briefcase me-2"></i>Dados Profissionais
+                </h5>
+                
+                <div class="form-group">
+                    <label>Foto de Perfil</label>
+                    <input type="file" class="form-control" name="foto_perfil" accept="image/*">
+                </div>
+                
+                <div class="form-group">
+                    <label>Especialidade</label>
+                    <select class="form-control" name="especialidade_id">
+                        <option value="">Selecione</option>
+                        {% if especialidades %}
+                        {% for especialidade in especialidades %}
+                        <option value="{{ especialidade.id }}">{{ especialidade.nome }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Conselho Regional</label>
+                    <select class="form-control" name="tipo_conselho_id">
+                        <option value="">Selecione</option>
+                        {% if tipo_conselho %}
+                        {% for tipo in tipo_conselho %}
+                        <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>UF do Conselho</label>
+                    <select class="form-control" name="uf_conselho_id">
+                        <option value="">Selecione</option>
+                        {% if estados %}
+                        {% for estado in estados %}
+                        <option value="{{ estado.id }}">{{ estado.nome }}</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Número do Conselho</label>
+                    <input type="text" class="form-control" name="numero_conselho" placeholder="Número do registro">
+                </div>
+                
+                <div class="form-group">
+                    <label>RQE</label>
+                    <input type="text" class="form-control" name="rqe" placeholder="Registro de Qualificação Especializada">
+                </div>
+                
+                <div class="form-group">
+                    <label>Valor da Consulta</label>
+                    <input type="text" class="form-control" name="valor_consulta" placeholder="R$ 0,00">
+                </div>
+                
+                <div class="form-group">
+                    <label>Documento Profissional</label>
+                    <input type="file" class="form-control" name="upload_documento">
+                </div>
+                
+                <div class="form-group">
+                    <label>Senha *</label>
+                    <input type="password" class="form-control" name="senha" placeholder="Crie uma senha" required>
+                </div>
+            </div>
+        </div>
 
-    {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-        crossorigin="anonymous"></script>
-    {% endblock %}
-
-</body>
+        <!-- Botões -->
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'painel:listar_medicos' %}" class="btn-modern btn-modern-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Voltar
+            </a>
+            <button type="submit" class="btn-modern btn-modern-primary">
+                <i class="bi bi-person-plus me-2"></i>Cadastrar Médico
+            </button>
+        </div>
+    </form>
+</div>
 {% endblock %}

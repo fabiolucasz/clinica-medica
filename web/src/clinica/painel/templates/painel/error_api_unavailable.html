@@ -1,12 +1,10 @@
 {# Componente reutilizável para erro de API indisponível #}
 {% if erro_api %}
-<div class="alert alert-danger d-flex align-items-center" role="alert">
-    <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Danger:">
-        <use xlink:href="#exclamation-triangle-fill"/>
-    </svg>
+<div class="modern-alert modern-alert-danger" style="margin-bottom: 1rem;">
+    <i class="bi bi-exclamation-triangle-fill"></i>
     <div>
         <strong>Erro de conexão:</strong> {{ erro_api }}
-        <br><small>Tente recarregar a página ou verifique se o servidor está online.</small>
+        <br><small style="color: var(--text-muted);">Tente recarregar a página ou verifique se o servidor está online.</small>
     </div>
 </div>
 {% endif %}

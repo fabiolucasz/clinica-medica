@@ -665,3 +665,435 @@ body {
     margin-top: -50px;
   }
 }
+
+/* ============================================
+   ESTILOS ESPECÍFICOS DO PAINEL ADMINISTRATIVO
+   ============================================ */
+
+/* ------------------------------------------
+   Tabelas Modernas
+   ------------------------------------------ */
+.modern-table-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  margin: 2rem auto;
+  width: 90%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+}
+
+.modern-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.modern-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
+  z-index: 10;
+}
+
+.modern-table tbody tr {
+  transition: background-color var(--transition-fast);
+  cursor: pointer;
+}
+
+.modern-table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.modern-table tbody td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.modern-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ------------------------------------------
+   Modais Modernos
+   ------------------------------------------ */
+.modern-modal .modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+.modern-modal .modal-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-bottom: none;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 1.5rem;
+}
+
+.modern-modal .modal-title {
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+}
+
+.modern-modal .modal-body {
+  padding: 2rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.modern-modal .modal-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.modern-modal .btn-close {
+  filter: invert(1);
+  opacity: 0.8;
+}
+
+.modern-modal .btn-close:hover {
+  opacity: 1;
+}
+
+/* ------------------------------------------
+   Alerts Modernos
+   ------------------------------------------ */
+.modern-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  margin: 1rem 0;
+  border: 1px solid;
+}
+
+.modern-alert-danger {
+  background: var(--error-bg);
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+.modern-alert-success {
+  background: var(--success-bg);
+  border-color: var(--success-color);
+  color: var(--success-color);
+}
+
+.modern-alert-warning {
+  background: var(--warning-bg);
+  border-color: var(--warning-color);
+  color: var(--warning-color);
+}
+
+.modern-alert-info {
+  background: var(--info-bg);
+  border-color: var(--info-color);
+  color: var(--info-color);
+}
+
+/* ------------------------------------------
+   Formulários Modernos
+   ------------------------------------------ */
+.modern-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.modern-form label {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.modern-form .form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+}
+
+.modern-form .form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(45, 130, 181, 0.1);
+}
+
+.modern-form select.form-control {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 3rem;
+}
+
+/* ------------------------------------------
+   Botões Modernos
+   ------------------------------------------ */
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-modern-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-modern-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-modern-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-modern-secondary:hover {
+  background: var(--border-color);
+}
+
+.btn-modern-danger {
+  background: var(--error-color);
+  color: white;
+}
+
+.btn-modern-danger:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+/* ------------------------------------------
+   Search Bar Moderna
+   ------------------------------------------ */
+.modern-search {
+  display: flex;
+  justify-content: center;
+  margin: 2rem auto;
+  width: 50%;
+}
+
+.modern-search .search-input {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.modern-search .search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-glow);
+}
+
+.modern-search .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------
+   Layout do Painel - Sidebar Nav Links
+   ------------------------------------------ */
+.painel-sidebar .nav-link {
+  color: var(--text-muted) !important;
+  padding: 0.875rem 1.25rem;
+  margin: 0.25rem 0.75rem;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.painel-sidebar .nav-link:hover,
+.painel-sidebar .nav-link.active {
+  background: rgba(45, 130, 181, 0.15);
+  color: var(--primary-light) !important;
+  box-shadow: 0 0 0 1px rgba(45, 130, 181, 0.2);
+}
+
+/* ------------------------------------------
+   Container do conteúdo do Painel
+   ------------------------------------------ */
+.painel-content {
+  margin-left: 280px;
+  margin-top: 4.3rem;
+  width: calc(100% - 280px);
+  padding: 1.5rem;
+  min-height: calc(100vh - 4.3rem);
+  background: var(--bg-secondary);
+}
+
+/* ------------------------------------------
+   Sidebar interno
+   ------------------------------------------ */
+.painel-sidebar-inner {
+  width: 245px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 1rem;
+  background: var(--bg-sidebar);
+}
+
+/* ------------------------------------------
+   Ajustes responsivos para mobile
+   ------------------------------------------ */
+@media (max-width: 991px) {
+  .painel-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .painel-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .painel-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .modern-search {
+    width: 90%;
+  }
+  
+  .modern-table-container {
+    width: 95%;
+  }
+}
+
+/* Schedule Overrides for Light/Dark Theme */
+.cd-schedule {
+  background: var(--bg-primary);
+}
+
+.cd-schedule__timeline {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.cd-schedule__timeline li {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cd-schedule__top-info {
+  background: var(--primary-color);
+  color: white;
+}
+
+.cd-schedule__top-info small {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.cd-schedule__event a {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.cd-schedule__event a:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.cd-schedule__name {
+  color: var(--text-primary);
+}
+
+/* Schedule Modal for Theme */
+.cd-schedule-modal {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.cd-schedule-modal__header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cd-schedule-modal__name {
+  color: var(--text-primary);
+}
+
+.cd-schedule-modal__date {
+  color: var(--text-secondary);
+}
+
+/* Schedule Placeholder for Theme */
+.cd-schedule__event.placeholder a {
+  background: var(--bg-secondary) !important;
+  border: 2px dashed var(--border-color) !important;
+  color: var(--text-muted) !important;
+}
+
+/* Mini Cards for Theme */
+.mini-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.mini-card:hover {
+  background: var(--bg-secondary);
+  box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.medico-nome {
+  color: var(--text-primary);
+}
+
+.especialidade {
+  color: var(--text-secondary);
+}
+
+.foto-placeholder {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.sala-nome {
+  color: var(--text-secondary);
+}
+
+.vagas {
+  background: var(--primary-color);
+  color: white;
+}

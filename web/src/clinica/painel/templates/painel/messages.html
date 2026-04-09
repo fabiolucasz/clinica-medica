@@ -1,23 +1,23 @@
 {# Componente para exibição de mensagens Django #}
 {% if messages %}
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="modern-alert modern-alert-{{ message.tags|default:'info' }}" style="margin-bottom: 1rem;">
+        <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' or message.tags == 'danger' %}x-circle-fill{% elif message.tags == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+        <span>{{ message }}</span>
     </div>
     {% endfor %}
 {% endif %}
 
 {% if error %}
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {{ error }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="modern-alert modern-alert-danger" style="margin-bottom: 1rem;">
+    <i class="bi bi-x-circle-fill"></i>
+    <span>{{ error }}</span>
 </div>
 {% endif %}
 
 {% if success %}
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{ success }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="modern-alert modern-alert-success" style="margin-bottom: 1rem;">
+    <i class="bi bi-check-circle-fill"></i>
+    <span>{{ success }}</span>
 </div>
 {% endif %}

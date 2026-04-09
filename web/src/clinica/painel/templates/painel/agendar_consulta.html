@@ -1,54 +1,39 @@
 {% extends 'painel/base.html' %}
-
-{% block navbar-right %}
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'painel:listar_consultas' %}">Voltar</a>
-</li>
-{% endblock %}
+{% load static %}
 
 {% block title %}Agendar Consulta{% endblock %}
+
+{% block sidebar-items %}
+<li>
+    <a href="{% url 'painel:listar_consultas' %}" class="nav-link">
+        <i class="bi bi-calendar-week me-2"></i>Agenda
+    </a>
+</li>
+<li>
+    <a href="{% url 'painel:agendar_consulta' %}" class="nav-link active">
+        <i class="bi bi-calendar-plus me-2"></i>Agendar Consulta
+    </a>
+</li>
+{% endblock %}
 
 {% block content %}
 
 {% if erro_api %}
-<div class="alert alert-danger alert-dismissible fade show mx-auto mt-4" style="max-width: 800px;" role="alert">
-    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Erro de conexão:</strong> {{ erro_api }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="modern-alert modern-alert-danger mx-auto mt-4" style="max-width: 800px;">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Erro de conexão:</strong> {{ erro_api }}
 </div>
 {% endif %}
 
 {% if error %}
-<div class="alert alert-danger alert-dismissible fade show mx-auto mt-4" style="max-width: 800px;" role="alert">
-    <i class="bi bi-x-circle-fill me-2"></i>{{ error }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="modern-alert modern-alert-danger mx-auto mt-4" style="max-width: 800px;">
+    <i class="bi bi-x-circle-fill"></i>
+    {{ error }}
 </div>
 {% endif %}
 
 <style>
-    .container {
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 2rem;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-section {
-        margin-bottom: 2rem;
-    }
-
-    .form-section h3 {
-        color: #333;
-        border-bottom: 2px solid #007bff;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .form-floating {
-        margin-bottom: 1rem;
-    }
-
+    /* Estilos específicos do calendário - usar variáveis CSS quando possível */
     .calendar-container {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -60,8 +45,9 @@
         text-align: center;
         font-weight: bold;
         padding: 0.5rem;
-        background-color: #f8f9fa;
+        background-color: var(--bg-secondary);
         border-radius: 5px;
+        color: var(--text-primary);
     }
 
     .calendar-day {
@@ -69,31 +55,35 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border-color);
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.2s;
+        background: var(--bg-primary);
+        color: var(--text-primary);
     }
 
     .calendar-day:hover {
-        background-color: #e9ecef;
+        background-color: var(--bg-secondary);
     }
 
     .calendar-day.available {
-        background-color: #d4edda;
-        border-color: #28a745;
+        background-color: var(--success-bg, #d4edda);
+        border-color: var(--success-color, #28a745);
+        color: var(--text-primary);
     }
 
     .calendar-day.unavailable {
-        background-color: #f8d7da;
-        border-color: #dc3545;
+        background-color: var(--danger-bg, #f8d7da);
+        border-color: var(--danger-color, #dc3545);
         cursor: not-allowed;
+        opacity: 0.6;
     }
 
     .calendar-day.selected {
-        background-color: #007bff;
+        background-color: var(--primary-color);
         color: white;
-        border-color: #0056b3;
+        border-color: var(--primary-color);
     }
 
     .time-slots {
@@ -104,182 +94,194 @@
     }
 
     .time-slot {
-        border: 2px solid #ddd;
+        border: 2px solid var(--border-color);
         border-radius: 8px;
         padding: 15px;
-        margin: 10px 0;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
-        background: white;
+        background: var(--bg-primary);
+        color: var(--text-primary);
     }
 
     .time-slot.available {
-        border-color: #28a745;
-        background: #f8fff9;
+        border-color: var(--success-color, #28a745);
+        background: var(--success-bg, rgba(40, 167, 69, 0.1));
     }
 
     .time-slot.occupied {
-        border-color: #dc3545;
-        background: #f8d7da;
+        border-color: var(--danger-color, #dc3545);
+        background: var(--danger-bg, rgba(220, 53, 69, 0.1));
         cursor: not-allowed;
         opacity: 0.7;
     }
 
     .time-slot.selected {
-        border-color: #007bff;
-        background: #e3f2fd;
+        border-color: var(--primary-color);
+        background: var(--primary-bg, rgba(79, 70, 229, 0.1));
         transform: scale(1.02);
     }
 
-    .time-slot:hover {
+    .time-slot:hover:not(.occupied) {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 8px var(--shadow-color);
     }
 
     .turno-titulo {
         font-weight: bold;
         font-size: 1.2em;
-        color: #495057;
+        color: var(--text-primary);
         margin-bottom: 5px;
     }
 
     .turno-horarios {
-        color: #6c757d;
+        color: var(--text-secondary);
         font-size: 0.9em;
         margin-bottom: 5px;
     }
 
     .turno-vagas {
-        color: #28a745;
+        color: var(--success-color, #28a745);
         font-size: 0.8em;
         font-weight: 500;
     }
 
     .paciente-results {
         position: absolute;
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px var(--shadow-color);
         max-height: 200px;
         overflow-y: auto;
         z-index: 1000;
         width: 100%;
+        margin-top: 4px;
     }
 
     .paciente-item {
         padding: 10px 15px;
         cursor: pointer;
-        border-bottom: 1px solid #f8f9fa;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
     }
 
     .paciente-item:hover {
-        background-color: #f8f9fa;
+        background-color: var(--bg-secondary);
     }
 
     .paciente-item:last-child {
         border-bottom: none;
     }
 
-    .paciente-info {
-        margin-bottom: 0;
-    }
-
     .paciente-nome {
         font-weight: bold;
-        color: #333;
+        color: var(--text-primary);
     }
 
     .paciente-cpf {
         font-size: 0.9em;
-        color: #666;
+        color: var(--text-secondary);
     }
 
     .paciente-celular {
         font-size: 0.85em;
-        color: #007bff;
+        color: var(--primary-color);
     }
 
     .search-container {
         position: relative;
     }
+
+    .paciente-selecionado-info {
+        background: var(--success-bg, rgba(40, 167, 69, 0.1));
+        border: 1px solid var(--success-color, #28a745);
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
 </style>
 
-<div class="container">
-    <h2 class="text-center mb-4">Agendar Consulta</h2>
+<div class="modern-table-container" style="max-width: 900px; margin: 0 auto; padding: 2rem;">
+    <h2 style="color: var(--text-primary); text-align: center; margin-bottom: 2rem;">
+        <i class="bi bi-calendar-plus me-2"></i>Agendar Consulta
+    </h2>
     
     <!-- Dados das vagas em data attribute -->
     <div id="vagas-data" data-vagas="{{ vagas_json|default:'[]' }}"></div>
 
-    <form method="post" id="agendamento-form">
+    <form method="post" id="agendamento-form" class="modern-form">
         {% csrf_token %}
         
         <!-- Pesquisa de Paciente -->
-        <div class="form-section">
-            <h3>Selecionar Paciente</h3>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="search-container">
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="paciente-search" 
-                                   placeholder="Buscar paciente por nome ou CPF" 
-                                   autocomplete="off">
-                            <label for="paciente-search">Buscar Paciente</label>
-                        </div>
-                        
-                        <!-- Lista de resultados da pesquisa -->
-                        <div id="paciente-results" class="paciente-results" style="display: none;">
-                            <!-- Resultados serão adicionados dinamicamente -->
-                        </div>
-                    </div>
-                    
-                    <!-- Paciente selecionado -->
-                    <div id="paciente-selecionado" class="paciente-selecionado" style="display: none;">
-                        <div class="alert alert-success d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Paciente selecionado:</strong>
-                                <span id="paciente-nome"></span>
-                                <small class="text-muted">(<span id="paciente-cpf"></span>)</small>
-                            </div>
-                            <button type="button" onclick="limparPaciente()" class="btn btn-sm btn-outline-danger">✕</button>
-                        </div>
-                        <input type="hidden" id="paciente-id" name="paciente_id">
-                    </div>
+        <div style="margin-bottom: 2rem;">
+            <h4 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                <i class="bi bi-person me-2"></i>Selecionar Paciente
+            </h4>
+            <div class="search-container" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="paciente-search">Buscar Paciente</label>
+                    <input type="text" class="form-control" id="paciente-search" 
+                           placeholder="Buscar paciente por nome ou CPF" 
+                           autocomplete="off">
                 </div>
+                
+                <!-- Lista de resultados da pesquisa -->
+                <div id="paciente-results" class="paciente-results" style="display: none;">
+                    <!-- Resultados serão adicionados dinamicamente -->
+                </div>
+            </div>
+            
+            <!-- Paciente selecionado -->
+            <div id="paciente-selecionado" style="display: none;">
+                <div class="paciente-selecionado-info">
+                    <div>
+                        <strong><i class="bi bi-check-circle-fill me-2" style="color: var(--success-color, #28a745);"></i>Paciente selecionado:</strong>
+                        <span id="paciente-nome" style="font-weight: 600; color: var(--text-primary);"></span>
+                        <small style="color: var(--text-muted);">(<span id="paciente-cpf"></span>)</small>
+                    </div>
+                    <button type="button" onclick="limparPaciente()" class="btn-modern btn-modern-danger" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <input type="hidden" id="paciente-id" name="paciente_id">
             </div>
         </div>
 
         <!-- Informações do Médico -->
-        <div class="form-section">
-            <h3>Médico e Clínica</h3>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-floating">
-                        <select class="form-control" id="medico-select" name="medico" required>
-                            <option value="">Selecione um médico</option>
-                            {% for medico in medicos %}
-                            <option value="{{ medico.id }}" {% if request.GET.medico == medico.id|stringformat:"s" %}selected{% endif %}>
-                                {{ medico.nome }} - {{ medico.especialidade_nome|default:medico.especialidade }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <label for="medico-select">Médico</label>
-                    </div>
+        <div style="margin-bottom: 2rem;">
+            <h4 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                <i class="bi bi-person-badge me-2"></i>Médico e Clínica
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div class="form-group">
+                    <label for="medico-select">Médico *</label>
+                    <select class="form-control" id="medico-select" name="medico" required>
+                        <option value="">Selecione um médico</option>
+                        {% for medico in medicos %}
+                        <option value="{{ medico.id }}" {% if request.GET.medico == medico.id|stringformat:"s" %}selected{% endif %}>
+                            {{ medico.nome }} - {{ medico.especialidade_nome|default:medico.especialidade }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-floating">
-                        <input type="text" class="form-control" id="clinica-info" readonly value="Clínica Padrão" placeholder="Clínica">
-                        <label for="clinica-info">Clínica</label>
-                    </div>
+                <div class="form-group">
+                    <label for="clinica-info">Clínica</label>
+                    <input type="text" class="form-control" id="clinica-info" readonly value="Clínica Padrão">
                 </div>
             </div>
         </div>
 
         <!-- Seleção de Data -->
-        <div class="form-section">
-            <h3>Selecione uma Data</h3>
-            <div class="mb-3">
+        <div style="margin-bottom: 2rem;">
+            <h4 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                <i class="bi bi-calendar-date me-2"></i>Selecione uma Data
+            </h4>
+            <div class="form-group" style="max-width: 300px;">
                 <input type="month" class="form-control" id="month-select" value="{% now 'Y-m' %}">
             </div>
             <div class="calendar-container" id="calendar">
@@ -289,8 +291,10 @@
         </div>
 
         <!-- Seleção de Horário -->
-        <div class="form-section">
-            <h3>Selecione um Horário</h3>
+        <div style="margin-bottom: 2rem;">
+            <h4 style="color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                <i class="bi bi-clock me-2"></i>Selecione um Horário
+            </h4>
             <div class="time-slots" id="time-slots">
                 <!-- Horários serão gerados por JavaScript -->
             </div>
@@ -300,8 +304,10 @@
         </div>
 
         <!-- Botão de Envio -->
-        <div class="text-center">
-            <button type="submit" class="btn btn-primary btn-lg">Confirmar Agendamento</button>
+        <div style="text-align: center; margin-top: 2rem;">
+            <button type="submit" class="btn-modern btn-modern-primary btn-lg">
+                <i class="bi bi-check-lg me-2"></i>Confirmar Agendamento
+            </button>
         </div>
     </form>
 </div>

@@ -2,16 +2,16 @@
 {% load static %}
 
 {% block extra_head %}
- <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>document.getElementsByTagName("html")[0].className += " js";</script>
-  <title>Agenda da Clínica</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.getElementsByTagName("html")[0].className += " js";</script>
+<title>Agenda da Clínica</title>
 {% endblock %}
 
 {% block sidebar-items %}
 <li>
-    <a href="{% url 'painel:agendar_consulta' %}" class="nav-link link-dark">
-        Agendar Consulta
+    <a href="{% url 'painel:agendar_consulta' %}" class="nav-link">
+        <i class="bi bi-calendar-plus me-2"></i>Agendar Consulta
     </a>
 </li>
 {% endblock %}
@@ -19,40 +19,38 @@
 {% block content %}
 
 {% if erro %}
-<div class="alert alert-danger alert-dismissible fade show mx-auto mt-4" style="max-width: 90%;" role="alert">
-    <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Erro:</strong> {{ erro }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="modern-alert modern-alert-danger mx-auto mt-4" style="max-width: 90%;">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Erro:</strong> {{ erro }}
 </div>
 {% endif %}
 
 <div class="container-fluid">
-  <header class="text-center">
-    <div class="" style="display: flex;justify-content: center;gap: 1rem;">
+  <header class="text-center" style="margin-bottom: 1.5rem;">
+    <h2 style="color: var(--text-primary); margin-bottom: 1.5rem;">
+        <i class="bi bi-calendar-week me-2"></i>Agenda da Clínica
+    </h2>
     
-    <!-- Seletor de Médico -->
-    <div class="medico-selector" style="margin-top: 1rem;">
-      <div class="form-floating d-inline-block">
-        <select class="form-select" id="medico-select" name="medico" onchange="atualizarSchedule()">
-          <option value="">Todos os médicos</option>
-          {% for medico in medicos %}
-          <option value="{{ medico.id }}" {% if medico_selecionado == medico.id|stringformat:"s" %}selected{% endif %}>
-              {{ medico.nome }} - {{ medico.especialidade_nome|default:medico.especialidade }}
-          </option>
-          {% endfor %}
-        </select>
-        <label for="medico-select">Médico</label>
-      </div>
-    </div>
-    
-    <!-- Seletor de Data Única -->
-    <div class="periodo-selector" style="margin-top: 1rem;">
-      <div class="form-floating d-inline-block">
-        <input type="date" id="data-semana" name="data_semana" class="form-control" 
-               value="{{ periodo.data_referencia|default:'' }}" onchange="atualizarSemanaPorData()">
-        <label for="data-semana">Selecione uma data</label>
-      </div>
-    </div>
-    
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- Seletor de Médico -->
+        <div class="modern-form" style="min-width: 280px;">
+            <label><i class="bi bi-person-badge me-2"></i>Médico</label>
+            <select class="form-control" id="medico-select" name="medico" onchange="atualizarSchedule()">
+                <option value="">Todos os médicos</option>
+                {% for medico in medicos %}
+                <option value="{{ medico.id }}" {% if medico_selecionado == medico.id|stringformat:"s" %}selected{% endif %}>
+                    {{ medico.nome }} - {{ medico.especialidade_nome|default:medico.especialidade }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Seletor de Data -->
+        <div class="modern-form" style="min-width: 200px;">
+            <label><i class="bi bi-calendar-date me-2"></i>Data</label>
+            <input type="date" id="data-semana" name="data_semana" class="form-control" 
+                   value="{{ periodo.data_referencia|default:'' }}" onchange="atualizarSemanaPorData()">
+        </div>
     </div>
   </header>
 
@@ -94,15 +92,15 @@
   
     <div class="cd-schedule__events">
       <!-- Navegação de Semanas -->
-    <div class="week-navigation mb-3">
-      <button id="prev-week" class="btn btn-outline-primary me-3">
-        ← Semana Anterior
-      </button>
-      <span id="current-week" class="fw-bold"></span>
-      <button id="next-week" class="btn btn-outline-primary ms-3">
-        Próxima Semana →
-      </button>
-    </div>
+      <div class="week-navigation" style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem;">
+        <button id="prev-week" class="btn-modern btn-modern-secondary">
+          <i class="bi bi-chevron-left me-2"></i>Semana Anterior
+        </button>
+        <span id="current-week" style="font-weight: 600; color: var(--text-primary); font-size: 1.1rem;"></span>
+        <button id="next-week" class="btn-modern btn-modern-secondary">
+          Próxima Semana<i class="bi bi-chevron-right ms-2"></i>
+        </button>
+      </div>
       <ul>
         <!-- Segunda-feira -->
         <li class="cd-schedule__group">

@@ -1,59 +1,60 @@
 {% extends "painel/base.html" %}
 
 {% block sidebar-items %}
-<li class="nav-item">
-    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link link-dark">Cadastrar clinica</a>
+<li>
+    <a href="{% url 'painel:cadastrar_clinica' %}" class="nav-link">
+        <i class="bi bi-hospital me-2"></i>Cadastrar Clínica
+    </a>
 </li>
-
-<li class="nav-item">
-    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link link-dark">Clinicas</a>
+<li>
+    <a href="{% url 'painel:listar_clinicas' %}" class="nav-link active">
+        <i class="bi bi-list-ul me-2"></i>Clínicas
+    </a>
 </li>
-
-<hr>
-
-<li class="nav-item">
-    <a href="{% url 'painel:listar_salas' %}" class="nav-link link-dark">Salas</a>
+<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
+<li>
+    <a href="{% url 'painel:listar_salas' %}" class="nav-link">
+        <i class="bi bi-door-open me-2"></i>Salas
+    </a>
 </li>
-
-<hr>
-
-<li class="nav-item">
-    <a href="{% url 'painel:listar_especialidades' %}" class="nav-link link-dark">Especialidades</a>
+<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
+<li>
+    <a href="{% url 'painel:listar_especialidades' %}" class="nav-link">
+        <i class="bi bi-stars me-2"></i>Especialidades
+    </a>
 </li>
-
-<hr>
-
-<li class="nav-item">
-    <a href="{% url 'painel:listar_conselhos' %}" class="nav-link link-dark">Conselhos</a>
+<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
+<li>
+    <a href="{% url 'painel:listar_conselhos' %}" class="nav-link">
+        <i class="bi bi-shield-check me-2"></i>Conselhos
+    </a>
 </li>
-
-<hr>
-
-<li class="nav-item">
-    <a href="{% url 'painel:listar_estados' %}" class="nav-link link-dark">Estados</a>
+<hr style="border-color: var(--border-color); margin: 0.5rem 0;">
+<li>
+    <a href="{% url 'painel:listar_estados' %}" class="nav-link">
+        <i class="bi bi-map me-2"></i>Estados
+    </a>
 </li>
-
 {% endblock %}
 
-{% block title %}Configurações - Clinicas{% endblock %}
+{% block title %}Configurações - Clínicas{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Clinicas Cadastradas</h1>
-    <table class="table">
+<div class="modern-table-container">
+    <table class="modern-table">
         <thead>
             <tr>
-                <th>Nome</th>
-                <th>Cidade</th>
-                <th>Estado</th>
-                <th>Celular</th>
-                <th>Email</th>
+                <th><i class="bi bi-hospital me-2"></i>Nome</th>
+                <th><i class="bi bi-geo-alt me-2"></i>Cidade</th>
+                <th><i class="bi bi-map me-2"></i>Estado</th>
+                <th><i class="bi bi-telephone me-2"></i>Celular</th>
+                <th><i class="bi bi-envelope me-2"></i>Email</th>
             </tr>
         </thead>
         <tbody>
             {% if clinicas %}
             {% for clinica in clinicas %}
-            <tr style="cursor: pointer;" data-clinica-id="{{ clinica.id }}" data-clinica-nome="{{ clinica.nome }}"
+            <tr data-clinica-id="{{ clinica.id }}" data-clinica-nome="{{ clinica.nome }}"
                 data-clinica-cep="{{ clinica.cep }}" data-clinica-rua="{{ clinica.rua }}"
                 data-clinica-numero="{{ clinica.numero }}" data-clinica-bairro="{{ clinica.bairro }}"
                 data-clinica-cidade="{{ clinica.cidade }}" data-clinica-estado="{{ clinica.estado }}"
@@ -69,7 +70,10 @@
             {% endfor %}
             {% else %}
             <tr>
-                <td colspan="7" class="text-center">Nenhuma clínica cadastrada</td>
+                <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                    Nenhuma clínica cadastrada
+                </td>
             </tr>
             {% endif %}
         </tbody>
@@ -77,39 +81,48 @@
 </div>
 
 <!-- Modal de Edição -->
-<div class="modal fade" id="editarClinicaModal" tabindex="-1" aria-labelledby="editarClinicaModalLabel"
-    aria-hidden="true">
+<div class="modal fade modern-modal" id="editarClinicaModal" tabindex="-1" aria-labelledby="editarClinicaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editarClinicaModalLabel">Editar Clínica</h5>
+                <h5 class="modal-title" id="editarClinicaModalLabel"><i class="bi bi-hospital me-2"></i>Editar Clínica</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="formEditarClinica" method="post">
+                <form id="formEditarClinica" method="post" class="modern-form">
                     {% csrf_token %}
                     <input type="hidden" id="clinica-id" name="clinica_id">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Dados da Clínica</h6>
-                            <p><strong>Nome:</strong> <input type="text" class="form-control" id="modal-nome"
-                                    name="nome" required></p>
-                            <p><strong>CEP:</strong> <input type="text" class="form-control" id="modal-cep" name="cep"
-                                    required></p>
-
-                            <p><strong>Rua:</strong> <input type="text" class="form-control" id="modal-rua" name="rua"
-                                    required></p>
-
-                            <p><strong>Número:</strong> <input type="text" class="form-control" id="modal-numero"
-                                    name="numero" required></p>
-
-                            <p><strong>Bairro:</strong> <input type="text" class="form-control" id="modal-bairro"
-                                    name="bairro" required></p>
-
-                            <p><strong>Cidade:</strong> <input type="text" class="form-control" id="modal-cidade"
-                                    name="cidade" required></p>
-
-                            <p><strong>Estado:</strong>
+                            <h6 style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">
+                                <i class="bi bi-hospital me-2"></i>Dados da Clínica
+                            </h6>
+                            <div class="form-group">
+                                <label>Nome</label>
+                                <input type="text" class="form-control" id="modal-nome" name="nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label>CEP</label>
+                                <input type="text" class="form-control" id="modal-cep" name="cep" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Rua</label>
+                                <input type="text" class="form-control" id="modal-rua" name="rua" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Número</label>
+                                <input type="text" class="form-control" id="modal-numero" name="numero" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Bairro</label>
+                                <input type="text" class="form-control" id="modal-bairro" name="bairro" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Cidade</label>
+                                <input type="text" class="form-control" id="modal-cidade" name="cidade" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Estado</label>
                                 <select class="form-control" id="modal-estado" name="estado" required>
                                     {% if estados %}
                                     {% for estado in estados %}
@@ -119,30 +132,42 @@
                                     <option value="">Nenhum estado encontrado</option>
                                     {% endif %}
                                 </select>
-                            </p>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <h6>Contatos</h6>
-                            <p><strong>Celular:</strong> <input type="text" class="form-control" id="modal-celular"
-                                    name="celular" required></p>
-
-                            <p><strong>Celular 2:</strong> <input type="text" class="form-control" id="modal-celular2"
-                                    name="celular2"></p>
-
-                            <p><strong>CNPJ:</strong> <input type="text" class="form-control" id="modal-cnpj"
-                                    name="cnpj" required></p>
-
-                            <p><strong>Email:</strong> <input type="text" class="form-control" id="modal-email"
-                                    name="email" required></p>
+                            <h6 style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">
+                                <i class="bi bi-telephone me-2"></i>Contatos
+                            </h6>
+                            <div class="form-group">
+                                <label>Celular</label>
+                                <input type="text" class="form-control" id="modal-celular" name="celular" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Celular 2</label>
+                                <input type="text" class="form-control" id="modal-celular2" name="celular2">
+                            </div>
+                            <div class="form-group">
+                                <label>CNPJ</label>
+                                <input type="text" class="form-control" id="modal-cnpj" name="cnpj" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" class="form-control" id="modal-email" name="email" required>
+                            </div>
                         </div>
                     </div>
-
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-editar" data-bs-dismiss="modal">Editar</button>
-                <button type="button" class="btn btn-danger" id="btn-excluir" data-bs-dismiss="modal">Excluir</button>
-                <button type="button" class="btn btn-secondary" id="btn-fechar" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-2"></i>Fechar
+                </button>
+                <button type="button" class="btn-modern btn-modern-danger" id="btn-excluir">
+                    <i class="bi bi-trash me-2"></i>Excluir
+                </button>
+                <button type="button" class="btn-modern btn-modern-primary" id="btn-editar">
+                    <i class="bi bi-pencil me-2"></i>Editar
+                </button>
             </div>
         </div>
     </div>
