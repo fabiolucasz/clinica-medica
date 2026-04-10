@@ -218,10 +218,31 @@ python manage.py runserver 0.0.0.0:8000
 
 ## Screenshots
 
-- **Dashboard**: Estatísticas de consultas com gráficos
-- **Agenda Visual**: Timeline semanal com consultas coloridas
-- **Gerenciar Consultas**: Lista com filtros e botão WhatsApp
-- **Modal WhatsApp**: Seleção de mensagem com preview
+### Homepage
+Página inicial da clínica
+
+![Homepage](pics/homepage.png)
+
+### Dashboard
+Estatísticas de consultas com gráficos
+
+![Dashboard](pics/dashboard.png)
+
+### Agenda Visual
+Timeline semanal com consultas coloridas
+
+![Agenda Visual](pics/agenda-visual.png)
+
+### Gerenciar Consultas
+Lista com filtros e botão WhatsApp
+
+![Gerenciar Consultas](pics/gerenciar-consultas.png)
+
+### Modal WhatsApp
+Seleção de mensagem com preview
+
+![Modal WhatsApp](pics/modal-whatsapp.png)
+
 
 ## Roadmap
 
