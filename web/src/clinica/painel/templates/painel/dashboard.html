@@ -446,13 +446,9 @@
     // Gráfico de Consultas Mensais
     const ctx = document.getElementById('consultasChart').getContext('2d');
     
-    {% if dashboard.grafico_mensal %}
-    const meses = {{ dashboard.grafico_mensal|safe }}.map(item => item.mes);
-    const quantidades = {{ dashboard.grafico_mensal|safe }}.map(item => item.quantidade);
-    {% else %}
-    const meses = [];
-    const quantidades = [];
-    {% endif %}
+    const graficoData = {{ dashboard.grafico_mensal|default:'[]'|safe }};
+    const meses = graficoData.map(item => item.mes);
+    const quantidades = graficoData.map(item => item.quantidade);
     
     new Chart(ctx, {
         type: 'bar',

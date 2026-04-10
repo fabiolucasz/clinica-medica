@@ -25,6 +25,8 @@ urlpatterns = [
     path("consulta/agendar/", views.agendar_consulta, name="agendar_consulta"),
     path("buscar-pacientes/", views.buscar_pacientes, name="buscar_pacientes"),
     path("consultas/", views.listar_consultas, name="listar_consultas"),
+    path("consultas/gerenciar/", views.gerenciar_consultas, name="gerenciar_consultas"),
+    path("api/agendamentos/<int:agendamento_id>/status", views.atualizar_status_agendamento, name="atualizar_status_agendamento"),
     path("consulta/editar/<int:id>/", views.editar_consulta, name="editar_consulta"),
 
     #Configurações

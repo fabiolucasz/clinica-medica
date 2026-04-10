@@ -1037,6 +1037,172 @@ def excluir_consulta(request, id):
     return render(request, 'painel/excluir_consulta.html')
 
 
+def gerenciar_consultas(request):
+    """
+    View para gerenciamento de consultas da semana com funcionalidade de
+    alteração de status e envio de mensagens WhatsApp.
+    """
+    from datetime import date, timedelta, datetime
+    
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return redirect('/login/')
+    
+    headers = {'Authorization': f'Bearer {token}'}
+    
+    # Obter datas da semana atual (Segunda a Sexta)
+    hoje = date.today()
+    dia_semana = hoje.weekday()  # 0=Segunda, 6=Domingo
+    
+    # Calcular segunda-feira da semana atual
+    segunda = hoje - timedelta(days=dia_semana)
+    sexta = segunda + timedelta(days=4)
+    
+    # Formatar datas para a API
+    data_inicio = segunda.strftime('%d/%m/%Y')
+    data_fim = sexta.strftime('%d/%m/%Y')
+    
+    # Filtros da requisição
+    filtro_medico = request.GET.get('medico', '')
+    filtro_status = request.GET.get('status', '')
+    
+    try:
+        # Buscar agendamentos da semana
+        url_agendamentos = f'{base_url}/agenda-completa?data_inicio={data_inicio}&data_fim={data_fim}'
+        if filtro_medico:
+            url_agendamentos += f'&medico_id={filtro_medico}'
+        
+        response_agendamentos = requests.get(url_agendamentos, headers=headers)
+        dados = response_agendamentos.json() if response_agendamentos.status_code == 200 else {}
+        agendamentos = dados.get('agendamentos', []) if isinstance(dados, dict) else []
+        
+        # Filtrar por status se especificado
+        if filtro_status and agendamentos:
+            agendamentos = [a for a in agendamentos if a.get('status') == filtro_status]
+        
+        # Buscar médicos para o filtro
+        url_medicos = f'{base_url}/medicos/'
+        response_medicos = requests.get(url_medicos, headers=headers)
+        medicos = response_medicos.json() if response_medicos.status_code == 200 else []
+        
+        # Formatar dados dos agendamentos
+        agendamentos_formatados = []
+        for ag in agendamentos:
+            # Converter data para formato de exibição
+            data_consulta = ag.get('data_consulta', '')
+            if data_consulta:
+                try:
+                    data_obj = datetime.strptime(data_consulta, '%Y-%m-%d')
+                    data_formatada = data_obj.strftime('%d/%m/%Y')
+                    dia_semana_nome = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][data_obj.weekday()]
+                except:
+                    data_formatada = data_consulta
+                    dia_semana_nome = ''
+            else:
+                data_formatada = ''
+                dia_semana_nome = ''
+            
+            agendamentos_formatados.append({
+                'id': ag.get('id'),
+                'paciente_nome': ag.get('paciente_nome', ''),
+                'paciente_celular': ag.get('paciente_celular', ''),
+                'medico_nome': ag.get('medico_nome', ''),
+                'data_consulta': data_formatada,
+                'dia_semana': dia_semana_nome,
+                'hora_inicio': ag.get('hora_inicio', ''),
+                'hora_fim': ag.get('hora_fim', ''),
+                'status': ag.get('status', 'agendado'),
+                'clinica_nome': ag.get('clinica_nome', ''),
+            })
+        
+        # Ordenar por data e hora
+        agendamentos_formatados.sort(key=lambda x: (x['data_consulta'], x['hora_inicio']))
+        
+        context = {
+            'agendamentos': agendamentos_formatados,
+            'medicos': medicos,
+            'filtro_medico': filtro_medico,
+            'filtro_status': filtro_status,
+            'data_inicio': data_inicio,
+            'data_fim': data_fim,
+            'status_list': [
+                {'value': '', 'label': 'Todos'},
+                {'value': 'aguardando', 'label': 'Aguardando'},
+                {'value': 'confirmada', 'label': 'Confirmada'},
+                {'value': 'agendado', 'label': 'Agendado'},
+                {'value': 'cancelada', 'label': 'Cancelada'},
+                {'value': 'realizada', 'label': 'Realizada'},
+            ]
+        }
+        
+        return render(request, 'painel/gerenciar_consultas.html', context)
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Erro na requisição à API: {e}")
+        context = {
+            'agendamentos': [],
+            'medicos': [],
+            'erro': 'Não foi possível carregar os dados dos agendamentos.',
+            'status_list': [
+                {'value': '', 'label': 'Todos'},
+                {'value': 'aguardando', 'label': 'Aguardando'},
+                {'value': 'confirmada', 'label': 'Confirmada'},
+                {'value': 'agendado', 'label': 'Agendado'},
+                {'value': 'cancelada', 'label': 'Cancelada'},
+                {'value': 'realizada', 'label': 'Realizada'},
+            ]
+        }
+        return render(request, 'painel/gerenciar_consultas.html', context)
+
+
+@csrf_exempt
+def atualizar_status_agendamento(request, agendamento_id):
+    """
+    View proxy para atualizar o status de um agendamento via API.
+    Recebe requisições AJAX do frontend e repassa para a API FastAPI.
+    """
+    if request.method != 'PATCH':
+        return JsonResponse({'error': 'Método não permitido'}, status=405)
+    
+    # Obter token da sessão
+    token = request.session.get('fastapi_token')
+    if not token:
+        return JsonResponse({'error': 'Não autenticado'}, status=401)
+    
+    try:
+        # Parse do body da requisição
+        body = json.loads(request.body)
+        novo_status = body.get('status')
+        
+        if not novo_status:
+            return JsonResponse({'error': 'Status não informado'}, status=400)
+        
+        # Enviar para a API FastAPI
+        headers = {'Authorization': f'Bearer {token}'}
+        url = f'{base_url}/agendamentos/{agendamento_id}/status'
+        
+        response = requests.patch(
+            url,
+            headers=headers,
+            json={'status': novo_status}
+        )
+        
+        if response.status_code == 200:
+            return JsonResponse(response.json(), status=200)
+        else:
+            return JsonResponse(
+                {'error': 'Erro ao atualizar status', 'detail': response.text},
+                status=response.status_code
+            )
+            
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+    except requests.exceptions.RequestException as e:
+        print(f"Erro na requisição à API: {e}")
+        return JsonResponse({'error': 'Erro ao comunicar com o servidor'}, status=500)
+
+
 # Configurações da clínica
 
 ## CRUD Clinica

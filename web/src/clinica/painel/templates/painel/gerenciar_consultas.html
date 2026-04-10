@@ -1,0 +1,403 @@
+{% extends 'painel/base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Consultas{% endblock %}
+
+{% block content %}
+
+{% if erro %}
+<div class="modern-alert modern-alert-danger mx-auto mt-4" style="max-width: 90%;">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Erro:</strong> {{ erro }}
+</div>
+{% endif %}
+
+<div class="container-fluid">
+  <header class="text-center" style="margin-bottom: 1.5rem;">
+    <h2 style="color: var(--text-primary); margin-bottom: 1.5rem;">
+        <i class="bi bi-clipboard-check me-2"></i>Gerenciar Consultas da Semana
+    </h2>
+    <p class="text-muted">
+        Período: {{ data_inicio }} a {{ data_fim }}
+    </p>
+    
+    <!-- Filtros -->
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <div class="modern-form" style="min-width: 200px;">
+            <label><i class="bi bi-person-badge me-2"></i>Médico</label>
+            <select class="form-control" id="filtro-medico" onchange="aplicarFiltros()">
+                <option value="">Todos os médicos</option>
+                {% for medico in medicos %}
+                <option value="{{ medico.id }}" {% if filtro_medico == medico.id|stringformat:"s" %}selected{% endif %}>
+                    {{ medico.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="modern-form" style="min-width: 200px;">
+            <label><i class="bi bi-tag me-2"></i>Status</label>
+            <select class="form-control" id="filtro-status" onchange="aplicarFiltros()">
+                {% for status in status_list %}
+                <option value="{{ status.value }}" {% if filtro_status == status.value %}selected{% endif %}>
+                    {{ status.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+  </header>
+
+  <!-- Lista de Agendamentos -->
+  <div class="modern-table-container" style="max-width: 1200px; margin: 0 auto;">
+    {% if agendamentos %}
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Paciente</th>
+          <th>Médico</th>
+          <th>Data</th>
+          <th>Horário</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ag in agendamentos %}
+        <tr data-agendamento-id="{{ ag.id }}">
+          <td>
+            <strong>{{ ag.paciente_nome }}</strong>
+            {% if ag.paciente_celular %}
+            <br><small class="text-muted">{{ ag.paciente_celular }}</small>
+            {% endif %}
+          </td>
+          <td>Dr(a). {{ ag.medico_nome }}</td>
+          <td>
+            {{ ag.dia_semana }}, {{ ag.data_consulta }}
+          </td>
+          <td>{{ ag.hora_inicio }} - {{ ag.hora_fim }}</td>
+          <td>
+            <select class="form-control status-select" 
+                    data-agendamento-id="{{ ag.id }}"
+                    onchange="atualizarStatus({{ ag.id }}, this.value)"
+                    style="width: auto; display: inline-block;">
+              {% for status in status_list %}
+                {% if status.value %}
+                <option value="{{ status.value }}" {% if ag.status == status.value %}selected{% endif %}>
+                  {{ status.label }}
+                </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <button class="btn-modern btn-modern-primary btn-sm" 
+                    data-agendamento-id="{{ ag.id }}"
+                    data-paciente="{{ ag.paciente_nome|default:'' }}"
+                    data-celular="{{ ag.paciente_celular|default:'' }}"
+                    data-medico="{{ ag.medico_nome|default:'' }}"
+                    data-data="{{ ag.data_consulta|default:'' }}"
+                    data-hora="{{ ag.hora_inicio|default:'' }}"
+                    onclick="abrirModalMensagemFromButton(this)">
+              <i class="bi bi-whatsapp me-1"></i> Mensagem
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-calendar-x" style="font-size: 3rem; color: var(--text-muted);"></i>
+      <p class="mt-3 text-muted">Nenhuma consulta encontrada para esta semana.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal de Mensagens -->
+<div class="modal fade" id="mensagemModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" style="background: var(--bg-primary); color: var(--text-primary);">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+        <h5 class="modal-title">
+          <i class="bi bi-whatsapp me-2" style="color: #25d366;"></i>
+          Enviar Mensagem WhatsApp
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Info do Paciente -->
+        <div class="alert alert-info mb-3" style="background: var(--bg-secondary); border-color: var(--border-color);">
+          <strong>Paciente:</strong> <span id="modal-paciente-nome"></span><br>
+          <strong>Médico:</strong> <span id="modal-medico-nome"></span><br>
+          <strong>Data:</strong> <span id="modal-data"></span> às <span id="modal-hora"></span><br>
+          <strong>Celular:</strong> <span id="modal-celular"></span>
+        </div>
+
+        <!-- Seleção de Mensagem -->
+        <div class="mb-3">
+          <label class="form-label">Mensagem Pronta:</label>
+          <select class="form-control" id="mensagem-select" onchange="selecionarMensagem()">
+            <option value="">-- Selecione uma mensagem --</option>
+            <option value="confirmacao">Confirmação de Consulta</option>
+            <option value="lembrete">Lembrete de Consulta</option>
+            <option value="cancelamento">Cancelamento de Consulta</option>
+            <option value="confirmacao_recebida">Confirmação Recebida</option>
+            <option value="personalizada">Personalizada</option>
+          </select>
+        </div>
+
+        <!-- Preview da Mensagem -->
+        <div class="mb-3">
+          <label class="form-label">Mensagem:</label>
+          <textarea class="form-control" id="mensagem-texto" rows="6" 
+                    style="background: var(--bg-secondary); color: var(--text-primary);"></textarea>
+          <small class="text-muted">
+            Variáveis disponíveis: <code>{nome}</code>, <code>{medico}</code>, <code>{data}</code>, <code>{hora}</code>
+          </small>
+        </div>
+
+        <!-- Preview Final -->
+        <div class="alert alert-secondary" style="background: var(--bg-secondary);">
+          <strong>Preview:</strong>
+          <p id="mensagem-preview" class="mb-0 mt-2" style="white-space: pre-wrap;"></p>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+        <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-2"></i>Cancelar
+        </button>
+        <button type="button" class="btn-modern btn-modern-success" onclick="enviarWhatsApp()">
+          <i class="bi bi-whatsapp me-2"></i>Enviar Mensagem
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast de Notificação -->
+<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+<script>
+// Variáveis globais
+let agendamentoAtual = null;
+
+// Mensagens prontas
+const mensagensProntas = {
+  'confirmacao': 'Olá {nome}!\n\nGostaríamos de confirmar sua consulta com Dr(a). {medico} marcada para {data} às {hora}.\n\nPor favor, responda CONFIRMAR para confirmar ou CANCELAR caso não possa comparecer.\n\nAtenciosamente,\nClínica Médica',
+  'lembrete': 'Olá {nome}!\n\nPassando para lembrar que você tem consulta agendada com Dr(a). {medico} amanhã ({data}) às {hora}.\n\nAguardamos você!\n\nAtenciosamente,\nClínica Médica',
+  'cancelamento': 'Olá {nome}!\n\nSua consulta com Dr(a). {medico} prevista para {data} às {hora} foi CANCELADA.\n\nPara reagendar, entre em contato conosco.\n\nAtenciosamente,\nClínica Médica',
+  'confirmacao_recebida': 'Olá {nome}!\n\nConfirmamos sua presença na consulta com Dr(a). {medico} no dia {data} às {hora}.\n\nVejo você lá!\n\nAtenciosamente,\nClínica Médica',
+  'personalizada': ''
+};
+
+// Aplicar filtros
+function aplicarFiltros() {
+  const medico = document.getElementById('filtro-medico').value;
+  const status = document.getElementById('filtro-status').value;
+  
+  const params = new URLSearchParams();
+  if (medico) params.set('medico', medico);
+  if (status) params.set('status', status);
+  
+  window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+// Atualizar status do agendamento
+async function atualizarStatus(agendamentoId, novoStatus) {
+  try {
+    const url = `{% url "painel:atualizar_status_agendamento" agendamento_id=0 %}`.replace('0', agendamentoId);
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ status: novoStatus })
+    });
+    
+    if (response.ok) {
+      mostrarToast('Status atualizado com sucesso!', 'success');
+      
+      // Se mudou para confirmada ou cancelada, oferecer enviar mensagem
+      if (novoStatus === 'confirmada' || novoStatus === 'cancelada') {
+        const row = document.querySelector(`tr[data-agendamento-id="${agendamentoId}"]`);
+        const paciente = row.querySelector('td:first-child strong').textContent;
+        const celular = row.querySelector('td:first-child small')?.textContent || '';
+        const medico = row.querySelector('td:nth-child(2)').textContent.replace('Dr(a). ', '');
+        const dataHora = row.querySelector('td:nth-child(3)').textContent.trim();
+        const hora = row.querySelector('td:nth-child(4)').textContent.split(' - ')[0];
+        
+        setTimeout(() => {
+          if (confirm(`Deseja enviar mensagem de ${novoStatus === 'confirmada' ? 'confirmação' : 'cancelamento'} para ${paciente}?`)) {
+            abrirModalMensagem(agendamentoId, paciente, celular, medico, dataHora, hora);
+            // Selecionar mensagem apropriada
+            document.getElementById('mensagem-select').value = novoStatus === 'confirmada' ? 'confirmacao_recebida' : 'cancelamento';
+            selecionarMensagem();
+          }
+        }, 500);
+      }
+    } else {
+      mostrarToast('Erro ao atualizar status.', 'danger');
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    mostrarToast('Erro ao atualizar status.', 'danger');
+  }
+}
+
+// Abrir modal de mensagem a partir do botão
+function abrirModalMensagemFromButton(button) {
+  const id = button.dataset.agendamentoId;
+  const paciente = button.dataset.paciente;
+  const celular = button.dataset.celular;
+  const medico = button.dataset.medico;
+  const data = button.dataset.data;
+  const hora = button.dataset.hora;
+  
+  abrirModalMensagem(id, paciente, celular, medico, data, hora);
+}
+
+// Abrir modal de mensagem
+function abrirModalMensagem(id, paciente, celular, medico, data, hora) {
+  agendamentoAtual = { id, paciente, celular, medico, data, hora };
+  
+  document.getElementById('modal-paciente-nome').textContent = paciente;
+  document.getElementById('modal-medico-nome').textContent = 'Dr(a). ' + medico;
+  document.getElementById('modal-data').textContent = data;
+  document.getElementById('modal-hora').textContent = hora;
+  document.getElementById('modal-celular').textContent = celular || 'Não informado';
+  
+  // Resetar campos
+  document.getElementById('mensagem-select').value = '';
+  document.getElementById('mensagem-texto').value = '';
+  document.getElementById('mensagem-preview').textContent = '';
+  
+  // Abrir modal
+  const modal = new bootstrap.Modal(document.getElementById('mensagemModal'));
+  modal.show();
+}
+
+// Selecionar mensagem pronta
+function selecionarMensagem() {
+  const tipo = document.getElementById('mensagem-select').value;
+  const texto = document.getElementById('mensagem-texto');
+  
+  if (tipo && mensagensProntas[tipo] !== undefined) {
+    texto.value = mensagensProntas[tipo];
+    atualizarPreview();
+  }
+}
+
+// Atualizar preview
+function atualizarPreview() {
+  const template = document.getElementById('mensagem-texto').value;
+  
+  if (agendamentoAtual) {
+    const preview = template
+      .replace(/{nome}/g, agendamentoAtual.paciente)
+      .replace(/{medico}/g, agendamentoAtual.medico)
+      .replace(/{data}/g, agendamentoAtual.data)
+      .replace(/{hora}/g, agendamentoAtual.hora);
+    
+    document.getElementById('mensagem-preview').textContent = preview;
+  }
+}
+
+// Listener para atualizar preview em tempo real
+document.getElementById('mensagem-texto').addEventListener('input', atualizarPreview);
+
+// Enviar mensagem WhatsApp
+function enviarWhatsApp() {
+  const mensagem = document.getElementById('mensagem-preview').textContent;
+  const celular = agendamentoAtual.celular;
+  
+  if (!celular) {
+    mostrarToast('Número de celular não informado.', 'warning');
+    return;
+  }
+  
+  // Remover caracteres não numéricos do celular
+  const numeroLimpo = celular.replace(/\D/g, '');
+  
+  // Abrir WhatsApp Web com a mensagem
+  const url = `https://web.whatsapp.com/send?phone=55${numeroLimpo}&text=${encodeURIComponent(mensagem)}`;
+  
+  window.open(url, '_blank');
+  
+  // Fechar modal
+  bootstrap.Modal.getInstance(document.getElementById('mensagemModal')).hide();
+  
+  mostrarToast('WhatsApp aberto! Por favor, confirme o envio da mensagem.', 'success');
+}
+
+// Mostrar toast
+function mostrarToast(mensagem, tipo = 'info') {
+  const container = document.getElementById('toast-container');
+  const toastId = 'toast-' + Date.now();
+  
+  const cores = {
+    'success': 'bg-success',
+    'danger': 'bg-danger',
+    'warning': 'bg-warning text-dark',
+    'info': 'bg-info text-dark'
+  };
+  
+  const toastHTML = `
+    <div id="${toastId}" class="toast align-items-center ${cores[tipo]} text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          ${mensagem}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+  
+  container.insertAdjacentHTML('beforeend', toastHTML);
+  
+  const toast = new bootstrap.Toast(document.getElementById(toastId));
+  toast.show();
+  
+  // Remover do DOM após fechar
+  setTimeout(() => {
+    document.getElementById(toastId)?.remove();
+  }, 5000);
+}
+</script>
+
+<style>
+.status-select {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.status-select option[value="aguardando"] {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-select option[value="confirmada"] {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-select option[value="agendado"] {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-select option[value="cancelada"] {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-select option[value="realizada"] {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+</style>
+
+{% endblock %}

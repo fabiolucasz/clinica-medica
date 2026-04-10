@@ -1,0 +1,684 @@
+/* Modern Schedule Component - Responsive & Attractive */
+
+:root {
+  --schedule-primary: #6366f1;
+  --schedule-primary-light: #818cf8;
+  --schedule-secondary: #10b981;
+  --schedule-danger: #ef4444;
+  --schedule-warning: #f59e0b;
+  --schedule-bg: var(--bg-primary, #ffffff);
+  --schedule-bg-secondary: var(--bg-secondary, #f8fafc);
+  --schedule-border: var(--border-color, #e2e8f0);
+  --schedule-text: var(--text-primary, #1e293b);
+  --schedule-text-muted: var(--text-secondary, #64748b);
+  --schedule-timeline-width: 70px;
+  --schedule-hour-height: 80px;
+  --schedule-border-radius: 12px;
+  --schedule-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --schedule-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Schedule Container */
+.modern-schedule {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100vh - 250px);
+  min-height: 600px;
+  background: var(--schedule-bg);
+  border-radius: var(--schedule-border-radius);
+  overflow: hidden;
+  box-shadow: var(--schedule-shadow);
+  position: relative;
+}
+
+/* Header with days of week */
+.schedule-header {
+  display: grid;
+  grid-template-columns: var(--schedule-timeline-width) repeat(5, 1fr);
+  background: linear-gradient(135deg, var(--schedule-primary) 0%, var(--schedule-primary-light) 100%);
+  color: white;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.schedule-header-corner {
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.schedule-day-header {
+  padding: 1rem 0.5rem;
+  text-align: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.schedule-day-header:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.schedule-day-header.active {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 -3px 0 white;
+}
+
+.schedule-day-header .day-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.schedule-day-header .day-date {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}
+
+/* Schedule Body - Scrollable Area (Single Scroll) */
+.schedule-body {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+/* Timeline (Hours column) - No scroll, syncs with grid */
+.schedule-timeline {
+  background: var(--schedule-bg-secondary);
+  border-right: 1px solid var(--schedule-border);
+  width: var(--schedule-timeline-width);
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.timeline-slot {
+  height: var(--schedule-hour-height);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--schedule-text-muted);
+  position: relative;
+}
+
+.timeline-slot::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  background: var(--schedule-border);
+}
+
+/* Schedule Grid Container - No scroll, parent handles it */
+.schedule-grid-container {
+  overflow: visible;
+  position: relative;
+  background: var(--schedule-bg);
+  flex: 1;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  min-width: 800px;
+  position: relative;
+}
+
+/* Time Grid Lines */
+.time-grid-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--schedule-border);
+}
+
+.grid-line.hour {
+  background: var(--schedule-border);
+}
+
+.grid-line.half-hour {
+  background: rgba(226, 232, 240, 0.5);
+  border-top: 1px dashed rgba(226, 232, 240, 0.8);
+}
+
+/* Day Columns */
+.day-column {
+  border-right: 1px solid var(--schedule-border);
+  position: relative;
+  min-height: calc(var(--schedule-hour-height) * 15); /* 08:00 to 22:00 = 14 hours + 1 extra */
+}
+
+.day-column:last-child {
+  border-right: none;
+}
+
+.day-column:hover {
+  background: rgba(99, 102, 241, 0.02);
+}
+
+/* Appointment Cards */
+.appointment-card {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  padding: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--schedule-shadow);
+  overflow: hidden;
+  font-size: 0.8125rem;
+  z-index: 10;
+}
+
+.appointment-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--schedule-shadow-lg);
+  z-index: 20;
+}
+
+.appointment-card.manha {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.appointment-card.tarde {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.appointment-card.noite {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Status Colors for Appointment Cards */
+.appointment-card.status-aguardando {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  border: 2px solid #f59e0b;
+}
+
+.appointment-card.status-confirmada {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 2px solid #10b981;
+}
+
+.appointment-card.status-agendado {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: 2px solid #6366f1;
+}
+
+.appointment-card.status-cancelada {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 2px solid #ef4444;
+  opacity: 0.7;
+}
+
+.appointment-card.status-realizada {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  border: 2px solid #64748b;
+}
+
+/* Status indicator badge on card */
+.appointment-card::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.appointment-card.status-aguardando::before {
+  background: #fbbf24;
+}
+
+.appointment-card.status-confirmada::before {
+  background: #34d399;
+}
+
+.appointment-card.status-agendado::before {
+  background: #818cf8;
+}
+
+.appointment-card.status-cancelada::before {
+  background: #fca5a5;
+}
+
+.appointment-card.status-realizada::before {
+  background: #94a3b8;
+}
+
+.appointment-card .patient-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appointment-card .doctor-name {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.appointment-card .time-range {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Current Time Indicator */
+.current-time-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--schedule-danger);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.current-time-line::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--schedule-danger);
+}
+
+/* Empty State */
+.empty-slot {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  background: transparent;
+  border: 2px dashed var(--schedule-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--schedule-text-muted);
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.empty-slot:hover {
+  opacity: 1;
+  border-color: var(--schedule-primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+/* Modal Styles */
+.schedule-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.schedule-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.schedule-modal {
+  background: var(--schedule-bg);
+  border-radius: var(--schedule-border-radius);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: var(--schedule-shadow-lg);
+  transform: scale(0.9) translateY(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.schedule-modal-overlay.active .schedule-modal {
+  transform: scale(1) translateY(0);
+}
+
+.schedule-modal-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--schedule-primary) 0%, var(--schedule-primary-light) 100%);
+  color: white;
+  position: relative;
+}
+
+.schedule-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.schedule-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.schedule-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 150px);
+}
+
+/* Mobile Day View */
+@media (max-width: 768px) {
+  :root {
+    --schedule-timeline-width: 55px;
+    --schedule-hour-height: 70px;
+  }
+
+  .modern-schedule {
+    height: calc(100vh - 180px);
+    min-height: 500px;
+    border-radius: 0;
+  }
+
+  /* Mobile Header - Day Selector */
+  .schedule-header {
+    grid-template-columns: var(--schedule-timeline-width) 1fr;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .schedule-header::-webkit-scrollbar {
+    display: none;
+  }
+
+  .schedule-header-corner {
+    min-width: var(--schedule-timeline-width);
+  }
+
+  .schedule-day-header {
+    min-width: 80px;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .schedule-day-header .day-name {
+    font-size: 0.75rem;
+  }
+
+  .schedule-day-header .day-date {
+    font-size: 0.65rem;
+  }
+
+  /* Mobile Body */
+  .schedule-body {
+    grid-template-columns: var(--schedule-timeline-width) 1fr;
+  }
+
+  .schedule-grid {
+    grid-template-columns: 1fr;
+    min-width: auto;
+  }
+
+  /* Mobile Day Columns - Show only one at a time */
+  .day-column {
+    display: none;
+    min-height: calc(var(--schedule-hour-height) * 15);
+  }
+
+  .day-column.active {
+    display: block;
+  }
+
+  /* Mobile Appointment Cards */
+  .appointment-card {
+    left: 8px;
+    right: 8px;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .appointment-card .patient-name {
+    font-size: 1rem;
+  }
+
+  .appointment-card .doctor-name {
+    font-size: 0.8125rem;
+  }
+
+  /* Mobile Day Navigation */
+  .mobile-day-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--schedule-bg-secondary);
+    border-bottom: 1px solid var(--schedule-border);
+  }
+
+  .mobile-day-nav button {
+    background: var(--schedule-primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-day-nav button:hover {
+    background: var(--schedule-primary-light);
+  }
+
+  .mobile-day-nav .current-day-label {
+    font-weight: 600;
+    color: var(--schedule-text);
+    font-size: 1rem;
+  }
+}
+
+/* Desktop View */
+@media (min-width: 769px) {
+  .mobile-day-nav {
+    display: none;
+  }
+
+  .day-column {
+    display: block !important;
+  }
+}
+
+/* Scrollbar Styling for Webkit - Applied to schedule-body */
+.schedule-body::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.schedule-body::-webkit-scrollbar-track {
+  background: var(--schedule-bg-secondary);
+}
+
+.schedule-body::-webkit-scrollbar-thumb {
+  background: var(--schedule-border);
+  border-radius: 5px;
+}
+
+.schedule-body::-webkit-scrollbar-thumb:hover {
+  background: var(--schedule-text-muted);
+}
+
+/* Firefox scrollbar */
+.schedule-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--schedule-border) var(--schedule-bg-secondary);
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.appointment-card {
+  animation: slideIn 0.3s ease;
+}
+
+/* Loading State */
+.schedule-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--schedule-text-muted);
+}
+
+.schedule-loading::after {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--schedule-border);
+  border-top-color: var(--schedule-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.confirmed {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--schedule-secondary);
+}
+
+.status-badge.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--schedule-warning);
+}
+
+.status-badge.cancelled {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--schedule-danger);
+}
+
+/* Tooltip for appointments */
+.appointment-tooltip {
+  position: absolute;
+  background: var(--schedule-bg);
+  border: 1px solid var(--schedule-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  box-shadow: var(--schedule-shadow-lg);
+  z-index: 1000;
+  font-size: 0.875rem;
+  max-width: 250px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.appointment-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.appointment-tooltip .tooltip-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--schedule-text);
+}
+
+.appointment-tooltip .tooltip-info {
+  color: var(--schedule-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* Print Styles */
+@media print {
+  .modern-schedule {
+    height: auto;
+    box-shadow: none;
+  }
+
+  .schedule-modal-overlay,
+  .mobile-day-nav {
+    display: none !important;
+  }
+
+  .schedule-grid-container {
+    overflow: visible;
+  }
+}

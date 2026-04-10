@@ -167,6 +167,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="{% url 'painel:gerenciar_consultas' %}"
+                                class="sidebar-link {% if 'gerenciar' in request.path %}active{% endif %}">
+                                <i class="bi bi-clipboard-check"></i> Gerenciar Consultas
+                            </a>
+                        </li>
+                        <li>
                             <a href="{% url 'painel:agendar_consulta' %}"
                                 class="sidebar-link {% if 'agendar' in request.path %}active{% endif %}">
                                 <i class="bi bi-calendar-plus"></i> Agendar Consulta
