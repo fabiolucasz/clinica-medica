@@ -1,0 +1,33 @@
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./api/src:/app/src
+      - sqlite_data:/app/src
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./web/src:/app/src
+      - sqlite_web_data:/app/src/clinica
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-change-in-production
+      - API_BASE_URL=http://api:8001
+    restart: unless-stopped
+    depends_on:
+      - api
+
+volumes:
+  sqlite_data:
+  sqlite_web_data:

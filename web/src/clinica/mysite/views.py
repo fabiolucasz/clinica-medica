@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import requests
+import os
 
 # Create your views here.
-base_url = 'http://127.0.0.1:8001'
+base_url = os.environ.get('API_BASE_URL', 'http://api:8001')
 
 def token_required(view_func):
     """Decorator para verificar se o usuário tem token válido na sessão"""

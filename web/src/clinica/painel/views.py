@@ -20,9 +20,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from django.utils import timezone
 import webbrowser
 import requests
+import os
 from mysite.views import token_required
 
-base_url = 'http://127.0.0.1:8001'
+base_url = os.environ.get('API_BASE_URL', 'http://api:8001')
 
 # Dashboard
 

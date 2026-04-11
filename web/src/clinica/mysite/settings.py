@@ -123,5 +123,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # SECURE_HSTS_PRELOAD = True
 
 # CSRF Settings
-CSRF_COOKIE_HTTPONLY = True  # Protege contra XSS
-SESSION_COOKIE_HTTPONLY = True  # Protege contra XSS
+#CSRF_COOKIE_HTTPONLY = True  # Protege contra XSS
+#SESSION_COOKIE_HTTPONLY = True  # Protege contra XSS
