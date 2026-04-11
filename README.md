@@ -182,39 +182,50 @@ DEBUG = True
 BASE_URL = 'http://127.0.0.1:8001'  # URL da API FastAPI
 ```
 
-## Execução Local
+## Execução com Docker Compose
 
 ### Pré-requisitos
-- Python 3.12+
-- PostgreSQL 14+
-- pip ou uv (gerenciador de pacotes)
+- Docker
+- Docker Compose
 
-### 1. Banco de Dados
+### 1. Clonar e entrar no projeto
 ```bash
-# Criar banco PostgreSQL
-createdb clinica_db
+git clone https://github.com/fabiolucasz/clinica-medica-whatsapp.git
 ```
 
-### 2. API (FastAPI)
 ```bash
-cd api
-uv sync                          # Instalar dependências
-uv run python src/populate_db.py # Popular dados iniciais
-uv run uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
+cd clinica-medica-whatsapp
 ```
 
-### 3. Web (Django)
+### 2. Iniciar os serviços
 ```bash
-cd web/src/clinica
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
+docker compose up -d --build
 ```
 
-### 4. Acesso
+
+
+### 3. Acesso
 - **Django**: http://localhost:8000
 - **API Docs**: http://localhost:8001/docs
 - **Métricas**: http://localhost:8001/metrics
+
+### Comandos úteis
+```bash
+# Ver logs
+docker compose logs -f
+
+# Parar serviços
+docker compose down
+
+# Rebuild após alterações
+docker compose up -d --build
+
+# Acessar shell do container web
+docker compose exec web sh
+
+# Acessar shell do container api
+docker compose exec api sh
+```
 
 ## Screenshots
 
