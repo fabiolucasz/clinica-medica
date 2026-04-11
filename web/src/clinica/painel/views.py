@@ -1,29 +1,14 @@
-from datetime import datetime
-import json
-from struct import pack
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.contrib.auth import logout
-import requests
 import json
 import concurrent.futures
-from datetime import datetime
-from django.db.models import Q
-from .models import Paciente, Medico, Tipo_conselho, Estados, Clinicas, Especialidades, Salas, Vagas, Agendamentos
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from django.utils import timezone
 import webbrowser
 import requests
 import os
 from mysite.views import token_required
 
-base_url = os.environ.get('API_BASE_URL', 'http://api:8001')
+base_url = os.environ.get('API_BASE_URL', 'http://127.0.0.1:8001')
 
 # Dashboard
 
@@ -503,13 +488,10 @@ def cadastrar_medico_sala(request, medico_id):
     # Headers com autenticação
     headers = {'Authorization': f'Bearer {token}'}
     
-    # URLs da API local (rodando na mesma máquina)
-    api_base_url = 'http://localhost:8001'
-    
     # Otimização MÁXIMA: Endpoint otimizado com tudo pré-processado
     try:
         # Usar endpoint otimizado que já vem com nomes enriquecidos
-        optimized_url = f'{api_base_url}/medico-sala/optimized/{medico_id}'
+        optimized_url = f'{base_url}/medico-sala/optimized/{medico_id}'
         response = requests.get(optimized_url, headers=headers)
         response.raise_for_status()
         
