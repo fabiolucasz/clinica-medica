@@ -35,6 +35,9 @@ O sistema utiliza uma arquitetura em duas camadas:
 | prometheus-client | 0.24.1+ | Métricas de monitoramento |
 | structlog | 25.5.0+ | Logging estruturado |
 | requests | 2.33.1+ | HTTP client |
+| boto3 | 1.35.0+ | Cliente AWS S3 para Supabase Storage |
+| filetype | 1.2.0+ | Detecção de tipo de arquivo |
+| python-multipart | 0.0.9+ | Upload de arquivos multipart |
 
 ### Frontend - Web (Django)
 
@@ -53,7 +56,7 @@ O sistema utiliza uma arquitetura em duas camadas:
 clinica-medica-whatsapp/
 ├── api/                          # Backend FastAPI
 │   └── src/
-│       ├── routes/               # 17 módulos de endpoints
+│       ├── routes/               # 18 módulos de endpoints
 │       │   ├── agendamentos.py   # CRUD de agendamentos
 │       │   ├── agenda.py         # Consulta de agenda
 │       │   ├── pacientes.py      # Gestão de pacientes
@@ -61,11 +64,14 @@ clinica-medica-whatsapp/
 │       │   ├── clinicas.py       # Gestão de clínicas
 │       │   ├── salas.py          # Gestão de salas
 │       │   ├── user.py           # Autenticação JWT
+│       │   ├── upload.py         # Upload de arquivos
 │       │   └── ...               # Outros módulos
 │       ├── models/               # SQLAlchemy models
 │       ├── schemas/              # Pydantic schemas
 │       ├── crud/                 # Operações de banco
 │       ├── auth/                 # Lógica de autenticação
+│       ├── storage/              # Integração com Storage
+│       │   └── supabase.py       # Cliente S3 Supabase
 │       └── database/             # Configuração de conexão
 │
 └── web/                          # Frontend Django
@@ -76,6 +82,8 @@ clinica-medica-whatsapp/
         │   │   │   ├── listar_consultas.html    # Agenda visual
         │   │   │   ├── gerenciar_consultas.html # Gestão com WhatsApp
         │   │   │   ├── dashboard.html           # Painel principal
+        │   │   │   ├── cadastrar_paciente.html  # Cadastro com foto
+        │   │   │   ├── cadastrar_medico.html    # Cadastro com documentos
         │   │   │   └── base.html                # Layout base
         │   ├── views.py          # Lógica de views
         │   ├── urls.py           # Roteamento
@@ -94,9 +102,16 @@ clinica-medica-whatsapp/
 - **Estados**: Cadastro de estados brasileiros
 
 ### Gestão de Pessoas
-- **Pacientes**: Cadastro com dados pessoais, contato, endereço
-- **Médicos**: Cadastro com especialidade, conselho, número do registro
+- **Pacientes**: Cadastro com dados pessoais, contato, endereço, **foto de perfil**
+- **Médicos**: Cadastro com especialidade, conselho, número do registro, **documentos profissionais**
 - **Alocação**: Médicos em salas com horários específicos
+
+### Upload de Arquivos (Supabase Storage)
+- **Fotos de Perfil**: Upload para pacientes e médicos (PNG, JPG, JPEG - máx 5MB)
+- **Documentos Profissionais**: Upload de PDFs para médicos (RG, CPF, Diploma, Certificados - máx 10MB)
+- **Integração S3**: Armazenamento em bucket Supabase com estrutura organizada por usuário
+- **Validação**: Verificação de tipo MIME e tamanho de arquivo
+- **Permissões**: Controle de acesso por roles (admin, médico, atendente)
 
 ### Agendamentos
 - **Calendário Visual**: Agenda semanal com timeline de horários
@@ -131,6 +146,10 @@ clinica-medica-whatsapp/
 - **Métricas Prometheus**: Endpoint `/metrics` na API
 - **Logging Estruturado**: structlog com contexto de requisições
 
+### Storage
+- **Supabase Storage**: Integração S3-compatible para armazenamento de arquivos
+- **Bucket Structure**: `/{user_id}/profile/` para fotos e `/{user_id}/documents/` para documentos
+
 ## Endpoints da API
 
 ### Autenticação
@@ -149,6 +168,14 @@ GET    /clinicas                   # Listar clínicas
 GET    /salas                      # Listar salas
 GET    /especialidades             # Listar especialidades
 GET    /estados                    # Listar estados
+```
+
+### Upload
+```
+POST   /upload/profile-image/{user_id}    # Upload foto de perfil
+POST   /upload/document/{user_id}         # Upload documento profissional
+DELETE /upload/file/{user_id}            # Remover arquivo
+GET    /upload/validation-info           # Informações de validação
 ```
 
 ### Agenda
@@ -173,6 +200,14 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/clinica_db
 SECRET_KEY=your-secret-key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Supabase Storage Configuration
+SUPABASE_STORAGE_URL=https://seu-projeto.storage.supabase.co
+SUPABASE_S3_ENDPOINT=https://seu-projeto.storage.supabase.co/storage/v1/s3
+SUPABASE_ACCESS_KEY=sua-access-key-s3
+SUPABASE_SECRET_KEY=sua-secret-key-s3
+SUPABASE_REGION=sa-east-1
+SUPABASE_BUCKET=clinica-files
 ```
 
 ### Web (Django settings)
@@ -257,6 +292,7 @@ Seleção de mensagem com preview
 
 ## Roadmap
 
+- [x] **Upload de arquivos**: Fotos de perfil e documentos com Supabase Storage
 - [ ] Área do paciente (portal web)
 - [ ] Notificações push
 - [ ] Relatórios em PDF
