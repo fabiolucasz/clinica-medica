@@ -83,30 +83,60 @@ def cadastrar_paciente(request):
         bairro = request.POST.get('bairro')
         cidade = request.POST.get('cidade')
         estado_uf = request.POST.get('estado')
-        foto_perfil = request.POST.get('foto')
         try:
+            # === CRIAR PACIENTE PRIMEIRO ===
+            data_payload = {
+                'nome': nome,
+                'password': senha,
+                'celular': celular,
+                'email': email,
+                'cpf': cpf,
+                'data_nascimento': data_nascimento,
+                'sexo': sexo,
+                'cep': cep,
+                'rua': rua,
+                'numero': numero,
+                'bairro': bairro,
+                'cidade': cidade,
+                'estado': estado_uf,
+                'role': "paciente",
+                'foto_perfil': None
+            }
+            
+            print("\n" + "="*50)
+            print("DEBUG - Criando paciente:")
+            print("="*50)
+            
             response = requests.post(
                 f'{base_url}/pacientes/',
                 headers=headers,
-                json={
-                    'nome': nome,
-                    'password': senha,
-                    'celular': celular,
-                    'email': email,
-                    'cpf': cpf,
-                    'data_nascimento': data_nascimento,
-                    'sexo': sexo,
-                    'cep': cep,
-                    'rua': rua,
-                    'numero': numero,
-                    'bairro': bairro,
-                    'cidade': cidade,
-                    'estado': estado_uf,
-                    'role': "paciente",
-                    'foto_perfil': foto_perfil
-                })
+                json=data_payload)
+            
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
             
             if response.status_code == 200:
+                paciente = response.json()
+                paciente_id = paciente.get('id')
+                print(f"Paciente criado com ID: {paciente_id}")
+                
+                # === UPLOAD DE FOTO APÓS CRIAR PACIENTE ===
+                if 'foto' in request.FILES and paciente_id:
+                    foto_file = request.FILES['foto']
+                    try:
+                        files = {'file': (foto_file.name, foto_file.read(), foto_file.content_type)}
+                        upload_response = requests.post(
+                            f'{base_url}/upload/profile-image/{paciente_id}',
+                            headers=headers,
+                            files=files
+                        )
+                        if upload_response.status_code == 200:
+                            print(f"Foto de perfil enviada: {upload_response.json().get('url')}")
+                        else:
+                            print(f"Erro no upload: {upload_response.status_code} - {upload_response.text}")
+                    except Exception as e:
+                        print(f"Erro ao enviar foto: {str(e)}")
+                
                 return redirect('painel:listar_pacientes')
             else:
                 print(f"Erro na API - Status: {response.status_code}")
@@ -126,7 +156,7 @@ def cadastrar_paciente(request):
             print(f"Erro ao abrir navegador: {e}")
         
         # Redirecionar para a lista de pacientes
-        return redirect('/painel/listar_pacientes/')
+        return redirect('painel:listar_pacientes')
         
     return render(request, 'painel/cadastrar_paciente.html', {'estados': estados, 'erro_api': erro_api})
 
@@ -300,18 +330,16 @@ def cadastrar_medico(request):
         bairro = request.POST.get('bairro')
         cidade = request.POST.get('cidade')
         estado = request.POST.get('estado')
-        foto_perfil = request.POST.get('foto_perfil')
         especialidade = request.POST.get('especialidade_id')
         tipo_conselho = request.POST.get('tipo_conselho_id')
         uf_conselho = request.POST.get('uf_conselho_id')
         numero_conselho = request.POST.get('numero_conselho')
         rqe = request.POST.get('rqe')
         valor_consulta = request.POST.get('valor_consulta')
-        upload_documento = request.POST.get('upload_documento')
         senha = request.POST.get('senha')
 
         try:
-            # === DEBUG: Exibir dados sendo enviados ===
+            # === CRIAR MÉDICO PRIMEIRO ===
             data_payload = {
                 "nome": nome,
                 "email": email,
@@ -326,23 +354,20 @@ def cadastrar_medico(request):
                 "cidade": cidade,
                 "estado": estado,
                 "role": "medico",
-                "foto_perfil": foto_perfil,
+                "foto_perfil": None,
                 "especialidade": especialidade,
                 "rqe": rqe,
                 "valor_consulta": valor_consulta,
                 "tipo_conselho": tipo_conselho,
                 "uf_conselho": uf_conselho,
                 "numero_conselho": numero_conselho,
-                "upload_arquivo": upload_documento,
+                "upload_arquivo": None,
                 "password": senha,
             }
             
             print("\n" + "="*50)
-            print("DEBUG - Payload enviado para API:")
+            print("DEBUG - Criando médico:")
             print("="*50)
-            for key, value in data_payload.items():
-                print(f"{key}: {repr(value)} (tipo: {type(value).__name__})")
-            print("="*50 + "\n")
             
             # Criar o medico
             response = requests.post(
@@ -355,10 +380,44 @@ def cadastrar_medico(request):
             
             if response.status_code == 200:
                 medico = response.json()
-                print(f"Médico retornado pela API: {medico}")
-                print(f"ID do médico: {medico.get('id')}")
-                # Redirecionar para a página de seleção de vagas com o ID do médico
-                return redirect('painel:cadastrar_medico_sala', medico_id=medico.get('id'))
+                medico_id = medico.get('id')
+                print(f"Médico criado com ID: {medico_id}")
+                
+                # === UPLOAD DE ARQUIVOS APÓS CRIAR MÉDICO ===
+                # Processar upload de foto de perfil
+                if 'foto_perfil' in request.FILES and medico_id:
+                    foto_file = request.FILES['foto_perfil']
+                    try:
+                        files = {'file': (foto_file.name, foto_file.read(), foto_file.content_type)}
+                        upload_response = requests.post(
+                            f'{base_url}/upload/profile-image/{medico_id}',
+                            headers=headers,
+                            files=files
+                        )
+                        if upload_response.status_code == 200:
+                            print(f"Foto de perfil enviada: {upload_response.json().get('url')}")
+                    except Exception as e:
+                        print(f"Erro ao enviar foto: {str(e)}")
+                
+                # Processar upload de documento
+                if 'upload_documento' in request.FILES and medico_id:
+                    doc_file = request.FILES['upload_documento']
+                    try:
+                        files = {'file': (doc_file.name, doc_file.read(), doc_file.content_type)}
+                        data = {'document_type': 'professional'}
+                        upload_response = requests.post(
+                            f'{base_url}/upload/document/{medico_id}',
+                            headers=headers,
+                            files=files,
+                            data=data
+                        )
+                        if upload_response.status_code == 200:
+                            print(f"Documento enviado: {upload_response.json().get('url')}")
+                    except Exception as e:
+                        print(f"Erro ao enviar documento: {str(e)}")
+                
+                # Redirecionar para a página de seleção de vagas
+                return redirect('painel:cadastrar_medico_sala', medico_id=medico_id)
             else:
                 # Erro da API - mostrar mensagem detalhada
                 error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
@@ -559,7 +618,7 @@ def cadastrar_medico_sala(request, medico_id):
             # Primeiro, buscar todas as vagas atuais para manter os médicos existentes
             def buscar_vaga_atual(vaga_id):
                 try:
-                    response = requests.get(f'{api_base_url}/vagas/{vaga_id}', headers=headers)
+                    response = requests.get(f'{base_url}/vagas/{vaga_id}', headers=headers)
                     response.raise_for_status()
                     return vaga_id, response.json()
                 except requests.exceptions.RequestException as e:
@@ -598,11 +657,14 @@ def cadastrar_medico_sala(request, medico_id):
                     
                     # Manter os médicos existentes e atualizar apenas os dias selecionados
                     update_data = {
+                        "status": 'disponivel',
                         "segunda": dias_selecionados.get("segunda") if "segunda" in dias_selecionados else vaga_atual.get("segunda"),
                         "terca": dias_selecionados.get("terca") if "terca" in dias_selecionados else vaga_atual.get("terca"),
                         "quarta": dias_selecionados.get("quarta") if "quarta" in dias_selecionados else vaga_atual.get("quarta"),
                         "quinta": dias_selecionados.get("quinta") if "quinta" in dias_selecionados else vaga_atual.get("quinta"),
                         "sexta": dias_selecionados.get("sexta") if "sexta" in dias_selecionados else vaga_atual.get("sexta"),
+                        "max_pacientes": 25,
+                        "pacientes_atuais": 0
                     }
                     
                     # Remover apenas valores None (quando usuário deselecionou)
@@ -610,7 +672,7 @@ def cadastrar_medico_sala(request, medico_id):
                     
                     print(f"DEBUG: Atualizando vaga {vaga_id} com dados: {update_data}")
                     
-                    update_response = requests.put(f'{api_base_url}/vagas/{vaga_id}', json=update_data, headers=headers)
+                    update_response = requests.put(f'{base_url}/vagas/{vaga_id}', json=update_data, headers=headers)
                     update_response.raise_for_status()
                     return vaga_id, True, "Sucesso"
                     

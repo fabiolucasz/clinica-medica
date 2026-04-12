@@ -112,8 +112,15 @@
                 </h5>
                 
                 <div class="form-group">
-                    <label>Foto de Perfil</label>
-                    <input type="file" class="form-control" name="foto_perfil" accept="image/*">
+                    <label>Foto de Perfil <small class="text-muted">(PNG, JPEG, JPG - máx 5MB)</small></label>
+                    <input type="file" 
+                           class="form-control" 
+                           name="foto_perfil" 
+                           accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                           id="foto_perfil"
+                           onchange="validateFile(this, 'image')">
+                    <small class="form-text text-muted">Formatos aceitos: PNG, JPEG, JPG. Tamanho máximo: 5MB</small>
+                    <div id="foto_error" class="text-danger" style="display: none;"></div>
                 </div>
                 
                 <div class="form-group">
@@ -168,8 +175,15 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Documento Profissional</label>
-                    <input type="file" class="form-control" name="upload_documento">
+                    <label>Documento Profissional <small class="text-muted">(PDF - máx 10MB)</small></label>
+                    <input type="file" 
+                           class="form-control" 
+                           name="upload_documento" 
+                           accept=".pdf,application/pdf"
+                           id="upload_documento"
+                           onchange="validateFile(this, 'document')">
+                    <small class="form-text text-muted">Apenas arquivos PDF são aceitos. Tamanho máximo: 10MB</small>
+                    <div id="documento_error" class="text-danger" style="display: none;"></div>
                 </div>
                 
                 <div class="form-group">
@@ -190,4 +204,68 @@
         </div>
     </form>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+/**
+ * Valida arquivo de upload
+ * @param {HTMLInputElement} input - Elemento input file
+ * @param {string} type - Tipo de arquivo ('image' ou 'document')
+ */
+function validateFile(input, type) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const maxImageSize = 5 * 1024 * 1024; // 5MB
+    const maxPdfSize = 10 * 1024 * 1024;  // 10MB
+    
+    let errorDiv;
+    if (type === 'image') {
+        errorDiv = document.getElementById('foto_error');
+        
+        // Validar extensão
+        const allowedExtensions = ['.png', '.jpg', '.jpeg'];
+        const fileName = file.name.toLowerCase();
+        const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+        
+        if (!hasValidExtension) {
+            errorDiv.textContent = 'Formato não permitido. Use: PNG, JPEG, JPG';
+            errorDiv.style.display = 'block';
+            input.value = '';
+            return;
+        }
+        
+        // Validar tamanho
+        if (file.size > maxImageSize) {
+            errorDiv.textContent = 'Imagem muito grande. Tamanho máximo: 5MB';
+            errorDiv.style.display = 'block';
+            input.value = '';
+            return;
+        }
+        
+        errorDiv.style.display = 'none';
+        
+    } else if (type === 'document') {
+        errorDiv = document.getElementById('documento_error');
+        
+        // Validar extensão
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            errorDiv.textContent = 'Apenas arquivos PDF são aceitos';
+            errorDiv.style.display = 'block';
+            input.value = '';
+            return;
+        }
+        
+        // Validar tamanho
+        if (file.size > maxPdfSize) {
+            errorDiv.textContent = 'PDF muito grande. Tamanho máximo: 10MB';
+            errorDiv.style.display = 'block';
+            input.value = '';
+            return;
+        }
+        
+        errorDiv.style.display = 'none';
+    }
+}
+</script>
 {% endblock %}
