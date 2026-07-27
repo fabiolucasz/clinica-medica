@@ -225,11 +225,11 @@ BASE_URL = 'http://127.0.0.1:8001'  # URL da API FastAPI
 
 ### 1. Clonar e entrar no projeto
 ```bash
-git clone https://github.com/fabiolucasz/clinica-medica-whatsapp.git
+git clone https://github.com/fabiolucasz/clinica-medica.git
 ```
 
 ```bash
-cd clinica-medica-whatsapp
+cd clinica-medica
 ```
 
 ### 2. Iniciar os serviços
