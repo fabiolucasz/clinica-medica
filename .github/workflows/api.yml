@@ -39,7 +39,7 @@ jobs:
         echo "ACCESS_TOKEN_EXPIRE_MINUTES=30" >> $GITHUB_ENV
         echo "HOST=localhost" >> $GITHUB_ENV
         echo "PORT=5432" >> $GITHUB_ENV
-        echo "DBNAME=test_db" >> $GITHUB_ENV
+        echo "DATABASE_NAME=test_db" >> $GITHUB_ENV
         echo "PASSWORD=test_password" >> $GITHUB_ENV
     
     - name: Run tests
