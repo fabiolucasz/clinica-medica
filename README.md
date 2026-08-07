@@ -38,6 +38,7 @@ O sistema utiliza uma arquitetura em duas camadas:
 | boto3 | 1.35.0+ | Cliente AWS S3 para Supabase Storage |
 | filetype | 1.2.0+ | Detecção de tipo de arquivo |
 | python-multipart | 0.0.9+ | Upload de arquivos multipart |
+| openai | 2.53.0+ | Cliente OpenAI para chat com IA |
 
 ### Frontend - Web (Django)
 
@@ -150,6 +151,14 @@ clinica-medica-whatsapp/
 - **Supabase Storage**: Integração S3-compatible para armazenamento de arquivos
 - **Bucket Structure**: `/{user_id}/profile/` para fotos e `/{user_id}/documents/` para documentos
 
+### Chat com Inteligência Artificial
+- **Assistente Virtual**: Chatbot para coleta de dados de pacientes
+- **Extração Estruturada**: IA extrai automaticamente informações do paciente (nome, whatsapp, data de nascimento, especialidade desejada, convênio)
+- **Armazenamento em Memória**: Histórico de chat armazenado temporariamente na memória do servidor
+- **Persistência de Leads**: Dados estruturados salvos no banco de dados quando coleta é completa
+- **Integração OpenAI**: Usa modelo GPT-4o-mini para respostas contextuais
+- **Contexto da Clínica**: IA treinada para atuar como assistente de agendamento
+
 ## Endpoints da API
 
 ### Autenticação
@@ -192,6 +201,12 @@ GET    /dados-agendamento         # Dados para formulário de agendamento
 GET    /dashboard/estatisticas    # Estatísticas para dashboard
 ```
 
+### Chat com IA
+```
+POST   /chat                       # Enviar mensagem e receber resposta da IA
+GET    /leads                      # Listar leads (requer autenticação)
+```
+
 ## Variáveis de Ambiente
 
 ### API (`.env`)
@@ -208,6 +223,11 @@ SUPABASE_ACCESS_KEY=sua-access-key-s3
 SUPABASE_SECRET_KEY=sua-secret-key-s3
 SUPABASE_REGION=sa-east-1
 SUPABASE_BUCKET=clinica-files
+
+# OpenAI Configuration
+AI_API_KEY=sk-proj-...  # Sua API key da OpenAI
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
 ```
 
 ### Web (Django settings)
@@ -293,6 +313,7 @@ Seleção de mensagem com preview
 ## Roadmap
 
 - [x] **Upload de arquivos**: Fotos de perfil e documentos com Supabase Storage
+- [x] **Chat com IA**: Assistente virtual para coleta de dados de pacientes
 - [ ] Área do paciente (portal web)
 - [ ] Notificações push
 - [ ] Relatórios em PDF
